@@ -15,6 +15,8 @@
     Storage.fetchEverything();
   }
 
+  const isAdmin = session.role === 'admin';
+
   // Refresh performance badges on dashboard load
   if (!isAdmin && typeof BadgeEngine !== 'undefined') {
     BadgeEngine.refreshBadges(session.userId).then(newBadges => {
@@ -23,8 +25,6 @@
       }
     });
   }
-
-  const isAdmin = session.role === 'admin';
 
   // ── DOM refs ──
   const sidebarNav = document.getElementById('sidebar-nav');
