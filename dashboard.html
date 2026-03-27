@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Dashboard</title>
+    <meta name="description" content="I.R.I.S dashboard: role-based workspace for admins and interns.">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/glowing-effect.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+</head>
+
+<body>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+
+        <!-- ── Sidebar ── -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S"
+                        style="width:100%;height:100%;object-fit:contain;padding:4px;">
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Intern Review & Intelligence System</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation">
+                <!-- Injected by JS based on role -->
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar" role="button" aria-label="User info and logout"
+                    tabindex="0">
+                    <div class="user-avatar" id="user-avatar-sidebar" aria-hidden="true">A</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Loading...</div>
+                        <div class="user-role" id="user-role-sidebar">—</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Topbar ── -->
+        <header class="app-topbar" role="banner">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <span class="topbar-title" id="topbar-title">Dashboard</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="info-btn" id="info-btn" aria-label="Platform information">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
+                    </button>
+                    <span class="badge badge-admin" id="topbar-role-badge">Admin</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn" aria-label="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Main Content ── -->
+        <main class="app-content" id="app-content" aria-label="Dashboard content">
+            <div class="container" data-reveal data-stagger>
+                <!-- Role banner -->
+                <div class="role-banner anim-reveal" id="role-banner">
+                    <span class="role-banner-icon material-symbols-outlined" aria-hidden="true"
+                        style="font-size: 32px; color: var(--clr-accent);">waving_hand</span>
+                    <div class="role-banner-text">
+                        <div class="role-banner-title" id="welcome-title">Welcome back!</div>
+                        <div class="role-banner-sub" id="welcome-sub">Your workspace is ready.</div>
+                    </div>
+                    <span class="badge" id="role-badge-main">Admin</span>
+                </div>
+
+                <!-- Stat cards -->
+                <div class="auto-grid-stats" id="stats-grid" aria-label="Statistics">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Main grid -->
+                <div class="dash-grid">
+                    <!-- Quick actions -->
+                    <div class="dash-card anim-fadeInUp anim-d2">
+                        <div class="dash-card-header">
+                            <h2 class="dash-card-title">Quick Actions</h2>
+                        </div>
+                        <div class="dash-card-body">
+                            <div class="quick-actions" id="quick-actions">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent projects -->
+                    <div class="dash-card anim-fadeInUp anim-d3">
+                        <div class="dash-card-header">
+                            <h2 class="dash-card-title">Recent Projects</h2>
+                            <a href="projects.html" class="btn btn-secondary btn-sm">View all</a>
+                        </div>
+                        <div class="dash-card-body" id="recent-projects-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Recent reports (Admin only) -->
+                    <div class="dash-card anim-fadeInUp anim-d4" id="reports-card" style="display: none;">
+                        <div class="dash-card-header">
+                            <h2 class="dash-card-title">Recent Activity Reports</h2>
+                        </div>
+                        <div class="dash-card-body" id="recent-reports-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="js/page-transition.js"></script>
+
+    <script src="js/storage.js"></script>
+    <script src="js/admin-popup.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/animation-engine.js"></script>
+    <script src="js/glowing-effect.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Admin Profile</title>
+    <meta name="description" content="I.R.I.S admin profile management and platform settings.">
+    <link rel="stylesheet" href="css/admin-profile.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+</head>
+
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S"
+                        style="width:100%;height:100%;object-fit:contain;padding:4px;">
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Intern Review & Intelligence System</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation"></nav>
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar" role="button" tabindex="0" aria-label="User info">
+                    <div class="user-avatar" id="user-avatar-sidebar" aria-hidden="true">A</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Admin</div>
+                        <div class="user-role" id="user-role-sidebar">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Topbar -->
+        <header class="app-topbar" role="banner">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <span class="topbar-title">My Profile</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="info-btn" id="info-btn" aria-label="Platform information">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                    <span class="badge badge-admin">Admin</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn" aria-label="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-content" aria-label="Admin profile">
+            <div class="container" data-reveal data-stagger>
+                <div class="admin-profile-wrap">
+
+                    <!-- Hero Banner -->
+                    <div class="admin-hero reveal" id="admin-hero">
+                        <div class="admin-hero-banner">
+                            <div class="hero-orb hero-orb-1"></div>
+                            <div class="hero-orb hero-orb-2"></div>
+                        </div>
+                        <div class="admin-hero-body">
+                            <div class="admin-avatar-wrap">
+                                <div class="admin-avatar" id="admin-avatar" aria-label="Admin avatar">
+                                    <span id="admin-avatar-initial">A</span>
+                                </div>
+
+                                <div class="admin-avatar-badge" aria-label="Administrator badge"><span
+                                        class="material-symbols-outlined" style="font-size: 12px;">stars</span></div>
+                            </div>
+                            <div class="admin-info">
+                                <div class="admin-display-name" id="admin-display-name">Alex Morgan</div>
+                                <div class="admin-role-tag">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 14px;">admin_panel_settings</span>
+                                    <span id="admin-role-tag-text">Administrator</span>
+                                </div>
+                                <div class="admin-email-row">
+                                    <span class="material-symbols-outlined" style="font-size: 14px;">mail</span>
+                                    <span id="admin-email">iris@iris.com</span>
+                                </div>
+                            </div>
+                            <div class="admin-hero-actions">
+                                <button class="btn btn-secondary btn-sm" id="edit-profile-btn">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                                    Edit Profile
+                                </button>
+                                <a href="profile-builder.html" class="btn btn-secondary btn-sm">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">construction</span>
+                                    Profile Builder
+                                </a>
+                                <a href="students.html" class="btn btn-primary btn-sm">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">group</span>
+                                    Manage Students
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="stats-row" id="stats-row" role="region" aria-label="Platform statistics">
+                        <div class="stat-card">
+                            <div class="stat-icon material-symbols-outlined"
+                                style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
+                                aria-hidden="true">school</div>
+                            <div class="stat-value" id="stat-students">0</div>
+                            <div class="stat-label">Total Interns</div>
+                            <div class="stat-trend" style="display: flex; align-items: center; gap: 4px;">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+                                Active
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon material-symbols-outlined"
+                                style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                aria-hidden="true">bolt</div>
+                            <div class="stat-value" id="stat-skills">0</div>
+                            <div class="stat-label">Skills Recorded</div>
+                            <div class="stat-trend" style="color:var(--clr-indigo)">
+                                Across all profiles
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon material-symbols-outlined"
+                                style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                aria-hidden="true">group_work</div>
+                            <div class="stat-value" id="stat-companies">0</div>
+                            <div class="stat-label">Active Teams</div>
+                            <div class="stat-trend" style="color:#f59e0b">
+                                Collaboration units
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Main Grid -->
+                    <div class="admin-grid">
+
+                        <!-- Left Sidebar (Account Info & Actions) -->
+                        <div class="profile-side">
+
+                            <!-- Admin Account Info -->
+                            <div class="admin-section reveal anim-d1" aria-label="Account information">
+                                <div class="admin-section-head">
+                                    <div class="admin-section-title-group">
+                                        <div class="admin-section-icon material-symbols-outlined"
+                                            style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                            aria-hidden="true">person</div>
+                                        <span class="admin-section-title">Account Info</span>
+                                    </div>
+                                </div>
+                                <div class="admin-section-body">
+                                    <div class="admin-info-list">
+                                        <div class="admin-info-row">
+                                            <div class="admin-info-label">Display Name</div>
+                                            <div class="name-edit-wrap">
+                                                <input class="name-edit-input" id="name-edit-field" type="text"
+                                                    value="Alex Morgan" aria-label="Edit display name">
+                                                <button class="name-edit-btn" id="name-save-btn"
+                                                    aria-label="Save name">Save</button>
+                                            </div>
+                                        </div>
+                                        <div class="admin-info-row">
+                                            <div class="admin-info-label">Email</div>
+                                            <div class="email-edit-wrap">
+                                                <input class="name-edit-input" id="email-edit-field" type="email"
+                                                    value="iris@iris.com" aria-label="Edit email">
+                                                <button class="name-edit-btn" id="email-save-btn"
+                                                    aria-label="Save email">Save</button>
+                                            </div>
+                                        </div>
+                                        <div class="admin-info-row">
+                                            <div class="admin-info-label">Role</div>
+                                            <div class="role-edit-wrap">
+                                                <input class="name-edit-input" id="role-edit-field" type="text"
+                                                    value="Administrator" aria-label="Edit role">
+                                                <button class="name-edit-btn" id="role-save-btn"
+                                                    aria-label="Save role">Save</button>
+                                            </div>
+                                        </div>
+                                        <div class="admin-info-row">
+                                            <div class="admin-info-label">Session Started</div>
+                                            <div class="admin-info-value" id="info-session">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="admin-section reveal anim-d2" aria-label="Quick actions">
+                                <div class="admin-section-head">
+                                    <div class="admin-section-title-group">
+                                        <div class="admin-section-icon material-symbols-outlined"
+                                            style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                            aria-hidden="true">bolt</div>
+                                        <span class="admin-section-title">Quick Actions</span>
+                                    </div>
+                                </div>
+                                <div class="admin-section-body">
+                                    <div class="quick-actions">
+                                        <a href="profile-builder.html" class="quick-action-btn">
+                                            <div class="quick-action-icon material-symbols-outlined"
+                                                style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
+                                                aria-hidden="true">edit</div>
+                                            <div>
+                                                <div class="quick-action-label">Profile Builder</div>
+                                                <div class="quick-action-desc">Edit intern profiles & skills</div>
+                                            </div>
+                                            <div class="quick-action-arrow material-symbols-outlined"
+                                                aria-hidden="true">chevron_right</div>
+                                        </a>
+                                        <a href="students.html" class="quick-action-btn">
+                                            <div class="quick-action-icon material-symbols-outlined"
+                                                style="background:rgba(34,211,238,.1); display: flex; align-items: center; justify-content: center;"
+                                                aria-hidden="true">school</div>
+                                            <div>
+                                                <div class="quick-action-label">Student Directory</div>
+                                                <div class="quick-action-desc">Browse all intern records</div>
+                                            </div>
+                                            <div class="quick-action-arrow material-symbols-outlined"
+                                                aria-hidden="true">chevron_right</div>
+                                        </a>
+                                        <a href="dashboard.html" class="quick-action-btn">
+                                            <div class="quick-action-icon material-symbols-outlined"
+                                                style="background:rgba(16,185,129,.1); display: flex; align-items: center; justify-content: center;"
+                                                aria-hidden="true">grid_view</div>
+                                            <div>
+                                                <div class="quick-action-label">Dashboard</div>
+                                                <div class="quick-action-desc">Back to main dashboard</div>
+                                            </div>
+                                            <div class="quick-action-arrow material-symbols-outlined"
+                                                aria-hidden="true">chevron_right</div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Right Column (Content) -->
+                        <div class="profile-main">
+
+                            <!-- Intern Directory -->
+                            <div class="admin-section reveal anim-d1" aria-label="Intern directory">
+                                <div class="admin-section-head">
+                                    <div class="admin-section-title-group">
+                                        <div class="admin-section-icon material-symbols-outlined"
+                                            style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
+                                            aria-hidden="true">school</div>
+                                        <span class="admin-section-title">Intern Directory</span>
+                                    </div>
+                                    <a href="students.html" class="btn btn-secondary btn-sm"
+                                        style="font-size:var(--fs-xs)">View All</a>
+                                </div>
+                                <div class="admin-section-body">
+                                    <div class="student-list" id="student-roster">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div><!-- /admin-grid -->
+
+                </div><!-- /admin-profile-wrap -->
+            </div>
+        </main>
+
+    </div>
+
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="js/page-transition.js"></script>
+
+    <script src="js/storage.js"></script>
+    <script src="js/admin-popup.js"></script>
+    <script src="js/admin-profile.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/animation-engine.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+
+</html>

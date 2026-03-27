@@ -1,0 +1,375 @@
+/* =========================================
+   InternTrack — Dashboard Styles
+   ========================================= */
+@import './global.css';
+
+/* ── Stat Widgets — uses auto-grid-stats from global.css ── */
+.auto-grid-stats {
+    margin-bottom: var(--sp-8);
+}
+
+
+/* Stat classes use global.css .stat-card */
+.stat-card.clickable-stat {
+    cursor: pointer;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--clr-indigo), var(--clr-cyan));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    opacity: 0.8;
+}
+
+.stat-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--sp-3);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-card-label {
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+    font-weight: var(--fw-semi);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.stat-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: transform 0.3s var(--ease-spring);
+}
+
+.stat-card:hover .stat-card-icon {
+    transform: scale(1.1);
+}
+
+.stat-card-value {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-black);
+    letter-spacing: -.02em;
+    line-height: 1;
+    margin-bottom: var(--sp-2);
+    color: var(--clr-text-primary);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-card-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
+    color: var(--clr-success);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-sparkline {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 70%;
+    height: 48px;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity var(--dur-normal);
+}
+
+.stat-card:hover .stat-sparkline {
+    opacity: 0.25;
+}
+
+.stat-icon.c-accent {
+    background: rgba(139, 92, 246, .12);
+}
+
+.stat-icon.c-cyan {
+    background: rgba(34, 211, 238, .1);
+}
+
+.stat-icon.c-violet {
+    background: rgba(168, 85, 247, .1);
+}
+
+.stat-icon.c-success {
+    background: rgba(16, 185, 129, .1);
+}
+
+.stat-suffix {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+}
+
+.stat-trend-badge {
+    position: absolute;
+    top: var(--sp-5);
+    right: var(--sp-5);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
+    color: var(--clr-success);
+    background: rgba(16, 185, 129, .1);
+    border: 1px solid rgba(16, 185, 129, .18);
+    border-radius: var(--radius-full);
+    padding: .15rem .55rem;
+}
+
+/* ── Dashboard Content Grid ── */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--sp-6);
+    align-items: start;
+    margin-top: var(--sp-6);
+}
+
+/* ── Activity Card ── */
+.dash-card {
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.dash-card-header {
+    padding: var(--sp-5) var(--sp-6);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dash-card-title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semi);
+}
+
+.dash-card-body {
+    padding: var(--sp-5) var(--sp-6);
+}
+
+/* ── Quick Action Buttons ── */
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4);
+}
+
+.action-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    padding: var(--sp-5);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--clr-text-primary);
+    transition:
+        background var(--dur-normal) var(--ease-out-expo),
+        border-color var(--dur-normal) var(--ease-out-expo),
+        transform var(--dur-normal) var(--ease-out-expo),
+        box-shadow var(--dur-normal) var(--ease-out-expo);
+    position: relative;
+    overflow: visible;
+    /* Required for magnetic pull outside bounds */
+    transform-style: preserve-3d;
+}
+
+.action-tile:hover {
+    background: rgba(255, 255, 255, .08);
+    border-color: var(--clr-accent);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.action-tile:active {
+    transform: scale(.98);
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.action-label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semi);
+}
+
+.action-desc {
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+}
+
+.action-tile .arrow-icon {
+    position: absolute;
+    right: var(--sp-4);
+    top: var(--sp-4);
+    color: var(--clr-text-muted);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: all var(--dur-normal) var(--ease-out);
+}
+
+.action-tile:hover .arrow-icon {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--clr-accent);
+}
+
+/* ── Recent Projects list ── */
+.proj-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: var(--sp-4);
+    margin: 0 -0.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    transition:
+        background var(--dur-normal) var(--ease-out-expo),
+        border-color var(--dur-normal) var(--ease-out-expo),
+        transform var(--dur-normal) var(--ease-out-expo);
+    cursor: pointer;
+}
+
+.proj-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--glass-border);
+    transform: perspective(800px) rotateX(0) rotateY(0) scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.proj-item .glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    border-radius: var(--radius-lg);
+}
+
+.proj-item:hover .glare {
+    opacity: 1;
+}
+
+.proj-item:last-child {
+    border-bottom: none;
+}
+
+.proj-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--clr-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-lg);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.proj-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.proj-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.proj-name {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semi);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proj-tech {
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+    margin-top: 2px;
+}
+
+.proj-link {
+    color: var(--clr-accent);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
+    text-decoration: none;
+    transition: color var(--dur-fast);
+}
+
+.proj-link:hover {
+    color: var(--clr-accent-hover);
+}
+
+/* ── Role Status Banner ── */
+/* Role Banner use global.css */
+
+/* ── Shimmer loading state ── */
+.shimmer-line {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--clr-bg-elevated) 25%, rgba(255, 255, 255, .06) 50%, var(--clr-bg-elevated) 75%);
+    background-size: 300% 100%;
+    animation: shimmer 1.5s linear infinite;
+    margin-bottom: var(--sp-2);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .dash-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .auto-grid-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .auto-grid-stats {
+        grid-template-columns: 1fr;
+    }
+}

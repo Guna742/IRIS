@@ -1,0 +1,351 @@
+/* =========================================
+   InternTrack — Profile View Styles (Public)
+   ========================================= */
+@import './global.css';
+
+/* ── Profile Hero ── */
+.profile-hero {
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-12) var(--sp-10);
+    margin: 0 auto var(--sp-8) auto;
+    max-width: 1000px;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-8);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--dur-normal) var(--ease-out),
+        box-shadow var(--dur-normal) var(--ease-out);
+}
+
+.profile-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.profile-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139, 92, 246, .08), transparent 70%);
+    pointer-events: none;
+}
+
+/* Large avatar */
+.hero-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--clr-indigo), var(--clr-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: var(--fw-bold);
+    flex-shrink: 0;
+    border: 3px solid rgba(139, 92, 246, .3);
+    box-shadow: 0 0 30px var(--clr-accent-glow);
+    overflow: hidden;
+    animation: anim-float 4s ease-in-out infinite;
+}
+
+.hero-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-1);
+}
+
+.hero-name {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-black);
+    letter-spacing: -.03em;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--clr-text-primary) 0%, var(--clr-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--sp-1);
+}
+
+.hero-tagline {
+    font-size: var(--fs-base);
+    color: var(--clr-text-secondary);
+    margin-top: var(--sp-2);
+}
+
+.hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+}
+
+/* hero-meta-item moved to global.css */
+@media (max-width: 600px) {
+    .profile-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--sp-8) var(--sp-6);
+        gap: var(--sp-6);
+    }
+
+    .hero-meta {
+        justify-content: center;
+    }
+
+    .hero-meta-item {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* hero-links and hero-link removed as they are unified into hero-meta-item */
+
+/* ── Profile layout ── */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--sp-6);
+    align-items: start;
+}
+
+/* ── Section Cards ── */
+.profile-section {
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--sp-5);
+    transition: transform var(--dur-normal) var(--ease-out),
+        box-shadow var(--dur-normal) var(--ease-out);
+}
+
+.profile-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.section-head {
+    padding: var(--sp-5) var(--sp-6);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.section-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+}
+
+.section-title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semi);
+}
+
+.section-body {
+    padding: var(--sp-6);
+}
+
+/* ── Bio Text ── */
+.bio-text {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-loose);
+    color: var(--clr-text-secondary);
+}
+
+/* ── Skills Grid ── */
+.skills-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+.skill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .35rem .85rem;
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
+    letter-spacing: .03em;
+    cursor: default;
+    transition: transform var(--dur-fast) var(--ease-spring),
+        box-shadow var(--dur-normal);
+}
+
+.skill-badge:hover {
+    transform: scale(1.08);
+}
+
+/* Color cycling */
+.skill-badge:nth-child(4n+1) {
+    background: rgba(139, 92, 246, .12);
+    color: var(--clr-accent);
+    border: 1px solid rgba(139, 92, 246, .2);
+}
+
+.skill-badge:nth-child(4n+2) {
+    background: rgba(34, 211, 238, .1);
+    color: var(--clr-cyan);
+    border: 1px solid rgba(34, 211, 238, .18);
+}
+
+.skill-badge:nth-child(4n+3) {
+    background: rgba(124, 92, 252, .12);
+    color: var(--clr-indigo);
+    border: 1px solid rgba(124, 92, 252, .2);
+}
+
+.skill-badge:nth-child(4n+4) {
+    background: rgba(168, 85, 247, .1);
+    color: var(--clr-violet);
+    border: 1px solid rgba(168, 85, 247, .18);
+}
+
+/* ── Internship Timeline ── */
+.timeline {
+    position: relative;
+    padding-left: var(--sp-6);
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 8px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--clr-accent), var(--clr-indigo), transparent);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: var(--sp-6);
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: calc(-1 * var(--sp-6) + 2px);
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--clr-accent);
+    border: 2px solid var(--clr-bg-surface);
+    box-shadow: 0 0 10px var(--clr-accent-glow);
+}
+
+.timeline-role {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semi);
+    margin-bottom: var(--sp-1);
+}
+
+.timeline-company {
+    font-size: var(--fs-sm);
+    color: var(--clr-accent);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--sp-2);
+}
+
+.timeline-dates {
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+    margin-bottom: var(--sp-3);
+}
+
+.timeline-desc {
+    font-size: var(--fs-sm);
+    color: var(--clr-text-secondary);
+    line-height: var(--lh-loose);
+}
+
+/* ── Sidebar info card ── */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.info-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+}
+
+.info-label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.info-value {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    word-break: break-word;
+}
+
+.info-value a {
+    color: var(--clr-accent);
+    text-decoration: none;
+    transition: color var(--dur-fast);
+}
+
+.info-value a:hover {
+    color: var(--clr-accent-hover);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--sp-6);
+    }
+
+    .hero-meta {
+        justify-content: center;
+    }
+
+    .hero-links {
+        justify-content: center;
+    }
+
+    .hero-avatar {
+        animation: none;
+    }
+}

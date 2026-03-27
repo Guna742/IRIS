@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Leaderboard</title>
+    <meta name="description"
+        content="I.R.I.S leaderboard: see top-performing interns ranked by overall score, demo projects, live projects, and rating.">
+    <link rel="stylesheet" href="css/students.css">
+    <link rel="stylesheet" href="css/leaderboard.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+</head>
+
+<body>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+
+        <!-- ── Sidebar ── -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S"
+                        style="width:100%;height:100%;object-fit:contain;padding:4px;">
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Intern Review & Intelligence System</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation">
+                <!-- Injected by JS -->
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar" role="button" aria-label="User info and logout"
+                    tabindex="0">
+                    <div class="user-avatar" id="user-avatar-sidebar" aria-hidden="true">A</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Loading...</div>
+                        <div class="user-role" id="user-role-sidebar">—</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Topbar ── -->
+        <header class="app-topbar" role="banner">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <span class="topbar-title" id="topbar-title"><span class="material-symbols-outlined"
+                            style="vertical-align: middle; margin-right: 4px;">military_tech</span> Leaderboard</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="info-btn" id="info-btn" aria-label="Platform information">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                    <span class="badge badge-admin" id="topbar-role-badge">Admin</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn" aria-label="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Main Content ── -->
+        <main class="app-content" id="app-content" aria-label="Leaderboard content">
+            <div class="container">
+
+                <!-- Page Header -->
+                <div class="lb-page-header">
+                    <div>
+                        <h1 class="lb-page-title">
+                            <span class="lb-trophy-icon material-symbols-outlined"
+                                style="-webkit-text-fill-color: initial; font-size: 32px; vertical-align: middle; margin-right: 8px; color: gold;">military_tech</span>
+                            <span>Intern Leaderboard</span>
+                        </h1>
+                        <p class="lb-page-sub">Top performers ranked by different achievement categories.</p>
+                    </div>
+                    <div class="lb-total-badge">
+                        Total Interns: <span id="lb-total-count">0</span>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="lb-controls-row">
+                    <!-- Search Bar -->
+                    <div class="lb-search-wrap">
+                        <span class="lb-search-icon material-symbols-outlined">search</span>
+                        <input type="text" id="lb-search-input" placeholder="Search intern by name..."
+                            aria-label="Search interns">
+                    </div>
+
+                    <!-- Filter Dropdown -->
+                    <div class="lb-dropdown-wrap">
+                        <button class="lb-dropdown-btn" id="lb-filter-btn" aria-haspopup="listbox"
+                            aria-expanded="false">
+                            <span id="lb-current-filter-icon" class="material-symbols-outlined"
+                                style="font-size: 18px; vertical-align: middle;">stars</span>
+                            <span id="lb-current-filter-label">All Overall</span>
+                            <span class="lb-dropdown-arrow material-symbols-outlined">arrow_drop_down</span>
+                        </button>
+                        <div class="lb-dropdown-menu" id="lb-filter-menu" role="listbox">
+                            <div class="lb-dropdown-item active" data-filter="overall" role="option">
+                                <span class="lb-filter-icon material-symbols-outlined">stars</span> All Overall
+                            </div>
+                            <div class="lb-dropdown-item" data-filter="demo" role="option">
+                                <span class="lb-filter-icon material-symbols-outlined">biotech</span> Demo Projects
+                            </div>
+                            <div class="lb-dropdown-item" data-filter="live" role="option">
+                                <span class="lb-filter-icon material-symbols-outlined">rocket</span> Live Projects
+                            </div>
+                            <div class="lb-dropdown-item" data-filter="rating" role="option">
+                                <span class="lb-filter-icon material-symbols-outlined">grade</span> Rating Based
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Podium Section -->
+                <div class="lb-podium-section" id="lb-podium" aria-label="Top 3 ranked interns">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Rest of Leaderboard Table -->
+                <div class="lb-table-section" id="lb-table-section">
+                    <div class="lb-table-header">
+                        <div class="lb-th rank-col">Rank</div>
+                        <div class="lb-th name-col">Intern</div>
+                        <div class="lb-th score-col" id="lb-score-header">Score</div>
+                        <div class="lb-th projects-col">Projects</div>
+                        <div class="lb-th rating-col">Rating</div>
+                    </div>
+                    <div class="lb-table-body" id="lb-table-body">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="js/page-transition.js"></script>
+
+    <script src="js/storage.js"></script>
+    <script src="js/admin-popup.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/animation-engine.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+
+</html>

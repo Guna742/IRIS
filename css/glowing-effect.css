@@ -1,0 +1,65 @@
+/* Vanilla CSS implementation of the Glowing Effect Component */
+/* Mapped from Aceternity UI's glowing-effect.tsx Tailwind utility classes */
+
+.glowing-effect-container {
+    position: relative;
+    z-index: 1;
+    /* Establishes stacking context */
+}
+
+/* Base wrap - inset minus 1px, pointer-events none, hidden opacity by default */
+.glowing-effect-wrap {
+    pointer-events: none;
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+    /* Keep it behind the card's actual background if the card has one */
+    border: 1px solid transparent;
+}
+
+/* In 'glow' mode or when proximity is hovered, show it */
+.glowing-effect-wrap.glow,
+.glowing-effect-container:hover>.glowing-effect-wrap {
+    opacity: 1;
+}
+
+.glowing-effect-wrap.has-blur {
+    filter: blur(var(--blur));
+}
+
+.glowing-effect-inner {
+    border-radius: inherit;
+    position: absolute;
+    inset: 0;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.glowing-effect-inner::after {
+    content: "";
+    border-radius: inherit;
+    position: absolute;
+    /* Inset trick to create border space */
+    inset: calc(-1 * var(--glowingeffect-border-width, 1px));
+    border: var(--glowingeffect-border-width, 1px) solid transparent;
+
+    /* Variable background gradient populated from JS */
+    background: var(--gradient);
+    background-attachment: fixed;
+
+    /* JS sets --active based on distance */
+    opacity: var(--active, 0);
+    transition: opacity 0.3s ease;
+
+    /* CSS Masking to render only the border bounds and the conic gradient cut */
+    mask-clip: padding-box, border-box;
+    mask-composite: intersect;
+    mask-image: linear-gradient(#0000, #0000), conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #00000000 0deg, #fff, #00000000 calc(var(--spread) * 2deg));
+
+    -webkit-mask-clip: padding-box, border-box;
+    -webkit-mask-composite: source-in;
+    -webkit-mask-image: linear-gradient(#0000, #0000), conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #00000000 0deg, #fff, #00000000 calc(var(--spread) * 2deg));
+}

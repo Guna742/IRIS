@@ -1,0 +1,290 @@
+/* =========================================
+   InternTrack — PREMIUM Animation Engine
+   "Perfectly smooth, unbelievable UI motion"
+   ========================================= */
+
+/* ── 1. GLOBAL SMOOTHNESS ── */
+:root {
+  --spring-easing: linear(0, 0.459 4.4%, 0.725 8.1%, 0.851 10.1%, 0.958 12.3%, 1.032 14.5%, 1.087 16.9%,
+      1.121 19.5%, 1.135 22.1%, 1.133 24.8%, 1.114 27.6%, 1.082 30.6%, 1.043 33.7%,
+      1.002 37%, 0.965 40.5%, 0.938 44.3%, 0.925 48.4%, 0.926 52.8%, 0.941 57.6%,
+      0.965 62.9%, 0.991 69%, 1.006 75.9%, 1.01 84.1%, 1);
+}
+
+/* ── 2. ENTRANCE SYSTEM (Blur + Scale + 3D) ── */
+
+@keyframes reveal-premium {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92) rotateX(-10deg);
+    filter: blur(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes title-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(100%) skewY(10deg);
+    filter: blur(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) skewY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes stagger-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(15px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ── 3. BACKGROUND MASTER (Mesh & Glass) ── */
+
+@keyframes mesh-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes aurora-flow {
+  0% {
+    transform: translate(-10%, -10%) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(10%, 10%) rotate(180deg);
+  }
+
+  100% {
+    transform: translate(-10%, -10%) rotate(360deg);
+  }
+}
+
+/* ── 4. INTERACTIVE REFINEMENT (Magnetic & Press) ── */
+
+@keyframes magnetic-snap {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(var(--mx, 0), var(--my, 0));
+  }
+}
+
+@keyframes btn-press {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.96);
+    filter: brightness(0.9);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── 5. STATUS & MICRO-MOTION ── */
+
+@keyframes success-reveal {
+  0% {
+    clip-path: circle(0% at 50% 50%);
+  }
+
+  100% {
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+
+@keyframes floating-premium {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+
+  33% {
+    transform: translateY(-15px) rotate(1deg);
+  }
+
+  66% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+}
+
+/* ── 6. UTILITY CLASSES (Expo & Spring powered) ── */
+
+.anim-reveal {
+  animation: reveal-premium var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.anim-title {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.anim-title>span {
+  display: inline-block;
+  animation: title-reveal var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.anim-stagger {
+  opacity: 0;
+}
+
+.anim-stagger.visible {
+  animation: stagger-fade-in var(--dur-normal) var(--ease-out-expo) both;
+}
+
+.anim-floating {
+  animation: floating-premium 8s var(--ease-in-out-quint) infinite;
+}
+
+.anim-mesh {
+  background-size: 400% 400%;
+  animation: mesh-gradient 15s var(--ease-in-out-quint) infinite;
+}
+
+/* ── 7. HOVER STATE HANDLERS ── */
+
+.hover-expo {
+  transition: all var(--dur-normal) var(--ease-out-expo);
+}
+
+.hover-expo:hover {
+  transform: translateY(-8px) scale(1.02);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.3));
+}
+
+.hover-spring {
+  transition: transform var(--dur-normal) var(--ease-spring);
+}
+
+.hover-spring:hover {
+  transform: scale(1.05);
+}
+
+/* ── 8. SCROLL INTERFACE ── */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(40px) scale(0.95);
+  filter: blur(10px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo),
+    filter var(--dur-slow) var(--ease-out-expo);
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    border-color: var(--clr-accent);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+    border-color: var(--clr-accent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+}
+
+.anim-pulse {
+  animation: pulse-border 1.5s ease infinite;
+}
+
+/* ── 9. PAGE TRANSITION SYSTEM ── */
+
+.page-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--clr-bg-deep, #ffffff);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-normal) var(--ease-out-expo);
+  backdrop-filter: blur(8px);
+}
+
+.page-transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.transition-logo-container {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.transition-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: pulse-border 2s infinite ease-in-out, floating-premium 4s infinite ease-in-out;
+  border-radius: 50%; /* If pulse-border is used */
+}
+
+/* Spinner element */
+.transition-spinner {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 3px solid transparent;
+  border-top-color: var(--clr-accent, #8b5cf6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
