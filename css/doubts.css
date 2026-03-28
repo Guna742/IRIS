@@ -5,7 +5,9 @@
 
 /* ── Page Layout ── */
 .doubts-page {
-    /* width/margin inherited from .container */
+    width: 80%;
+    max-width: 1400px;
+    margin: 0 auto;
     padding: var(--sp-2) 0 var(--sp-12);
 }
 
@@ -451,7 +453,9 @@
    ======================================================== */
 
 .detail-page {
-    /* width/margin inherited from .container */
+    width: 80%;
+    max-width: 1400px;
+    margin: 0 auto;
     padding: var(--sp-2) 0 var(--sp-12);
 }
 
