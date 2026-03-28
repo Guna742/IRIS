@@ -1,12 +1,12 @@
 /**
- * I.R.I.S — Page Transition System
- * Shows a branded loader with the destination page name on navigation.
- * Must be loaded in <head> to inject the overlay before first paint.
+ * I.R.I.S — Cinematic Page Transition Engine (V12 - FINAL FIXED)
+ * Fixes Double-Animation / Rebuilding Glitch.
  */
 
 'use strict';
 
 const PageTransition = (() => {
+    // ── Configuration ──
     const PAGE_NAMES = {
         'dashboard.html':        'Dashboard',
         'students.html':         'Intern Directory',
@@ -22,163 +22,167 @@ const PageTransition = (() => {
         'info.html':             'Info',
     };
 
-    const EXCLUDE_SELECTORS = [
-        '[target="_blank"]',
-        '[href^="#"]',
-        '[href^="javascript:"]',
-        '[href^="mailto:"]',
-        '[href^="tel:"]',
-        '.no-transition',
-    ];
+    const DEPARTURE_DELAY = 1000; 
+    const ARRIVAL_HOLD    = 800;  
+    const EXCLUDE_SELECTORS = ['[target="_blank"]', '[href^="#"]', '[href^="javascript:"]', '.no-transition'];
 
-    let overlay = null;
-    let nameEl  = null;
+    let loader = null;
+    let pageName = null;
     let isNavigating = false;
 
-    // ── Build the loader DOM and inject it immediately ──
+    // ── FIX 3 — Stop overlay rebuilding glitch ──
     function buildOverlay() {
-        if (document.getElementById('iris-page-loader')) return;
+        const existing = document.getElementById('page-loader');
+        if (existing) {
+            loader = existing;
+            pageName = document.getElementById('pageName');
+            return;
+        }
 
-        overlay = document.createElement('div');
-        overlay.id = 'iris-page-loader';
-        // Inline critical styles so it works even before CSS loads
-        overlay.style.cssText = `
-            position:fixed;inset:0;
-            background:radial-gradient(ellipse at center,#0e0b1e 0%,#060912 100%);
-            display:flex;align-items:center;justify-content:center;
-            z-index:99999;opacity:0;pointer-events:none;
-            transition:opacity 0.35s ease;
-        `;
-        overlay.innerHTML = `
-            <div class="ipl-content">
-                <div class="ipl-logo">
-                    <img src="img/site-logo.png" alt="I.R.I.S" class="ipl-logo-img">
-                    <span class="ipl-logo-text">I.R.I.S</span>
-                </div>
-                <div class="ipl-spinner"><span class="ipl-arc"></span></div>
-                <div class="ipl-page-name" id="ipl-page-name">Loading…</div>
-                <div class="ipl-bar-wrap"><div class="ipl-bar" id="ipl-bar"></div></div>
-            </div>`;
+        loader = document.createElement('div');
+        loader.id = 'page-loader';
+        loader.innerHTML = `<div class="ipl-page-name" id="pageName"></div>`;
 
-        // Inject as soon as body exists
+        const transitionLabel = sessionStorage.getItem('transition');
+        const alreadyPlayed = sessionStorage.getItem('transitionPlayed');
+
+        if (transitionLabel && alreadyPlayed === 'false') {
+            loader.classList.add('active'); // Maintain state
+            document.documentElement.style.overflow = 'hidden';
+        }
+
         const inject = () => {
-            document.body.appendChild(overlay);
-            nameEl = document.getElementById('ipl-page-name');
+            if (document.body) {
+                document.body.prepend(loader);
+                pageName = document.getElementById('pageName');
+                handleArrival();
+            }
         };
 
-        if (document.body) {
-            inject();
-        } else {
-            document.addEventListener('DOMContentLoaded', inject);
+        if (document.body) inject();
+        else {
+            const observer = new MutationObserver(() => {
+                if (document.body) {
+                    observer.disconnect();
+                    inject();
+                }
+            });
+            observer.observe(document.documentElement, { childList: true });
         }
     }
 
-    // ── Activate loader (exit: leaving current page) ──
-    function show(label) {
-        if (!overlay) buildOverlay();
-
-        // Reset bar animation by cloning
-        const bar = document.getElementById('ipl-bar');
-        if (bar) {
-            bar.style.animation = 'none';
-            void bar.offsetWidth;
-            bar.style.animation = '';
-        }
-
-        if (nameEl) {
-            nameEl.textContent = label || 'Loading…';
-            nameEl.classList.remove('ipl-name-in');
-            void nameEl.offsetWidth;
-            nameEl.classList.add('ipl-name-in');
-        }
-
-        if (overlay) {
-            overlay.style.opacity = '1';
-            overlay.style.pointerEvents = 'all';
-        }
-    }
-
-    // ── Deactivate loader (entry: new page has loaded) ──
-    function hide() {
-        if (!overlay) return;
-        overlay.style.transition = 'opacity 0.5s ease 0.1s';
-        overlay.style.opacity = '0';
-        overlay.style.pointerEvents = 'none';
-    }
-
-    // ── Navigate with loader ──
-    function navigateTo(href, label) {
+    // ── Departure logic (Page A) ──
+    function navigateTo(href, customLabel) {
         if (isNavigating) return;
         isNavigating = true;
 
-        if (!label) {
-            const base = href.split('/').pop().split('?')[0].split('#')[0];
-            label = PAGE_NAMES[base] || base.replace('.html', '').replace(/-/g, ' ');
-            label = label.charAt(0).toUpperCase() + label.slice(1);
+        const label = customLabel || getLabelFor(href);
+
+        // 🔧 FIX 2 — Mark transition stage
+        sessionStorage.setItem('transition', label);
+        sessionStorage.setItem('transitionPlayed', 'false');
+
+        if (pageName) {
+            pageName.textContent = label;
+            pageName.style.transition = 'none';
+            pageName.style.opacity = '1';
+            void pageName.offsetHeight; 
+            pageName.style.transition = ''; 
         }
-        show(label);
-        setTimeout(() => { window.location.href = href; }, 900);
+
+        if (loader) {
+            loader.classList.remove('ipl-hiding');
+            loader.classList.add('active');
+        }
+
+        setTimeout(() => { window.location.href = href; }, DEPARTURE_DELAY);
     }
 
-    // ── Intercept all internal <a> clicks ──
-    function handleLinkClick(e) {
-        const link = e.target.closest('a');
-        if (!link || !link.href) return;
-        if (e.defaultPrevented) return;
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    // ── Arrival logic (Page B) ──
+    function handleArrival() {
+        const transitionLabel = sessionStorage.getItem('transition');
+        const alreadyPlayed = sessionStorage.getItem('transitionPlayed');
 
-        const isExcluded = EXCLUDE_SELECTORS.some(sel => {
-            try { return link.matches(sel); } catch { return false; }
-        });
-        if (isExcluded) return;
+        if (!transitionLabel || alreadyPlayed === 'true') {
+            revealPage();
+            return;
+        }
 
+        // ✅ FIX 4 — Avoid instant re-animation (Static Visibility)
+        if (pageName) {
+            pageName.textContent = transitionLabel;
+            pageName.style.opacity = '1';
+        }
+
+        // Mark as played to prevent re-animation on reload or back
+        sessionStorage.setItem('transitionPlayed', 'true');
+        sessionStorage.removeItem('transition');
+
+        const finalize = () => {
+            revealPage();
+            // Holding center for 0.8s while blurred before fade out
+            setTimeout(performFadeOut, ARRIVAL_HOLD);
+        };
+
+        if (document.readyState === 'complete') finalize();
+        else window.addEventListener('load', finalize);
+        
+        setTimeout(() => { if (!document.body.classList.contains('ready')) finalize(); }, 4000);
+    }
+
+    function revealPage() {
+        document.body.classList.add('ready');
+        document.documentElement.style.overflow = '';
+    }
+
+    function performFadeOut() {
+        if (!loader || !pageName) return;
+        
+        // Final dissolve
+        pageName.style.opacity = '0';
+        pageName.style.transform = 'scale(1.1)';
+        pageName.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+
+        setTimeout(() => {
+            loader.classList.add('ipl-hiding');
+        }, 300);
+
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 3000);
+    }
+
+    function getLabelFor(href) {
         try {
-            const url = new URL(link.href, window.location.href);
-            if (url.origin !== window.location.origin) return;
-            // Same page (ignore hash-only changes)
-            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-            e.preventDefault();
-            navigateTo(link.href);
-        } catch { /* ignore malformed URLs */ }
+            const url = new URL(href, window.location.href);
+            const file = url.pathname.split('/').pop() || 'dashboard.html';
+            return (PAGE_NAMES[file] || file.replace('.html', '').replace(/-/g, ' ')).toUpperCase();
+        } catch { return 'IRIS'; }
     }
 
-    // ── Init ──
     function init() {
         buildOverlay();
-
-        // Hide loader when new page finishes loading
-        window.addEventListener('load', () => {
-            // Small delay so the user briefly sees the new page name
-            setTimeout(hide, 150);
-        });
-
-        // Bfcache (back/forward button)
-        window.addEventListener('pageshow', (e) => {
-            if (e.persisted) {
-                isNavigating = false;
-                hide();
-            }
-        });
-
-        // Intercept internal links
-        document.addEventListener('click', handleLinkClick, true); // capture phase
-
-        // Info button shortcut
         document.addEventListener('click', (e) => {
-            const infoBtn = e.target.closest('#info-btn');
-            if (infoBtn) {
-                e.preventDefault();
-                navigateTo('info.html', 'Info');
-            }
+            const link = e.target.closest('a');
+            if (!link || !link.href || e.defaultPrevented) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+
+            const isExcluded = EXCLUDE_SELECTORS.some(sel => {
+                try { return link.matches(sel); } catch { return false; }
+            });
+            if (isExcluded) return;
+
+            const url = new URL(link.href, window.location.href);
+            if (url.origin !== window.location.origin) return;
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+            
+            e.preventDefault();
+            navigateTo(link.href);
         });
     }
 
-    // Public API
-    return { init, navigateTo, show, hide };
+    return { init, navigateTo };
 })();
 
-// Expose for onclick usage
-window.navigateWithLoader = (href, name) => PageTransition.navigateTo(href, name);
-
-// Auto-start - run immediately since this is in <head>
+// Auto-run
 PageTransition.init();
