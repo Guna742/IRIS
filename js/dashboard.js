@@ -80,35 +80,6 @@
     el.className = `badge ${roleBadgeClass}`;
   });
 
-  // ── Build Sidebar Nav ──
-  const NAV_INTERN = [
-    { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', active: true },
-    { label: 'My Profile', href: 'student-profile.html', icon: 'person' },
-    { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
-    { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-    { label: 'Projects', href: 'projects.html', icon: 'folder' },
-    { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-  ];
-
-  const NAV_ADMIN = [
-    { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', active: true },
-    { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
-    { label: 'Interns', href: 'students.html', icon: 'group' },
-    { label: 'Projects', href: 'projects.html', icon: 'folder' },
-    { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-  ];
-
-  const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
-
-  let navHTML = `<div class="nav-section-label">Menu</div>`;
-  navItems.forEach(item => {
-    navHTML += `
-      <a class="nav-item${item.active ? ' active' : ''}" href="${item.href}" aria-current="${item.active ? 'page' : 'false'}">
-        <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
-        <span>${item.label}</span>
-      </a>`;
-  });
-  sidebarNav.innerHTML = navHTML;
 
   // ── Stats ──
   const projects = Storage.getProjects();
@@ -313,20 +284,6 @@
   if (typeof initTextReveals === 'function') initTextReveals();
 
   // ── Sidebar toggle (mobile) ──
-  function openSidebar() {
-    appSidebar.classList.add('open');
-    sidebarOverlay.classList.add('visible');
-    hamburgerBtn.setAttribute('aria-expanded', 'true');
-  }
-  function closeSidebar() {
-    appSidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('visible');
-    hamburgerBtn.setAttribute('aria-expanded', 'false');
-  }
-  hamburgerBtn.addEventListener('click', () => {
-    appSidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-  });
-  sidebarOverlay.addEventListener('click', closeSidebar);
 
   // ── Logout ──
   logoutBtn.addEventListener('click', () => Auth.logout());

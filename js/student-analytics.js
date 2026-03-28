@@ -17,7 +17,7 @@
 
     const isAdmin = session.role === 'admin';
 
-    setupSidebar(session);
+    SidebarEngine.init();
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
     // ── Get target intern ──
@@ -115,21 +115,7 @@
             <span class="badge ${isAdmin ? 'badge-admin' : 'badge-user'}">${isAdmin ? 'Admin View' : 'My Stats'}</span>
         </div>
 
-        <!-- ═══ HOURLY REPORT WIDGET (Intern Only) ═══ -->
-        ${!isAdmin ? `
-        <div class="report-widget reveal anim-d1" style="margin-bottom:var(--sp-8); background:var(--clr-bg-card); border-radius:16px; padding:20px; border:1px solid var(--clr-border); display:grid; grid-template-columns: 1fr auto; gap:20px; align-items:center;">
-            <div>
-                <div style="font-size:1.1rem; font-weight:600; color:var(--clr-text-main); margin-bottom:4px;">Daily Activity Report</div>
-                <div style="font-size:0.9rem; color:var(--clr-text-muted);">Please submit your progress update every 2 hours (09:00 - 17:00).</div>
-            </div>
-            <div id="report-action-area">
-                <button class="btn btn-primary" onclick="window.submitHourlyReport()">
-                    <span class="material-symbols-outlined" style="margin-right:8px;">send</span>
-                    Submit Current Phase Report
-                </button>
-            </div>
-        </div>
-        ` : ''}
+        <!-- ═══ HOURLY REPORT WIDGET (REMOVED) ═══ -->
 
         <!-- ═══ STATS ROW ═══ -->
         <div class="stats-row">
@@ -211,7 +197,7 @@
         </div>
 
         <!-- ═══ CHARTS ROW ═══ -->
-        <div class="charts-row">
+        <div class="charts-row" style="grid-template-columns: 1fr;">
 
             <!-- Chart 1: Analytic Overview -->
             <div class="chart-widget reveal anim-d1">
@@ -243,31 +229,7 @@
                 </div>
             </div>
 
-            <!-- Chart 2: Recent Progress -->
-            <div class="chart-widget reveal anim-d2">
-                <div class="chart-widget-head">
-                    <div>
-                        <div class="chart-widget-title" id="chart-2-title">Recent Progress</div>
-                        <div class="chart-widget-meta" id="chart-2-meta">Time-based activity tracking</div>
-                    </div>
-                </div>
-                <div class="chart-sub-head" style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:15px;">
-                    <div class="filter-group">
-                        <button class="filter-btn" onclick="updateTimeFilter2('today', this)">Today</button>
-                        <button class="filter-btn" onclick="updateTimeFilter2('week', this)">Week</button>
-                        <button class="filter-btn active" onclick="updateTimeFilter2('month', this)">Month</button>
-                    </div>
-                </div>
-                <div class="line-chart-wrap" id="line-chart-wrap-2" aria-label="Comparison chart">
-                    <!-- SVG injected by JS -->
-                </div>
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <div class="legend-dot" style="background:#10b981"></div>
-                        <span>Activity</span>
-                    </div>
-                </div>
-            </div>
+            <!-- Chart 2: REMOVED -->
 
         </div>
 
@@ -629,8 +591,15 @@
         }
 
         await IrisModal.alert('Report submitted successfully! Your progress graph will update.');
-        refreshChart2();
+        refreshCharts();
     };
+
+    // Re-render charts on resize for full-width responsiveness
+    window.addEventListener('resize', () => {
+        if (outputEl && !outputEl.hidden) {
+            refreshCharts();
+        }
+    });
 
     function refreshCharts() {
         refreshChart1();
@@ -967,7 +936,7 @@
     // ────────────────────────────────────────────────────────
     // SIDEBAR
     // ────────────────────────────────────────────────────────
-    function setupSidebar(session) {
+    SidebarEngine.init = function(session) {
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');
         const roleEl = document.getElementById('user-role-sidebar');
@@ -993,6 +962,7 @@
                 ? [{ label: 'Interns', href: 'students.html', icon: 'group', active: true }]
                 : [
                     { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
+                    { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
                     { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', active: true }
                 ]
             ),

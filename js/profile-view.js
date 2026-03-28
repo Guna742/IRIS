@@ -232,7 +232,7 @@
   }
 
   // ── Shared sidebar builder ──
-  function setupSidebar(session, activePage) {
+  function SidebarEngine.init(session, activePage) {
     const nav = document.getElementById('sidebar-nav');
     const avatar = document.getElementById('user-avatar-sidebar');
     const nameEl = document.getElementById('user-name-sidebar');
@@ -255,8 +255,11 @@
     const items = [
       { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
       { label: 'My Profile', href: session.role === 'admin' ? 'admin-profile.html' : 'profile-view.html', icon: 'person' },
-      ...(session.role === 'admin' ? [{ label: 'Interns', href: 'students.html', icon: 'group' }] : []),
+      { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
+      { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
+      { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
       { label: 'Projects', href: 'projects.html', icon: 'folder' },
+      { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
     ];
 
     if (nav) {

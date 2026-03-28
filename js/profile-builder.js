@@ -11,7 +11,7 @@
     if (!session) return;
 
     // ── Sidebar setup (shared pattern) ──
-    setupSidebar(session, 'profile-builder.html');
+    SidebarEngine.init(session, 'profile-builder.html');
 
     // ── DOM refs ──
     const saveBtn = document.getElementById('save-btn');
@@ -366,7 +366,7 @@
     }
 
     // ── Shared sidebar builder ──
-    function setupSidebar(session, activePage) {
+    function SidebarEngine.init(session, activePage) {
         const nav = document.getElementById('sidebar-nav');
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');

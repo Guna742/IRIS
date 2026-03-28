@@ -562,3 +562,10 @@
         right: var(--sp-5);
     }
 }
+/* -- Rating Zone (Admin Only) -- */
+.card-rating-zone { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--glass-border); }
+.rating-label { font-size: 10px; text-transform: uppercase; color: var(--clr-text-muted); letter-spacing: .05em; display: block; margin-bottom: 4px; }
+.star-rating { display: flex; gap: 4px; }
+.star { font-size: 20px; cursor: pointer; color: rgba(255, 255, 255, 0.1); transition: all .2s ease; }
+.star.active { color: #f59e0b; text-shadow: 0 0 10px rgba(245, 158, 11, .5); }
+.star:hover { transform: scale(1.2); color: #fbbf24; }

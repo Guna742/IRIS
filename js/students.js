@@ -108,24 +108,6 @@
   topbarRoleBadge.textContent = 'Admin';
   topbarRoleBadge.className = 'badge badge-admin';
 
-  // ── Sidebar nav ──
-  const NAV = [
-    { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-    { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
-    { label: 'Interns', href: 'students.html', icon: 'group', active: true },
-    { label: 'Projects', href: 'projects.html', icon: 'folder' },
-    { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-  ];
-
-  let navHTML = `<div class="nav-section-label">Menu</div>`;
-  NAV.forEach(item => {
-    navHTML += `
-      <a class="nav-item${item.active ? ' active' : ''}" href="${item.href}" aria-current="${item.active ? 'page' : 'false'}">
-        <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
-        <span>${item.label}</span>
-      </a>`;
-  });
-  sidebarNav.innerHTML = navHTML;
 
   // ── Load data ──
   const profiles = Storage.getProfiles();
@@ -383,6 +365,35 @@
                     </div>`;
       })() : '<div class="text-dim text-xs">No active projects.</div>'}
                 </div>
+
+                <!-- Missed Report Requests -->
+                <div class="detail-group" style="margin-top:20px">
+                    <div class="detail-section-title">Missed Report Requests</div>
+                    <div id="missed-requests-${profile.userId}">
+                        ${(() => {
+                            const requests = Storage.getMissedReportRequests(profile.userId);
+                            const pending = requests.filter(r => r.status === 'pending');
+                            if (pending.length === 0) return '<div class="text-dim text-xs">No pending requests.</div>';
+                            
+                            return pending.map(r => `
+                                <div class="missed-request-item" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; border:1px solid var(--clr-border); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center">
+                                    <div>
+                                        <div style="font-size:0.85rem; font-weight:600">Update ${r.window === 1 ? '1 (10AM-2PM)' : '2 (2PM-6PM)'}</div>
+                                        <div style="font-size:0.75rem; color:var(--clr-text-muted)">Requested: ${new Date(r.createdAt).toLocaleTimeString()}</div>
+                                    </div>
+                                    <div style="display:flex; gap:8px">
+                                        <button onclick="event.stopPropagation(); approveMissedRequest('${profile.userId}', '${r.id}')" class="btn btn-success btn-xs" title="Approve">
+                                            <span class="material-symbols-outlined" style="font-size:16px">check</span>
+                                        </button>
+                                        <button onclick="event.stopPropagation(); rejectMissedRequest('${profile.userId}', '${r.id}')" class="btn btn-danger btn-xs" title="Reject">
+                                            <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('');
+                        })()}
+                    </div>
+                </div>
               </div>
 
               <!-- Footer Actions -->
@@ -532,6 +543,35 @@
     }
   };
 
+  // ── Missed Report Handlers ──
+  window.approveMissedRequest = async function(uid, requestId) {
+    if (!(await IrisModal.confirm("Approve this missed report request?"))) return;
+    
+    if (Storage.updateMissedReportRequestStatus(uid, requestId, 'approved')) {
+        renderAllCards(); // Re-render to show updated state
+        showToast("Request approved. Intern can now submit.");
+    }
+  };
+
+  window.rejectMissedRequest = async function(uid, requestId) {
+    if (!(await IrisModal.confirm("Reject this missed report request?"))) return;
+    
+    if (Storage.updateMissedReportRequestStatus(uid, requestId, 'rejected')) {
+        renderAllCards();
+        showToast("Request rejected.", "info");
+    }
+  };
+
+  function showToast(msg, type = 'success') {
+    const tc = document.getElementById('toast-container');
+    if (!tc) return;
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    tc.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
   // Keyboard support
   document.querySelectorAll('.student-summary').forEach(el => {
     el.addEventListener('keydown', e => {
@@ -542,21 +582,6 @@
     });
   });
 
-  // ── Sidebar toggle ──
-  function openSidebar() {
-    appSidebar.classList.add('open');
-    sidebarOverlay.classList.add('visible');
-    hamburgerBtn.setAttribute('aria-expanded', 'true');
-  }
-  function closeSidebar() {
-    appSidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('visible');
-    hamburgerBtn.setAttribute('aria-expanded', 'false');
-  }
-  hamburgerBtn.addEventListener('click', () => {
-    appSidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-  });
-  sidebarOverlay.addEventListener('click', closeSidebar);
 
   // ── Logout ──
   logoutBtn.addEventListener('click', () => Auth.logout());

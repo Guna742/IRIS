@@ -14,7 +14,7 @@
         Storage.fetchEverything();
     }
 
-    setupSidebar(session, 'student-profile.html');
+    SidebarEngine.init();
     let currentProjectIdx = 0;
 
     // Topbar badge
@@ -752,7 +752,7 @@
         if (outputEl) {
             outputEl.innerHTML = buildStudentHTML(p, session, currentProjectIdx);
             setupEventListeners(p, session);
-            setupSidebar(session, 'student-profile.html');
+            SidebarEngine.init(session, 'student-profile.html');
             initReveal();
             // Update completion bar
             const pct = computeCompletion(p);
@@ -764,7 +764,7 @@
     }
 
     // ── Sidebar ──
-    function setupSidebar(session, activePage) {
+    SidebarEngine.init = function(session, activePage) {
         const nav = document.getElementById('sidebar-nav');
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');
@@ -789,6 +789,7 @@
             { label: 'My Profile', href: 'student-profile.html', icon: 'person', active: true },
             { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
             { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
+            { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
             { label: 'Projects', href: 'projects.html', icon: 'folder' },
             { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
         ];

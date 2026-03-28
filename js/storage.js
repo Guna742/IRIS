@@ -184,6 +184,59 @@ const Storage = (() => {
         return report;
     }
 
+    // ── Missed Report Requests ──
+    const MISSED_REPORTS_KEY = 'interntrack_missed_report_requests';
+    function getMissedReportRequests(userId) {
+        try {
+            const raw = localStorage.getItem(MISSED_REPORTS_KEY);
+            const all = raw ? JSON.parse(raw) : [];
+            if (!userId) return all;
+            return all.filter(r => String(r.userId) === String(userId));
+        } catch { return []; }
+    }
+
+    function saveMissedReportRequest(request) {
+        const all = getMissedReportRequests();
+        request.id = 'miss_' + Date.now();
+        request.createdAt = Date.now();
+        request.status = 'pending';
+        all.push(request);
+        localStorage.setItem(MISSED_REPORTS_KEY, JSON.stringify(all));
+        
+        // Sync to Firebase
+        syncMissedReportRequestToFirebase(request.userId, request);
+        return request;
+    }
+
+    function updateMissedReportRequestStatus(userId, requestId, status) {
+        const all = getMissedReportRequests();
+        const idx = all.findIndex(r => r.id === requestId);
+        if (idx > -1) {
+            all[idx].status = status;
+            all[idx].updatedAt = Date.now();
+            localStorage.setItem(MISSED_REPORTS_KEY, JSON.stringify(all));
+            
+            // Sync to Firebase
+            syncMissedReportRequestToFirebase(userId, all[idx]);
+            return true;
+        }
+        return false;
+    }
+
+    async function syncMissedReportRequestToFirebase(userId, request) {
+        if (!userId || !request) return;
+        try {
+            await fbDb.collection('users').doc(userId)
+                .collection('missed_requests').doc(request.id).set({
+                    ...request,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            console.log(`[Storage] Missed request synced: ${request.id}`);
+        } catch (err) {
+            console.error('[Storage] syncMissedReportRequest error:', err);
+        }
+    }
+
     // ── Admin Profiles ──
     const ADMIN_KEY = 'interntrack_admin';
     function getAdminProfile(userId) {
@@ -489,6 +542,10 @@ const Storage = (() => {
         getInternRank,
         getHourlyReports,
         saveHourlyReport,
+        // Missed Reports
+        getMissedReportRequests,
+        saveMissedReportRequest,
+        updateMissedReportRequestStatus,
         // Firestore Sync
         syncAdminProfile,
         createInternRecord,

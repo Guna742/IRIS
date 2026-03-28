@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Report Submission</title>
+    <meta name="description" content="I.R.I.S Daily Progress Reporting System for Interns.">
+    <link rel="stylesheet" href="css/student-analytics.css">
+    <link rel="stylesheet" href="css/iris-modal.css">
+    
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    
+    <style>
+        .report-card {
+            background: var(--clr-bg-card);
+            border: 1px solid var(--clr-border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .window-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--clr-border);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #9898a6;
+        }
+        .status-dot.active {
+            background: var(--clr-success);
+            box-shadow: 0 0 10px var(--clr-success);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--clr-text-main); }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--clr-border);
+            background: rgba(255,255,255,0.03);
+            color: var(--clr-text-main);
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: var(--clr-purple);
+            outline: none;
+            background: rgba(255,255,255,0.06);
+        }
+        .report-history {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .history-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--clr-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .history-time { font-size: 0.8rem; color: var(--clr-text-muted); margin-bottom: 8px; }
+        .history-note { font-size: 0.95rem; }
+        
+        /* Missed report styling */
+        .missed-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><img src="img/site-logo.png" alt="IRIS"></div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Reporting System</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar">
+                    <div class="user-avatar" id="user-avatar-sidebar">U</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Loading...</div>
+                        <div class="user-role" id="user-role-sidebar">Intern</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Topbar -->
+        <header class="app-topbar">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn"><span class="material-symbols-outlined">menu</span></button>
+                    <span class="topbar-title">Report Submission</span>
+                </div>
+                <div class="topbar-right">
+                    <span class="badge badge-user">Intern</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span> Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-content">
+            <div class="container">
+                
+                <!-- Status Row -->
+                <div id="status-container"></div>
+
+                <!-- Submission Form Area -->
+                <div id="submission-area">
+                    <div class="report-card reveal">
+                        <div class="window-status">
+                            <div class="status-dot active"></div>
+                            <div>
+                                <h2 id="window-title" style="font-size:1.2rem; margin:0">Loading Window...</h2>
+                                <p id="window-timer" style="font-size:0.85rem; color:var(--clr-text-muted); margin:4px 0 0">Checking current window status...</p>
+                            </div>
+                        </div>
+
+                        <form id="report-form">
+                            <div class="form-group">
+                                <label class="form-label">Progress Description</label>
+                                <textarea id="report-note" class="form-textarea" rows="4" placeholder="What have you accomplished in the last 4 hours?" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Optional Notes / Challenges</label>
+                                <textarea id="report-meta" class="form-textarea" rows="2" placeholder="Any blockers or additional context?"></textarea>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end">
+                                <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                                    <span class="material-symbols-outlined" style="margin-right:8px">send</span>
+                                    Submit Progress Update
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History Area -->
+                <div class="reveal" style="margin-top:40px">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+                        <h3 style="font-size:1.1rem">Today's Submissions</h3>
+                        <button id="download-report-btn" class="btn btn-secondary btn-sm" style="display:none">
+                            <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">download</span>
+                            Download Daily Report (PDF)
+                        </button>
+                    </div>
+                    <div id="report-history" class="report-history">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals & Scripts -->
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/page-transition.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/iris-modal.js"></script>
+    <script src="js/report-submission.js"></script>
+</body>
+</html>

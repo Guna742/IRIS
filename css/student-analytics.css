@@ -249,18 +249,12 @@ body::after {
 /* ══════════════════════════════════════
    CHARTS ROW
    ══════════════════════════════════════ */
-.charts-row {
+.charts-row, .charts-row.full-width {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 24px;
     align-items: start;
     margin-bottom: 24px;
-}
-
-@media (max-width: 1024px) {
-    .charts-row {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Chart widget */

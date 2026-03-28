@@ -21,7 +21,7 @@
         Storage.fetchEverything();
     }
     
-    setupSidebar(session, 'projects.html');
+    SidebarEngine.init();
 
     // ── Topbar ──
     const badge = document.getElementById('topbar-role-badge');
@@ -31,12 +31,13 @@
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
     // ── UI visibility (Add project only for Interns/Users) ──
-    if (isUser) {
+    // ── Permissions (Both can add) ──
+    if (isAdmin || isUser) {
         document.getElementById('fab-btn').style.display = 'flex';
         document.getElementById('add-btn-top').style.display = 'flex';
+        document.getElementById('no-permission-tip').style.display = 'none';
     } else {
         document.getElementById('no-permission-tip').style.display = 'block';
-        document.getElementById('no-permission-tip').textContent = 'Admin Mode: Rate intern projects to influence their performance scores.';
     }
 
     // ── Render projects ──
@@ -420,7 +421,7 @@
     }
 
     // ── Shared sidebar builder ──
-    function setupSidebar(session, activePage) {
+    SidebarEngine.init = function(session, activePage) {
         const nav = document.getElementById('sidebar-nav');
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');
@@ -447,7 +448,8 @@
                 ? [{ label: 'Interns', href: 'students.html', icon: 'group' }]
                 : [
                     { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
-                    { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' }
+                    { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
+                    { label: 'Report Submission', href: 'report-submission.html', icon: 'description' }
                 ]
             ),
             { label: 'Projects', href: 'projects.html', icon: 'folder', active: true },

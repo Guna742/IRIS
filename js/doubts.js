@@ -90,6 +90,7 @@ const IMAGE_UPLOAD_ENABLED = false;
         { label: 'My Profile',   href: 'student-profile.html', icon: 'person' },
         { label: 'Leaderboard',  href: 'leaderboard.html',  icon: 'leaderboard' },
         { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
+        { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
         { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
         { label: 'Doubts',       href: 'doubts.html',       icon: 'help_center', active: true },
     ];

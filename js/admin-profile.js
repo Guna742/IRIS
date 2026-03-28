@@ -14,7 +14,7 @@
         Storage.fetchEverything();
     }
 
-    setupSidebar(session, 'admin-profile.html');
+    SidebarEngine.init();
 
     // Logout
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
@@ -271,7 +271,7 @@
     }
 
     // ── Sidebar ──
-    function setupSidebar(session, activePage) {
+    SidebarEngine.init = function(session, activePage) {
         const nav = document.getElementById('sidebar-nav');
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');

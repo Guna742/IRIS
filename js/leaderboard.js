@@ -80,9 +80,10 @@
     const NAV_INTERN = [
         { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
         { label: 'My Profile', href: 'student-profile.html', icon: 'person' },
-        { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard', active: true },
+        { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
         { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-        { label: 'Projects', href: 'projects.html', icon: 'folder' },
+        { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
+        { label: 'Projects', href: 'projects.html', icon: 'folder', active: true },
         { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
     ];
 
