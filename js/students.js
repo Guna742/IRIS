@@ -119,7 +119,7 @@
   // ── Helpers ──
   function getProjectsForStudent(profile) {
     if (!profile || !profile.userId) return [];
-    return allProjects.filter(p => String(p.ownerId) === String(profile.userId));
+    return allProjects.filter(p => String(p.userId || p.ownerId) === String(profile.userId));
   }
 
   // ── Render cards ──
@@ -444,7 +444,7 @@
   }
 
   window.nextAdminProj = function (uid) {
-    const studentProjects = Storage.getProjects().filter(p => p.ownerId === uid);
+    const studentProjects = Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(uid));
     if (!studentProjects.length) return;
 
     // Animate current project out
@@ -557,16 +557,6 @@
   // ── Logout ──
   logoutBtn.addEventListener('click', () => Auth.logout());
 
-  // ── Init Animations ──
-  if (typeof initMagneticButtons === 'function') initMagneticButtons();
-  if (typeof init3DTilt === 'function') init3DTilt();
-  if (typeof initScrollReveals === 'function') initScrollReveals();
-  if (typeof initTextReveals === 'function') initTextReveals();
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindSearch);
-  } else {
-    bindSearch();
-  }
+  // SidebarEngine.init() is called automatically by sidebar-engine.js
 
 })();

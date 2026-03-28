@@ -75,7 +75,8 @@
     function buildStudentHTML(p, session, currentProjectIdx) {
         const intern = p.internship || {};
         const links = p.socialLinks || {};
-        const myProjects = Storage.getProjects().filter(pr => pr.ownerId === session.userId);
+        const projects = Storage.getProjects() || [];
+        const myProjects = projects.filter(pr => String(pr.userId || pr.ownerId) === String(session.userId));
         const skillCount = (p.skills || []).length;
         const pct = computeCompletion(p);
         const isActive = intern.endDate ? new Date(intern.endDate) >= new Date() : !!intern.company;

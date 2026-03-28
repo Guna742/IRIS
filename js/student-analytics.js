@@ -44,7 +44,7 @@
     }
 
     const allProjects = Storage.getProjects();
-    const myProjects = allProjects.filter(p => p.ownerId === targetUid);
+    const myProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(targetUid));
 
     // ── Update topbar title ──
     const topbarTitle = document.getElementById('topbar-title');

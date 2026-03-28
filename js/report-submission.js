@@ -556,64 +556,11 @@
         `;
     }
 
-    // ── Sidebar Helpers ──
-    function setupSidebar() {
-        const p = Storage.getProfile(userId);
-        const currentName = p?.name || session.displayName;
-
-        if (userAvatarSb) {
-            if (p?.avatar) {
-                userAvatarSb.innerHTML = `<img src="${p.avatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-            } else {
-                userAvatarSb.textContent = currentName[0].toUpperCase();
-            }
-        }
-        if (userNameSb) userNameSb.textContent = currentName;
-        
-        const items = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'student-profile.html', icon: 'person' },
-            { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
-            { label: 'My Analytics', href: `student-analytics.html?student=${userId}`, icon: 'analytics' },
-            { label: 'Report Submission', href: 'report-submission.html', icon: 'description', active: true },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-        ];
-
-        if (sidebarNav) {
-            sidebarNav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-                items.map(item => `
-                <a class="nav-item${item.active ? ' active' : ''}" href="${item.href}">
-                    <span class="nav-icon"><span class="material-symbols-outlined">${item.icon}</span></span>
-                    <span>${item.label}</span>
-                </a>`).join('');
-        }
-    }
-
-    // ── Reveal Animation ──
     function initReveal() {
-        const revealEls = document.querySelectorAll('.reveal');
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
-                }
-            });
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
         }, { threshold: 0.1 });
-
-        revealEls.forEach(el => observer.observe(el));
-        
-        // Secondary trigger for above-the-fold content
-        setTimeout(() => {
-            revealEls.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                if (rect.top < window.innerHeight) {
-                    el.classList.add('visible');
-                }
-            });
-        }, 100);
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
     }
 
     init();

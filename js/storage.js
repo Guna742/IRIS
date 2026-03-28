@@ -73,16 +73,16 @@ const Storage = (() => {
     }
 
     function getProfile(userId) {
+        const session = Auth.getSession();
         if (!userId) {
-            const session = Auth.getSession();
             userId = session ? session.userId : null;
         }
         if (!userId) return null;
+        
         const profiles = getProfiles();
         if (profiles[userId]) return profiles[userId];
 
         // NEW: Handle missing profiles for logged-in users (Skeletal Profile)
-        const session = Auth.getSession();
         if (session && session.userId === userId) {
             return {
                 userId,
@@ -110,7 +110,7 @@ const Storage = (() => {
         const profiles = getProfiles();
         if (profiles[userId]) {
             // Delete their projects from Firestore first
-            const userProjects = getProjects().filter(p => String(p.ownerId) === String(userId));
+            const userProjects = getProjects().filter(p => String(p.userId || p.ownerId) === String(userId));
             for (const p of userProjects) {
                 if (p.id) await deleteProjectFromFirebase(p.id);
             }
@@ -118,7 +118,7 @@ const Storage = (() => {
             delete profiles[userId];
             localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
             // Also delete their projects from localStorage
-            const projects = getProjects().filter(p => String(p.ownerId) !== String(userId));
+            const projects = getProjects().filter(p => String(p.userId || p.ownerId) !== String(userId));
             localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
             
             // Delete user document from Firestore (standard profile location)
