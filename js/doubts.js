@@ -66,8 +66,8 @@ const IMAGE_UPLOAD_ENABLED = false;
     const subtitleEl = document.querySelector('.doubts-header-text .page-subtitle');
     if (subtitleEl) {
         subtitleEl.textContent = isAdmin
-            ? 'Review intern doubts and provide clear, helpful answers.'
-            : 'Ask questions, get answers from your admin, and resolve your doubts.';
+            ? 'Review intern messages and provide clear, helpful answers.'
+            : 'Post messages, get answers from your admin, and clear the wall.';
     }
 
     // ── Populate sidebar user info ──
