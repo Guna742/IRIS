@@ -409,6 +409,8 @@ textarea.field-input {
     width: 80%;
     max-width: 1400px;
     margin: 0 auto;
+    padding: 0 var(--sp-6);
+    box-sizing: border-box;
 }
 
 
@@ -957,13 +959,7 @@ textarea.field-input {
     gap: var(--sp-6);
 }
 
-.container {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 var(--sp-6);
-    box-sizing: border-box;
-}
+/* Container handled globally above */
 
 /* ── Misc ── */
 .text-accent {
