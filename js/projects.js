@@ -30,12 +30,16 @@
 
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
-    // ── UI visibility (Add project only for Interns/Users) ──
-    // ── Permissions (Both can add) ──
-    if (isAdmin || isUser) {
+    // ── UI visibility (Add project only for Interns) ──
+    if (isUser) {
         document.getElementById('fab-btn').style.display = 'flex';
         document.getElementById('add-btn-top').style.display = 'flex';
         document.getElementById('no-permission-tip').style.display = 'none';
+    } else if (isAdmin) {
+        document.getElementById('fab-btn').style.display = 'none';
+        document.getElementById('add-btn-top').style.display = 'none';
+        document.getElementById('no-permission-tip').innerHTML = '⭐ <strong>Reviewer Mode</strong>: You can provide feedback and ratings for intern projects below.';
+        document.getElementById('no-permission-tip').style.display = 'block';
     } else {
         document.getElementById('no-permission-tip').style.display = 'block';
     }
@@ -144,11 +148,17 @@
             </button>
           </div>` : isAdmin ? `
           <div class="card-rating-zone">
-            <span class="rating-label">Rate Project:</span>
-            <div class="star-rating" data-id="${p.id}">
+            <span class="rating-label">Quality Rating:</span>
+            <div class="star-rating" data-id="${p.id}" role="group" aria-label="Project rating">
                 ${[1, 2, 3, 4, 5].map(v => `
-                    <span class="star ${p.rating >= v ? 'active' : ''}" data-value="${v}" role="button" aria-label="Rate ${v} stars">${p.rating >= v ? '★' : '☆'}</span>
+                    <span class="star ${p.rating >= v ? 'active' : ''}" 
+                          data-value="${v}" 
+                          role="button" 
+                          tabindex="0"
+                          aria-label="Rate ${v} stars"
+                          title="Rate ${v} star${v > 1 ? 's' : ''}">${p.rating >= v ? '★' : '☆'}</span>
                 `).join('')}
+                <span class="rating-value-hint">${p.rating ? `${p.rating}/5` : 'Not Rated'}</span>
             </div>
           </div>
           ` : p.rating ? `
