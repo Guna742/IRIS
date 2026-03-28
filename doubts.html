@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="css/glowing-effect.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -161,7 +163,6 @@
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <!-- Scripts -->
-    <script src="js/page-transition.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>
     <script src="js/badge-engine.js"></script>

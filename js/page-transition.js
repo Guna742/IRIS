@@ -1,13 +1,12 @@
 /**
  * I.R.I.S — Page Transition System
- * Shows a branded loader with the destination page name before every navigation.
- * Inject this script FIRST on every page (before storage.js, auth.js, etc.)
+ * Shows a branded loader with the destination page name on navigation.
+ * Must be loaded in <head> to inject the overlay before first paint.
  */
 
 'use strict';
 
 const PageTransition = (() => {
-    // ── Page name map (href basename → display label) ──
     const PAGE_NAMES = {
         'dashboard.html':        'Dashboard',
         'students.html':         'Intern Directory',
@@ -34,105 +33,135 @@ const PageTransition = (() => {
 
     let overlay = null;
     let nameEl  = null;
+    let isNavigating = false;
 
-    // ── Build Loader DOM ──
+    // ── Build the loader DOM and inject it immediately ──
     function buildOverlay() {
         if (document.getElementById('iris-page-loader')) return;
 
         overlay = document.createElement('div');
         overlay.id = 'iris-page-loader';
+        // Inline critical styles so it works even before CSS loads
+        overlay.style.cssText = `
+            position:fixed;inset:0;
+            background:radial-gradient(ellipse at center,#0e0b1e 0%,#060912 100%);
+            display:flex;align-items:center;justify-content:center;
+            z-index:99999;opacity:0;pointer-events:none;
+            transition:opacity 0.35s ease;
+        `;
         overlay.innerHTML = `
             <div class="ipl-content">
                 <div class="ipl-logo">
                     <img src="img/site-logo.png" alt="I.R.I.S" class="ipl-logo-img">
                     <span class="ipl-logo-text">I.R.I.S</span>
                 </div>
-                <div class="ipl-spinner">
-                    <span class="ipl-arc"></span>
-                </div>
+                <div class="ipl-spinner"><span class="ipl-arc"></span></div>
                 <div class="ipl-page-name" id="ipl-page-name">Loading…</div>
-                <div class="ipl-bar-wrap"><div class="ipl-bar"></div></div>
+                <div class="ipl-bar-wrap"><div class="ipl-bar" id="ipl-bar"></div></div>
             </div>`;
-        document.body.appendChild(overlay);
-        nameEl = overlay.querySelector('#ipl-page-name');
+
+        // Inject as soon as body exists
+        const inject = () => {
+            document.body.appendChild(overlay);
+            nameEl = document.getElementById('ipl-page-name');
+        };
+
+        if (document.body) {
+            inject();
+        } else {
+            document.addEventListener('DOMContentLoaded', inject);
+        }
     }
 
-    // ── Show loader (exit animation) ──
+    // ── Activate loader (exit: leaving current page) ──
     function show(label) {
         if (!overlay) buildOverlay();
+
+        // Reset bar animation by cloning
+        const bar = document.getElementById('ipl-bar');
+        if (bar) {
+            bar.style.animation = 'none';
+            void bar.offsetWidth;
+            bar.style.animation = '';
+        }
+
         if (nameEl) {
             nameEl.textContent = label || 'Loading…';
-            // Reset animation
             nameEl.classList.remove('ipl-name-in');
             void nameEl.offsetWidth;
             nameEl.classList.add('ipl-name-in');
         }
-        overlay.classList.add('ipl-visible');
+
+        if (overlay) {
+            overlay.style.opacity = '1';
+            overlay.style.pointerEvents = 'all';
+        }
     }
 
-    // ── Hide loader (entry animation) ──
+    // ── Deactivate loader (entry: new page has loaded) ──
     function hide() {
         if (!overlay) return;
-        overlay.classList.add('ipl-hiding');
-        overlay.addEventListener('transitionend', () => {
-            overlay.classList.remove('ipl-visible', 'ipl-hiding');
-        }, { once: true });
+        overlay.style.transition = 'opacity 0.5s ease 0.1s';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
     }
 
     // ── Navigate with loader ──
     function navigateTo(href, label) {
-        // Derive label from page map if not provided
+        if (isNavigating) return;
+        isNavigating = true;
+
         if (!label) {
             const base = href.split('/').pop().split('?')[0].split('#')[0];
             label = PAGE_NAMES[base] || base.replace('.html', '').replace(/-/g, ' ');
             label = label.charAt(0).toUpperCase() + label.slice(1);
         }
         show(label);
-        setTimeout(() => {
-            window.location.href = href;
-        }, 900); // sweet spot: loader visible long enough to read
+        setTimeout(() => { window.location.href = href; }, 900);
     }
 
-    // ── Intercept <a> clicks ──
+    // ── Intercept all internal <a> clicks ──
     function handleLinkClick(e) {
         const link = e.target.closest('a');
         if (!link || !link.href) return;
         if (e.defaultPrevented) return;
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
 
-        const isExcluded = EXCLUDE_SELECTORS.some(sel => link.matches(sel));
+        const isExcluded = EXCLUDE_SELECTORS.some(sel => {
+            try { return link.matches(sel); } catch { return false; }
+        });
         if (isExcluded) return;
 
-        const url = new URL(link.href, window.location.href);
-        if (url.origin !== window.location.origin) return;
-
-        // Same page + same hash? Don't intercept
-        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-
-        e.preventDefault();
-        navigateTo(link.href);
+        try {
+            const url = new URL(link.href, window.location.href);
+            if (url.origin !== window.location.origin) return;
+            // Same page (ignore hash-only changes)
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+            e.preventDefault();
+            navigateTo(link.href);
+        } catch { /* ignore malformed URLs */ }
     }
 
     // ── Init ──
     function init() {
         buildOverlay();
 
-        // Hide loader when the new page has finished loading
+        // Hide loader when new page finishes loading
         window.addEventListener('load', () => {
-            document.body.classList.add('page-loaded');
-            hide();
+            // Small delay so the user briefly sees the new page name
+            setTimeout(hide, 150);
         });
 
-        // Bfcache support (back/forward button)
+        // Bfcache (back/forward button)
         window.addEventListener('pageshow', (e) => {
             if (e.persisted) {
-                document.body.classList.add('page-loaded');
+                isNavigating = false;
                 hide();
             }
         });
 
-        // Intercept all internal links
-        document.addEventListener('click', handleLinkClick);
+        // Intercept internal links
+        document.addEventListener('click', handleLinkClick, true); // capture phase
 
         // Info button shortcut
         document.addEventListener('click', (e) => {
@@ -148,12 +177,8 @@ const PageTransition = (() => {
     return { init, navigateTo, show, hide };
 })();
 
-// Expose globally for onclick usage
+// Expose for onclick usage
 window.navigateWithLoader = (href, name) => PageTransition.navigateTo(href, name);
 
-// Auto-start
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', PageTransition.init);
-} else {
-    PageTransition.init();
-}
+// Auto-start - run immediately since this is in <head>
+PageTransition.init();
