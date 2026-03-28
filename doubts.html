@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — The Wall</title>
-    <meta name="description" content="Ask questions, share knowledge, and resolve Wall Messages with your fellow IRIS interns.">
+    <meta name="description" content="Ask questions, share knowledge, and clear the wall with your fellow IRIS interns.">
     <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/Wall Messages.css">
+    <link rel="stylesheet" href="css/doubts.css">
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="stylesheet" href="css/glowing-effect.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
@@ -62,7 +62,7 @@
                     <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
                         <span class="material-symbols-outlined">menu</span>
                     </button>
-                    <span class="topbar-title" id="topbar-title">Wall Messages &amp; Q&amp;A</span>
+                    <span class="topbar-title" id="topbar-title">The Wall</span>
                 </div>
                 <div class="topbar-right">
                     <span class="badge badge-user" id="topbar-role-badge">Intern</span>
@@ -75,50 +75,50 @@
         </header>
 
         <!-- ── Main Content ── -->
-        <main class="app-content" id="app-content" aria-label="Wall Messages content">
-            <div class="Wall Messages-page">
+        <main class="app-content" id="app-content" aria-label="The Wall content">
+            <div class="doubts-page container">
 
                 <!-- Page Header -->
-                <div class="Wall Messages-header">
-                    <div class="Wall Messages-header-text">
-                        <h1 class="page-title">Wall Messages &amp; Q&amp;A</h1>
+                <div class="doubts-header">
+                    <div class="doubts-header-text">
+                        <h1 class="page-title">The Wall</h1>
                         <p class="page-subtitle">Ask questions, share knowledge, help each other grow.</p>
                     </div>
-                    <button class="btn btn-primary" id="ask-Wall Message-btn" aria-label="Ask a new question">
+                    <button class="btn btn-primary" id="ask-doubt-btn" aria-label="Post on the wall">
                         <span class="material-symbols-outlined" style="font-size:18px">add_circle</span>
                         Post on The Wall
                     </button>
                 </div>
 
                 <!-- Filter Tabs -->
-                <div class="Wall Message-tabs" role="tablist" aria-label="Filter questions">
-                    <button class="Wall Message-tab active" data-tab="all" role="tab" aria-selected="true" id="tab-all">
+                <div class="doubt-tabs" role="tablist" aria-label="Filter questions">
+                    <button class="doubt-tab active" data-tab="all" role="tab" aria-selected="true" id="tab-all">
                         All <span class="tab-count" id="count-all">0</span>
                     </button>
-                    <button class="Wall Message-tab" data-tab="open" role="tab" aria-selected="false" id="tab-open">
+                    <button class="doubt-tab" data-tab="open" role="tab" aria-selected="false" id="tab-open">
                         Open <span class="tab-count" id="count-open">0</span>
                     </button>
-                    <button class="Wall Message-tab" data-tab="resolved" role="tab" aria-selected="false" id="tab-resolved">
+                    <button class="doubt-tab" data-tab="resolved" role="tab" aria-selected="false" id="tab-resolved">
                         Resolved <span class="tab-count" id="count-resolved">0</span>
                     </button>
-                    <button class="Wall Message-tab" data-tab="mine" role="tab" aria-selected="false" id="tab-mine">
-                        My Questions <span class="tab-count" id="count-mine">0</span>
+                    <button class="doubt-tab" data-tab="mine" role="tab" aria-selected="false" id="tab-mine">
+                        My Posts <span class="tab-count" id="count-mine">0</span>
                     </button>
                 </div>
 
                 <!-- Question List -->
-                <div class="Wall Messages-list" id="Wall Messages-list" role="list" aria-label="Questions">
+                <div class="doubts-list" id="doubts-list" role="list" aria-label="Messages">
                     <!-- Skeletons while loading -->
-                    <div class="Wall Message-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
-                    <div class="Wall Message-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
-                    <div class="Wall Message-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+                    <div class="doubt-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+                    <div class="doubt-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+                    <div class="doubt-skeleton"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
                 </div>
 
             </div>
         </main>
     </div>
 
-    <!-- ── Ask Wall Message Modal ── -->
+    <!-- ── Ask Doubt Modal ── -->
     <div class="modal-overlay" id="ask-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-ask">
         <div class="modal-box">
             <div class="modal-header">
@@ -129,37 +129,22 @@
             </div>
             <form class="modal-form" id="ask-form" novalidate>
                 <div class="field-group">
-                    <label class="field-label" for="Wall Message-title">Title <span style="color:var(--clr-danger)">*</span></label>
-                    <input type="text" id="Wall Message-title" class="field-input" placeholder="e.g. How do I set up Firebase Auth?" maxlength="200" required>
+                    <label class="field-label" for="doubt-title">Subject <span style="color:var(--clr-danger)">*</span></label>
+                    <input type="text" id="doubt-title" class="field-input" placeholder="e.g. Firebase Connection Issue" maxlength="200" required>
                 </div>
                 <div class="field-group">
-                    <label class="field-label" for="Wall Message-desc">Description <span style="color:var(--clr-danger)">*</span></label>
-                    <textarea id="Wall Message-desc" class="field-input" rows="5" placeholder="Describe your Wall Message in detail. Include what you've tried..." maxlength="3000" required></textarea>
+                    <label class="field-label" for="doubt-desc">Message <span style="color:var(--clr-danger)">*</span></label>
+                    <textarea id="doubt-desc" class="field-input" rows="5" placeholder="Write your message here..." maxlength="3000" required></textarea>
                 </div>
                 <div class="field-group">
-                    <label class="field-label" for="Wall Message-link">Reference Link (optional)</label>
-                    <input type="url" id="Wall Message-link" class="field-input" placeholder="https://...">
+                    <label class="field-label" for="doubt-link">Reference Link (optional)</label>
+                    <input type="url" id="doubt-link" class="field-input" placeholder="https://...">
                 </div>
-                <!-- IMAGE UPLOAD: disabled until Firebase Storage plan is upgraded.
-                     To re-enable: remove this comment block and the closing comment below.
-                <div class="field-group">
-                    <label class="field-label">Attach Image (optional)</label>
-                    <div class="upload-area" id="upload-area">
-                        <input type="file" id="Wall Message-image" accept="image/*" aria-label="Attach image">
-                        <div class="upload-icon"><span class="material-symbols-outlined" style="font-size:32px;color:var(--clr-text-muted)">image</span></div>
-                        <div class="upload-text">Click or drag &amp; drop an image</div>
-                        <div class="upload-hint">PNG, JPG, GIF up to 5MB</div>
-                    </div>
-                    <div class="upload-preview" id="upload-preview">
-                        <img id="upload-preview-img" src="" alt="Preview">
-                    </div>
-                </div>
-                END IMAGE UPLOAD -->
                 <div style="display:flex; gap:var(--sp-3); justify-content:flex-end">
                     <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="ask-submit-btn">
                         <span class="material-symbols-outlined" style="font-size:18px">send</span>
-                        Post Question
+                        Post Message
                     </button>
                 </div>
             </form>
@@ -182,7 +167,7 @@
     <script src="js/animation-engine.js"></script>
     <script src="js/glowing-effect.js"></script>
     <script src="js/iris-modal.js"></script>
-    <script src="js/Wall Messages.js"></script>
+    <script src="js/doubts.js"></script>
 </body>
 
 </html>
