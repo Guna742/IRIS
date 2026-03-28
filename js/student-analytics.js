@@ -197,7 +197,7 @@
         </div>
 
         <!-- ═══ CHARTS ROW ═══ -->
-        <div class="charts-row" style="grid-template-columns: 1fr;">
+        <div class="charts-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--sp-6);">
 
             <!-- Chart 1: Analytic Overview -->
             <div class="chart-widget reveal anim-d1">
@@ -209,9 +209,9 @@
                 </div>
                 <div class="chart-sub-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <div class="chart-controls">
-                        <button class="chart-tab active" onclick="switchTab(this,'growth')">Growth</button>
-                        <button class="chart-tab" onclick="switchTab(this,'skills')">Skills</button>
-                        <button class="chart-tab" onclick="switchTab(this,'projects')">Projects</button>
+                        <button class="chart-tab active" onclick="updateTimeFilter('today', this)">Today</button>
+                        <button class="chart-tab" onclick="updateTimeFilter('week', this)">Week</button>
+                        <button class="chart-tab" onclick="updateTimeFilter('month', this)">Month</button>
                     </div>
                 </div>
                 <div class="line-chart-wrap" id="line-chart-wrap-1" aria-label="Performance line chart">
@@ -229,7 +229,30 @@
                 </div>
             </div>
 
-            <!-- Chart 2: REMOVED -->
+            <div class="chart-widget reveal anim-d2">
+                <div class="chart-widget-head">
+                    <div>
+                        <div class="chart-widget-title">Reporting Performance</div>
+                        <div class="chart-widget-meta">Consistency based on 4-hour window updates</div>
+                    </div>
+                </div>
+                <div class="chart-sub-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div class="chart-controls">
+                        <button class="chart-tab active" onclick="updateReportFilter('today', this)">Today</button>
+                        <button class="chart-tab" onclick="updateReportFilter('week', this)">Week</button>
+                        <button class="chart-tab" onclick="updateReportFilter('month', this)">Month</button>
+                    </div>
+                </div>
+                <div class="line-chart-wrap" id="report-performance-chart-wrap" style="height:240px;">
+                    <!-- SVG injected by JS -->
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background:#10b981"></div>
+                        <span>Submission %</span>
+                    </div>
+                </div>
+            </div>
 
         </div>
 
@@ -482,51 +505,169 @@
 
 
     // Global state for filters
-    let currentFilter2 = 'month'; // 'today', 'week', 'month'
-    let currentTab1 = 'growth';  // 'growth', 'skills'
-    let currentTab2 = 'projects'; // 'projects', 'activity'
+    let curTimeFilter = 'today';
+    let curReportFilter = 'today';
 
-    // ── Chart tab switching ──
-    window.switchTab = function (el, mode) {
+    // ── Chart 1: Analytic Overview filter ──
+    window.updateTimeFilter = function (filter, el) {
         const parent = el.closest('.chart-widget');
         parent.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
-        currentTab1 = mode;
-
-        const title = document.getElementById('chart-1-title');
-        const meta = document.getElementById('chart-1-meta');
-        if (mode === 'growth') {
-            title.textContent = 'Analytic Overview';
-            meta.textContent = 'Long-term performance & project growth';
-        } else if (mode === 'skills') {
-            title.textContent = 'Technical Proficiency';
-            meta.textContent = 'Skill development and expertise levels';
-        } else {
-            title.textContent = 'Project Volume';
-            meta.textContent = 'Total submissions and quality benchmarks';
-        }
-
-        refreshChart1();
+        curTimeFilter = filter;
+        refreshAnalyticOverview();
     };
 
-    window.updateTimeFilter2 = function (filter, el) {
-        // Update all Chart 2 filter buttons
-        const group = el.closest('.filter-group');
-        group.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn === el);
-        });
-        currentFilter2 = filter;
-        refreshChart2();
+    // ── Chart 2: Reporting Performance filter ──
+    window.updateReportFilter = function (filter, el) {
+        const parent = el.closest('.chart-widget');
+        parent.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        curReportFilter = filter;
+        refreshReportPerformance();
     };
 
-    function refreshChart1() {
-        const myP = Storage.getProjects().filter(p => String(p.ownerId) === String(targetUid));
-        renderLineChart('line-chart-wrap-1', currentTab1, myP, true); // True = long-term
+    function refreshCharts() {
+        refreshAnalyticOverview();
+        refreshReportPerformance();
     }
 
-    function refreshChart2() {
-        const myP = Storage.getProjects().filter(p => String(p.ownerId) === String(targetUid));
-        renderLineChart('line-chart-wrap-2', 'progress', myP, false); // False = granular
+    function refreshAnalyticOverview() {
+        const reports = Storage.getHourlyReports(targetUid);
+        renderAnalyticChart('line-chart-wrap-1', reports);
+    }
+
+    function refreshReportPerformance() {
+        const reports = Storage.getHourlyReports(targetUid);
+        renderReportPerformanceChart('report-performance-chart-wrap', reports);
+    }
+
+    function renderAnalyticChart(containerId, reports) {
+        const wrap = document.getElementById(containerId);
+        if (!wrap) return;
+
+        const now = new Date();
+        const data = [];
+        const labels = [];
+        
+        if (curTimeFilter === 'today') {
+            const hCheckpoints = [9, 11, 13, 14, 16, 18];
+            hCheckpoints.forEach(h => {
+                labels.push(`${h}:00`);
+                // Find if any report was submitted within that hour
+                const r = reports.find(rep => {
+                    const d = new Date(rep.createdAt || rep.timestamp);
+                    return d.toDateString() === now.toDateString() && d.getHours() === h;
+                });
+                data.push(r ? 100 : 0);
+            });
+        } else if (curTimeFilter === 'week') {
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(d.toLocaleDateString([], { weekday: 'short' }));
+                const dailyReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === d.toDateString());
+                // Activity score: (Number of unique hours with reports / 6) * 100
+                const uniqueHours = new Set(dailyReports.map(r => new Date(r.createdAt || r.timestamp).getHours()));
+                data.push(Math.min(100, (uniqueHours.size / 6) * 100));
+            }
+        } else {
+            for (let i = 25; i >= 0; i -= 5) {
+                const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                const monthlyReports = reports.filter(r => {
+                    const rd = new Date(r.createdAt || r.timestamp);
+                    return rd <= d && rd >= new Date(d.getTime() - 5*24*60*60*1000);
+                });
+                data.push(Math.min(100, (monthlyReports.length / 10) * 100));
+            }
+        }
+
+        drawSVG(wrap, data, labels, '#8b5cf6', true); // Show target line for Left Chart
+    }
+
+    function renderReportPerformanceChart(containerId, reports) {
+        const wrap = document.getElementById(containerId);
+        if (!wrap) return;
+
+        const now = new Date();
+        const data = [];
+        const labels = [];
+        
+        if (curReportFilter === 'today') {
+            const windows = [9, 13, 14, 18];
+            windows.forEach(h => {
+                labels.push(`${h}:00`);
+                // Check if any report exists for the windows (Update 1 or Update 2)
+                const winId = h <= 13 ? 1 : 2;
+                const r = reports.find(rep => {
+                    const d = new Date(rep.createdAt || rep.timestamp);
+                    return d.toDateString() === now.toDateString() && rep.window === winId;
+                });
+                data.push(r ? 100 : 0);
+            });
+        } else if (curReportFilter === 'week') {
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(d.toLocaleDateString([], { weekday: 'short' }));
+                const dailyReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === d.toDateString());
+                data.push((dailyReports.length / 2) * 100);
+            }
+        } else {
+            for (let i = 25; i >= 0; i -= 5) {
+                const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                labels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                const monthlyReports = reports.filter(r => {
+                    const rd = new Date(r.createdAt || r.timestamp);
+                    return rd <= d && rd >= new Date(d.getTime() - 5*24*60*60*1000);
+                });
+                data.push(Math.min(100, (monthlyReports.length / 10) * 100));
+            }
+        }
+
+        drawSVG(wrap, data, labels, '#10b981', false); // No target line for Right Chart
+    }
+
+    function drawSVG(wrap, data, labels, color, showTarget = false) {
+        const rect = wrap.getBoundingClientRect();
+        const W = rect.width || 400;
+        const H = rect.height || 200;
+        
+        if (W === 0 || H === 0) {
+            // Retry if layout not ready
+            setTimeout(() => drawSVG(wrap, data, labels, color, showTarget), 100);
+            return;
+        }
+
+        const pad = { top: 20, right: 30, bottom: 40, left: 45 };
+        const cW = W - pad.left - pad.right;
+        const cH = H - pad.top - pad.bottom;
+
+        const xScale = (i) => pad.left + (i / (data.length - 1)) * cW;
+        const yScale = (v) => pad.top + cH - (v / 100) * cH;
+
+        const pathD = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(v).toFixed(1)}`).join(' ');
+        const areaD = `${pathD} L ${xScale(data.length - 1).toFixed(1)} ${(pad.top + cH).toFixed(1)} L ${pad.left.toFixed(1)} ${(pad.top + cH).toFixed(1)} Z`;
+        
+        // Target line at 70%
+        const targetLineD = `M ${xScale(0).toFixed(1)} ${yScale(70).toFixed(1)} L ${xScale(data.length - 1).toFixed(1)} ${yScale(70).toFixed(1)}`;
+
+        wrap.innerHTML = `
+            <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100% text-shadow: none;">
+                <defs>
+                    <linearGradient id="grad-${color.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
+                        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#grad-${color.replace('#','')})" />
+                ${showTarget ? `<path d="${targetLineD}" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.5" />` : ''}
+                <path d="${pathD}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                ${data.map((v, i) => `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(v).toFixed(1)}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2" />`).join('')}
+                ${labels.map((l, i) => `<text x="${xScale(i)}" y="${H - 10}" text-anchor="middle" fill="#9898a6" font-size="10" font-family="Inter, system-ui">${l}</text>`).join('')}
+                <text x="10" y="${yScale(0)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">0%</text>
+                <text x="10" y="${yScale(50)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">50%</text>
+                <text x="10" y="${yScale(100)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">100%</text>
+            </svg>
+        `;
     }
 
     window.submitHourlyReport = async function () {

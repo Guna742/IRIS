@@ -141,6 +141,49 @@
         roleField.addEventListener('keydown', (e) => { if (e.key === 'Enter') roleSaveBtn.click(); });
     }
 
+    // ── Approval Logic for Edit Requests ──
+    const requestsListEl = document.getElementById('pending-requests-list');
+
+    function refreshRequests() {
+        if (!requestsListEl) return;
+        const allRequests = Storage.getMissedReportRequests() || [];
+        const pending = allRequests.filter(r => r.status === 'pending');
+
+        if (pending.length === 0) {
+            requestsListEl.innerHTML = '<div style="padding:20px; text-align:center; color:var(--clr-text-muted); font-size:0.9rem">No pending requests at the moment.</div>';
+            return;
+        }
+
+        requestsListEl.innerHTML = pending.map(req => {
+            const student = Storage.getProfile(req.userId) || { name: 'Unknown Intern' };
+            const dateStr = new Date(req.createdAt).toLocaleDateString();
+            return `
+            <div class="student-list-item" style="display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--glass-border)">
+                <div class="student-list-info" style="flex:1">
+                    <div class="student-list-name" style="font-weight:600">${student.name}</div>
+                    <div class="student-list-role" style="font-size:0.8rem; color:var(--clr-text-muted)">Request for ${dateStr}</div>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-secondary btn-sm" onclick="handleRequest('${req.userId}', '${req.id}', 'denied')" style="padding:4px 8px; color:#ef4444">Deny</button>
+                    <button class="btn btn-primary btn-sm" onclick="handleRequest('${req.userId}', '${req.id}', 'approved')" style="padding:4px 8px">Approve</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.handleRequest = function(uid, rid, status) {
+        if (Storage.updateMissedReportRequestsStatus) {
+            Storage.updateMissedReportRequestsStatus(uid, rid, status);
+        } else {
+            // Fallback if method name is slightly different in storage.js
+            Storage.updateMissedReportRequestStatus(uid, rid, status);
+        }
+        showToast(`Request ${status}!`, status === 'approved' ? 'success' : 'info');
+        refreshRequests();
+    };
+
+    refreshRequests();
+
     // ── Avatar Upload Logic removed ──
 
     // ── Compute & render stats ──

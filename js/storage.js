@@ -184,7 +184,7 @@ const Storage = (() => {
         return report;
     }
 
-    // ── Missed Report Requests ──
+    // ── Missed/Edit Report Requests ──
     const MISSED_REPORTS_KEY = 'interntrack_missed_report_requests';
     function getMissedReportRequests(userId) {
         try {
@@ -231,7 +231,7 @@ const Storage = (() => {
                     ...request,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-            console.log(`[Storage] Missed request synced: ${request.id}`);
+            console.log(`[Storage] Missed/Edit request synced: ${request.id}`);
         } catch (err) {
             console.error('[Storage] syncMissedReportRequest error:', err);
         }

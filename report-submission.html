@@ -145,7 +145,28 @@
         <main class="app-content">
             <div class="container">
                 
-                <!-- Status Row -->
+                <!-- Performance Analytics Chart -->
+                <div class="report-card reveal" style="padding: 20px; overflow: hidden;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+                        <div>
+                            <h3 style="font-size:1.1rem; margin:0">Performance Overview</h3>
+                            <p style="font-size:0.85rem; color:var(--clr-text-muted); margin:4px 0 0">Tracking your submission consistency and quality</p>
+                        </div>
+                        <div class="chart-controls" style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary btn-xs active" data-filter="today" onclick="updateChartFilter('today', this)">Today</button>
+                            <button class="btn btn-secondary btn-xs" data-filter="week" onclick="updateChartFilter('week', this)">Week</button>
+                            <button class="btn btn-secondary btn-xs" data-filter="month" onclick="updateChartFilter('month', this)">Month</button>
+                        </div>
+                    </div>
+                    <div id="report-analytics-chart" style="height:220px; width:100%; position:relative;">
+                        <!-- SVG Chart injected by JS -->
+                        <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--clr-text-muted)">
+                            Initializing analytics...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Row & Edit Requests -->
                 <div id="status-container"></div>
 
                 <!-- Submission Form Area -->
@@ -182,10 +203,16 @@
                 <div class="reveal" style="margin-top:40px">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
                         <h3 style="font-size:1.1rem">Today's Submissions</h3>
-                        <button id="download-report-btn" class="btn btn-secondary btn-sm" style="display:none">
-                            <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">download</span>
-                            Download Daily Report (PDF)
-                        </button>
+                        <div style="display:flex; gap:12px">
+                            <button id="download-demo-pdf-btn" class="btn btn-secondary btn-sm" style="border:1px solid var(--clr-violet); color:var(--clr-violet)">
+                                <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">visibility</span>
+                                View Demo Report
+                            </button>
+                            <button id="download-report-btn" class="btn btn-secondary btn-sm" style="display:none">
+                                <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">download</span>
+                                Download Daily Report (PDF)
+                            </button>
+                        </div>
                     </div>
                     <div id="report-history" class="report-history">
                         <!-- Filled by JS -->
