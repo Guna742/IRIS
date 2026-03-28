@@ -92,14 +92,14 @@ const IMAGE_UPLOAD_ENABLED = false;
         { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
         { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
         { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'Doubts',       href: 'doubts.html',       icon: 'help_center', active: true },
+        { label: 'The Wall',     href: 'doubts.html',       icon: 'chat', active: true },
     ];
     const NAV_ADMIN = [
         { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
         { label: 'My Profile',   href: 'admin-profile.html', icon: 'person' },
         { label: 'Interns',      href: 'students.html',     icon: 'group' },
         { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'Doubts',       href: 'doubts.html',       icon: 'help_center', active: true },
+        { label: 'The Wall',     href: 'doubts.html',       icon: 'chat', active: true },
     ];
     const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
 

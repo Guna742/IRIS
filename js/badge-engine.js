@@ -1,7 +1,7 @@
 /**
- * I.R.I.S — Badge & Points Engine
+ * I.R.I.S — Badge & Points Engine (V2)
  * Manages user points and badge milestones for the Q&A system.
- * Requires: firebase-config.js (fbDb), auth.js (Auth)
+ * Badges: Newbie, Learner, Contributor, Helper, Active Intern.
  */
 
 'use strict';
@@ -22,8 +22,8 @@ const BadgeEngine = (() => {
             id: 'newbie',
             label: 'Newbie',
             emoji: '🌱',
-            desc: 'Welcome to IRIS!',
-            check: () => true  // Always eligible — assigned on first visit
+            desc: 'Welcome to IRIS! (Assigned on signup)',
+            check: () => true 
         },
         {
             id: 'learner',
@@ -52,43 +52,19 @@ const BadgeEngine = (() => {
             emoji: '⚡',
             desc: 'Reached 100 total points',
             check: (stats) => (stats.points || 0) >= 100
-        },
-        {
-            id: 'project-star',
-            label: 'Project Star',
-            emoji: '⭐',
-            desc: 'Maintain an average project rating of 4.0 or higher',
-            check: (stats) => {
-                const score = stats.projectScore || 0;
-                // score 80 corresponds to average 4.0 (80 = (4.0/5)*100)
-                return score >= 80;
-            }
-        },
-        {
-            id: 'top-ranked',
-            label: 'Top Ranked',
-            emoji: '🏆',
-            desc: 'Reached the Top 3 in overall rankings',
-            check: (stats) => {
-                const rank = stats.rank || 999;
-                return rank > 0 && rank <= 3;
-            }
         }
     ];
 
     /**
      * Award points to a user for a given action.
-     * Also checks and assigns any newly eligible badges.
      * @param {string} userId
      * @param {'ask'|'answer'|'upvote_received'|'accepted'} action
-     * @returns {Promise<{points: number, newBadges: string[]}>}
      */
     async function awardAction(userId, action) {
         if (!userId || !action || !(action in POINTS)) return { points: 0, newBadges: [] };
 
         const pointsToAdd = POINTS[action];
         const userRef = fbDb.collection('users').doc(userId);
-
         let newBadges = [];
 
         try {
@@ -103,22 +79,13 @@ const BadgeEngine = (() => {
 
                 const newPoints = currentPoints + pointsToAdd;
 
-                // Update stats counter for the action
+                // Update counters
                 const updatedStats = { ...stats, points: newPoints };
                 if (action === 'ask')              updatedStats.questionsAsked = (stats.questionsAsked || 0) + 1;
                 if (action === 'answer')           updatedStats.answersPosted = (stats.answersPosted || 0) + 1;
                 if (action === 'upvote_received')  updatedStats.answerUpvotesReceived = (stats.answerUpvotesReceived || 0) + 1;
 
-                // Sync current performance from Storage for a fresh check
-                if (typeof Storage !== 'undefined') {
-                    const profile = Storage.getProfile(userId);
-                    if (profile) {
-                        updatedStats.projectScore = Storage.computeInternScore(profile);
-                        updatedStats.rank = Storage.getInternRank(userId);
-                    }
-                }
-
-                // Check badges
+                // Check eligibility for new badges
                 newBadges = BADGES
                     .filter(b => !currentBadges.includes(b.id) && b.check(updatedStats))
                     .map(b => b.id);
@@ -137,50 +104,7 @@ const BadgeEngine = (() => {
     }
 
     /**
-     * Manually check and refresh performance badges (Top Rank, Project Star) 
-     * without needing a Q&A action.
-     */
-    async function refreshBadges(userId) {
-        if (!userId || typeof Storage === 'undefined') return [];
-        
-        try {
-            const profile = Storage.getProfile(userId);
-            if (!profile) return [];
-
-            const userRef = fbDb.collection('users').doc(userId);
-            const doc = await userRef.get();
-            if (!doc.exists) return [];
-
-            const data = doc.data();
-            const currentBadges = data.badges || [];
-            const stats = data.qaStats || {};
-
-            // Add performance metrics to check object
-            stats.points = data.points || 0;
-            stats.projectScore = Storage.computeInternScore(profile);
-            stats.rank = Storage.getInternRank(userId);
-
-            const newlyAwarded = BADGES
-                .filter(b => !currentBadges.includes(b.id) && b.check(stats))
-                .map(b => b.id);
-
-            if (newlyAwarded.length > 0) {
-                await userRef.update({
-                    badges: [...currentBadges, ...newlyAwarded],
-                    qaStats: stats
-                });
-                console.log(`[BadgeEngine] Awarded performance badges to ${userId}:`, newlyAwarded);
-            }
-            return newlyAwarded;
-        } catch (err) {
-            console.error('[BadgeEngine] refreshBadges failed:', err);
-            return [];
-        }
-    }
-
-    /**
-     * Ensure the 'newbie' badge is assigned to a user (called on first visit).
-     * @param {string} userId
+     * Ensure the 'newbie' badge is assigned.
      */
     async function ensureNewbieBadge(userId) {
         if (!userId) return;
@@ -200,9 +124,7 @@ const BadgeEngine = (() => {
     }
 
     /**
-     * Fetch user's points and badges from Firestore.
-     * @param {string} userId
-     * @returns {Promise<{points: number, badges: string[], qaStats: object}>}
+     * Fetch user's points and badges.
      */
     async function getUserRewards(userId) {
         try {
@@ -215,19 +137,16 @@ const BadgeEngine = (() => {
                 qaStats: d.qaStats || {}
             };
         } catch (err) {
-            console.warn('[BadgeEngine] getUserRewards failed:', err);
             return { points: 0, badges: [], qaStats: {} };
         }
     }
 
     /**
-     * Render badge pills as HTML string.
-     * @param {string[]} badgeIds
-     * @returns {string} HTML
+     * Render badge pills.
      */
     function renderBadges(badgeIds) {
         if (!badgeIds || badgeIds.length === 0) {
-            return '<span style="color:var(--clr-text-muted);font-size:var(--fs-sm)">No badges yet.</span>';
+            return '<span class="text-muted text-xs">No badges yet. Engage to earn!</span>';
         }
         return badgeIds.map(id => {
             const def = BADGES.find(b => b.id === id);
@@ -239,6 +158,6 @@ const BadgeEngine = (() => {
         }).join('');
     }
 
-    return { awardAction, refreshBadges, ensureNewbieBadge, getUserRewards, renderBadges, BADGES, POINTS };
+    return { awardAction, ensureNewbieBadge, getUserRewards, renderBadges, BADGES, POINTS };
 
 })();
