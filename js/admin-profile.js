@@ -313,59 +313,9 @@
         }, 3000);
     }
 
-    // ── Sidebar ──
-    SidebarEngine.init = function(session, activePage) {
-        const nav = document.getElementById('sidebar-nav');
-        const avatar = document.getElementById('user-avatar-sidebar');
-        const nameEl = document.getElementById('user-name-sidebar');
-        const roleEl = document.getElementById('user-role-sidebar');
-
-        const isAdmin = session.role === 'admin';
-        const p = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : Storage.getProfile(session.userId);
-        const currentName = p?.name || session.displayName;
-
-        if (avatar) {
-            if (p?.avatar) {
-                avatar.innerHTML = `<img src="${p.avatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-            } else {
-                avatar.textContent = currentName[0].toUpperCase();
-            }
-        }
-        if (nameEl) nameEl.textContent = currentName;
-        if (roleEl) roleEl.textContent = 'Administrator';
-
-        const items = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'admin-profile.html', icon: 'person', active: activePage === 'admin-profile.html' },
-            { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-        ];
-
-        if (nav) {
-            nav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-                items.map(item => `
-                <a class="nav-item${item.href === activePage ? ' active' : ''}" href="${item.href}" aria-current="${item.href === activePage ? 'page' : 'false'}">
-                    <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
-                    <span>${item.label}</span>
-                </a>`).join('');
-        }
-
-        const hamburger = document.getElementById('hamburger-btn');
-        const sidebar = document.getElementById('app-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (hamburger && sidebar && overlay) {
-            hamburger.addEventListener('click', () => {
-                const open = sidebar.classList.toggle('open');
-                overlay.classList.toggle('visible', open);
-                hamburger.setAttribute('aria-expanded', String(open));
-            });
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('visible');
-                hamburger.setAttribute('aria-expanded', 'false');
-            });
-        }
+    // Sidebar logic handled by global SidebarEngine.init() in sidebar-engine.js
+    if (typeof SidebarEngine !== 'undefined' && SidebarEngine.init) {
+        SidebarEngine.init();
     }
 
 })();

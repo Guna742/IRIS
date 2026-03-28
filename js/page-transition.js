@@ -1,6 +1,6 @@
 /**
- * I.R.I.S — Cinematic Page Transition Engine (V12 - FINAL FIXED)
- * Fixes Double-Animation / Rebuilding Glitch.
+ * I.R.I.S — Cinematic Page Transition Engine (V14 - SNAPPY & TYPING)
+ * Minimal Blur (5px) & High-Speed Typewriter (30ms).
  */
 
 'use strict';
@@ -22,15 +22,17 @@ const PageTransition = (() => {
         'info.html':             'Info',
     };
 
-    const DEPARTURE_DELAY = 1000; 
-    const ARRIVAL_HOLD    = 800;  
+    const DEPARTURE_DELAY = 850; 
+    const ARRIVAL_HOLD    = 600;  
+    const TYPING_SPEED    = 30; // 30ms per character
     const EXCLUDE_SELECTORS = ['[target="_blank"]', '[href^="#"]', '[href^="javascript:"]', '.no-transition'];
 
     let loader = null;
     let pageName = null;
     let isNavigating = false;
+    let typeInterval = null;
 
-    // ── FIX 3 — Stop overlay rebuilding glitch ──
+    // ── Build Overlay ──
     function buildOverlay() {
         const existing = document.getElementById('page-loader');
         if (existing) {
@@ -47,7 +49,7 @@ const PageTransition = (() => {
         const alreadyPlayed = sessionStorage.getItem('transitionPlayed');
 
         if (transitionLabel && alreadyPlayed === 'false') {
-            loader.classList.add('active'); // Maintain state
+            loader.classList.add('active'); 
             document.documentElement.style.overflow = 'hidden';
         }
 
@@ -71,6 +73,24 @@ const PageTransition = (() => {
         }
     }
 
+    // ── Typewriter Helper ──
+    function typeText(element, text, callback) {
+        clearInterval(typeInterval);
+        element.textContent = '';
+        let i = 0;
+        element.style.opacity = '1';
+        
+        typeInterval = setInterval(() => {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(typeInterval);
+                if (callback) callback();
+            }
+        }, TYPING_SPEED); 
+    }
+
     // ── Departure logic (Page A) ──
     function navigateTo(href, customLabel) {
         if (isNavigating) return;
@@ -78,21 +98,16 @@ const PageTransition = (() => {
 
         const label = customLabel || getLabelFor(href);
 
-        // 🔧 FIX 2 — Mark transition stage
         sessionStorage.setItem('transition', label);
         sessionStorage.setItem('transitionPlayed', 'false');
-
-        if (pageName) {
-            pageName.textContent = label;
-            pageName.style.transition = 'none';
-            pageName.style.opacity = '1';
-            void pageName.offsetHeight; 
-            pageName.style.transition = ''; 
-        }
 
         if (loader) {
             loader.classList.remove('ipl-hiding');
             loader.classList.add('active');
+        }
+
+        if (pageName) {
+            typeText(pageName, label);
         }
 
         setTimeout(() => { window.location.href = href; }, DEPARTURE_DELAY);
@@ -108,19 +123,15 @@ const PageTransition = (() => {
             return;
         }
 
-        // ✅ FIX 4 — Avoid instant re-animation (Static Visibility)
         if (pageName) {
-            pageName.textContent = transitionLabel;
-            pageName.style.opacity = '1';
+            typeText(pageName, transitionLabel);
         }
 
-        // Mark as played to prevent re-animation on reload or back
         sessionStorage.setItem('transitionPlayed', 'true');
         sessionStorage.removeItem('transition');
 
         const finalize = () => {
             revealPage();
-            // Holding center for 0.8s while blurred before fade out
             setTimeout(performFadeOut, ARRIVAL_HOLD);
         };
 
@@ -138,14 +149,13 @@ const PageTransition = (() => {
     function performFadeOut() {
         if (!loader || !pageName) return;
         
-        // Final dissolve
         pageName.style.opacity = '0';
-        pageName.style.transform = 'scale(1.1)';
-        pageName.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        pageName.style.transform = 'scale(1.04)';
+        pageName.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
 
         setTimeout(() => {
             loader.classList.add('ipl-hiding');
-        }, 300);
+        }, 150);
 
         setTimeout(() => {
             loader.style.display = 'none';
@@ -184,5 +194,4 @@ const PageTransition = (() => {
     return { init, navigateTo };
 })();
 
-// Auto-run
 PageTransition.init();

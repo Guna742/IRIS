@@ -785,36 +785,31 @@
 }
 
 .accept-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,.04);
-    border: 1px solid var(--glass-border);
-    color: var(--clr-text-muted);
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: var(--radius-full);
+    background: rgba(16, 185, 129, .08);
+    border: 1px solid rgba(16, 185, 129, .2);
+    color: var(--clr-success);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semi);
     cursor: pointer;
     transition: all var(--dur-fast) var(--ease-out);
     margin-top: var(--sp-2);
 }
 
 .accept-btn:hover {
-    background: rgba(16, 185, 129, .15);
+    background: var(--clr-success);
+    color: white;
     border-color: var(--clr-success);
-    color: var(--clr-success);
-    transform: scale(1.05);
-}
-
-.accept-btn.accepted {
-    background: rgba(16, 185, 129, .2);
-    border-color: var(--clr-success);
-    color: var(--clr-success);
-    cursor: default;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .accept-btn .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 /* Accepted answer badge */
