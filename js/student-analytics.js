@@ -72,18 +72,18 @@
         outputEl.hidden = false;
         outputEl.innerHTML = buildDashHTML(profile, myProjects || []);
 
-        // Post-render: animate stats + charts
-        setTimeout(() => {
-            try { animateCounters(); } catch (e) { console.warn('Counter animation failed', e); }
-            try {
-                refreshCharts();
-            } catch (e) { console.warn('Charts failed', e); }
-            try { renderBarChart(profile.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
-
-            // Critical: Always reveal content
-            initReveal();
-            setupDetailHandlers();
-        }, 80);
+            // Post-render: animate stats + charts
+            setTimeout(() => {
+                try { animateCounters(); } catch (e) { console.warn('Counter animation failed', e); }
+                try {
+                    refreshCharts();
+                } catch (e) { console.warn('Charts failed', e); }
+                try { renderBarChart(profile.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
+    
+                // Critical: Always reveal content
+                initReveal();
+                setupDetailHandlers();
+            }, 300);
     } catch (err) {
         console.error('Analytics render failed', err);
         showError('Encountered an error while rendering your dashboard. Please check your profile data.');
@@ -229,6 +229,8 @@
                 </div>
             </div>
 
+            <!-- Chart 2: Reporting Performance (ADMIN ONLY) -->
+            ${isAdmin ? `
             <div class="chart-widget reveal anim-d2">
                 <div class="chart-widget-head">
                     <div>
@@ -252,7 +254,7 @@
                         <span>Submission %</span>
                     </div>
                 </div>
-            </div>
+            </div>` : ''}
 
         </div>
 
@@ -641,14 +643,18 @@
         const cW = W - pad.left - pad.right;
         const cH = H - pad.top - pad.bottom;
 
-        const xScale = (i) => pad.left + (i / (data.length - 1)) * cW;
+        // Ensure data.length is at least 2 for scaling
+        const displayData = data.length >= 2 ? data : (data.length === 1 ? [data[0], data[0]] : [0, 0]);
+        const displayLabels = labels.length >= 2 ? labels : (labels.length === 1 ? [labels[0], labels[0]] : ['—', '—']);
+
+        const xScale = (i) => pad.left + (i / (displayData.length - 1)) * cW;
         const yScale = (v) => pad.top + cH - (v / 100) * cH;
 
-        const pathD = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(v).toFixed(1)}`).join(' ');
-        const areaD = `${pathD} L ${xScale(data.length - 1).toFixed(1)} ${(pad.top + cH).toFixed(1)} L ${pad.left.toFixed(1)} ${(pad.top + cH).toFixed(1)} Z`;
+        const pathD = displayData.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(v).toFixed(1)}`).join(' ');
+        const areaD = `${pathD} L ${xScale(displayData.length - 1).toFixed(1)} ${(pad.top + cH).toFixed(1)} L ${pad.left.toFixed(1)} ${(pad.top + cH).toFixed(1)} Z`;
         
         // Target line at 70%
-        const targetLineD = `M ${xScale(0).toFixed(1)} ${yScale(70).toFixed(1)} L ${xScale(data.length - 1).toFixed(1)} ${yScale(70).toFixed(1)}`;
+        const targetLineD = `M ${xScale(0).toFixed(1)} ${yScale(70).toFixed(1)} L ${xScale(displayData.length - 1).toFixed(1)} ${yScale(70).toFixed(1)}`;
 
         wrap.innerHTML = `
             <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100% text-shadow: none;">
@@ -661,8 +667,8 @@
                 <path d="${areaD}" fill="url(#grad-${color.replace('#','')})" />
                 ${showTarget ? `<path d="${targetLineD}" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.5" />` : ''}
                 <path d="${pathD}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                ${data.map((v, i) => `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(v).toFixed(1)}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2" />`).join('')}
-                ${labels.map((l, i) => `<text x="${xScale(i)}" y="${H - 10}" text-anchor="middle" fill="#9898a6" font-size="10" font-family="Inter, system-ui">${l}</text>`).join('')}
+                ${displayData.map((v, i) => `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(v).toFixed(1)}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2" />`).join('')}
+                ${displayLabels.map((l, i) => `<text x="${xScale(i)}" y="${H - 10}" text-anchor="middle" fill="#9898a6" font-size="10" font-family="Inter, system-ui">${l}</text>`).join('')}
                 <text x="10" y="${yScale(0)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">0%</text>
                 <text x="10" y="${yScale(50)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">50%</text>
                 <text x="10" y="${yScale(100)}" fill="#5a5a6a" font-size="10" font-family="Inter, system-ui">100%</text>
