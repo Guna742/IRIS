@@ -1,6 +1,6 @@
 /**
- * I.R.I.S — Doubt Detail Page Logic (V12 FULL)
- * Features: Shimmer removal, Accepted Answer, Voting, Points, Views.
+ * I.R.I.S — Doubt Detail Page Logic (V12 FULL REPAIR)
+ * Features: Fixed skeleton removal, Intern answering, Accepted Answer, Voting, Points.
  */
 
 'use strict';
@@ -21,21 +21,12 @@
     const questionId = params.get('id');
     if (!questionId) { window.location.replace('doubts.html'); return; }
 
-    // ── Performance Check ──
-    if (!isAdmin) {
-        BadgeEngine.refreshBadges(session.userId);
+    // ── Sidebar Initialization ──
+    if (typeof SidebarEngine !== 'undefined') {
+        SidebarEngine.init(session, 'doubts.html');
     }
 
     // ── DOM refs ──
-    const sidebarNav        = document.getElementById('sidebar-nav');
-    const userAvatarSb      = document.getElementById('user-avatar-sidebar');
-    const userNameSb        = document.getElementById('user-name-sidebar');
-    const userRoleSb        = document.getElementById('user-role-sidebar');
-    const topbarBadge       = document.getElementById('topbar-role-badge');
-    const logoutBtn         = document.getElementById('logout-btn');
-    const hamburgerBtn      = document.getElementById('hamburger-btn');
-    const appSidebar        = document.getElementById('app-sidebar');
-    const sidebarOverlay    = document.getElementById('sidebar-overlay');
     const questionSection   = document.getElementById('question-section');
     const answersSection    = document.getElementById('answers-section');
     const answersList       = document.getElementById('answers-list');
@@ -47,58 +38,11 @@
     const backBtn           = document.getElementById('back-btn');
     const lightbox          = document.getElementById('lightbox');
     const lightboxImg       = document.getElementById('lightbox-img');
-    const loadingShimmer    = document.getElementById('profile-loading');
+    const questionSkeleton  = document.getElementById('question-skeleton');
 
     // ── Global State ──
     let currentQ = null;
 
-    // ── Populate sidebar ──
-    const profile = isAdmin ? null : Storage.getProfile(session.userId);
-    const currentName = profile?.name || session.displayName || 'Intern';
-
-    if (userAvatarSb) userAvatarSb.textContent = currentName[0].toUpperCase();
-    if (userNameSb)   userNameSb.textContent = currentName;
-    if (userRoleSb)   userRoleSb.textContent = isAdmin ? 'Administrator' : 'Intern';
-    if (topbarBadge) {
-        topbarBadge.textContent = isAdmin ? 'Admin' : 'Intern';
-        topbarBadge.className   = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
-    }
-
-    // ── Sidebar Nav ──
-    const navItems = isAdmin ? [
-        { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-        { label: 'My Profile',   href: 'admin-profile.html', icon: 'person' },
-        { label: 'Interns',      href: 'students.html',     icon: 'group' },
-        { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'Doubts',       href: 'doubts.html',       icon: 'help_center', active: true },
-    ] : [
-        { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-        { label: 'My Profile',   href: 'student-profile.html', icon: 'person' },
-        { label: 'Leaderboard',  href: 'leaderboard.html',  icon: 'leaderboard' },
-        { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-        { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'The Wall',     href: 'doubts.html',       icon: 'chat', active: true },
-    ];
-    if (sidebarNav) {
-        sidebarNav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-            navItems.map(item => `
-                <a class="nav-item${item.active ? ' active' : ''}" href="${item.href}">
-                    <span class="nav-icon"><span class="material-symbols-outlined">${item.icon}</span></span>
-                    <span>${item.label}</span>
-                </a>`).join('');
-    }
-
-    // ── Sidebar Mobile ──
-    hamburgerBtn?.addEventListener('click', () => {
-        appSidebar.classList.toggle('open');
-        sidebarOverlay.classList.toggle('visible');
-    });
-    sidebarOverlay?.addEventListener('click', () => {
-        appSidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('visible');
-    });
-
-    logoutBtn?.addEventListener('click', () => Auth.logout());
     backBtn?.addEventListener('click', () => window.location.href = 'doubts.html');
 
     // ── Toast ──
@@ -130,28 +74,25 @@
     // ── Listen to Question ──
     fbDb.collection('questions').doc(questionId).onSnapshot(snap => {
         if (!snap.exists) {
-            if (loadingShimmer) loadingShimmer.innerHTML = '<p class="text-muted">Question deleted or not found.</p>';
+            if (questionSection) questionSection.innerHTML = '<p class="text-muted" style="padding:2rem;text-align:center">Doubt not found or has been deleted.</p>';
             return;
         }
         
         currentQ = { id: snap.id, ...snap.data() };
         
-        // REMOVE SHIMMER
-        if (loadingShimmer) loadingShimmer.remove();
+        // Remove Skeleton
+        if (questionSkeleton) questionSkeleton.remove();
         
         renderQuestion(currentQ);
         if (answersSection) answersSection.hidden = false;
         if (postAnswerSection) {
             postAnswerSection.hidden = false;
-            // Reveal actual display if it was hidden via CSS
-            postAnswerSection.style.display = 'block';
         }
     });
 
     function renderQuestion(q) {
-        const isOwner    = q.userId === session.userId;
+        const hasVoted = (q.votedBy || []).includes(session.userId);
         const isResolved = q.status === 'resolved' || !!q.acceptedAnswerId;
-        const hasVoted   = (q.votedBy || []).includes(session.userId);
 
         questionSection.innerHTML = `
             <div class="question-card">
@@ -162,7 +103,6 @@
                             <span class="material-symbols-outlined">thumb_up</span>
                         </button>
                         <div class="vote-count">${q.votes || 0}</div>
-                        <div class="vote-label">votes</div>
                     </div>
 
                     <div class="question-content">
@@ -195,7 +135,7 @@
                 votes: firebase.firestore.FieldValue.increment(1),
                 votedBy: firebase.firestore.FieldValue.arrayUnion(session.userId)
             });
-            showToast('Question upvoted!', 'success');
+            showToast('Doubt upvoted!', 'success');
         });
 
         document.getElementById('q-img')?.addEventListener('click', () => {
@@ -218,7 +158,7 @@
 
     function renderAnswers(answers) {
         if (answers.length === 0) {
-            answersList.innerHTML = `<p class="text-muted" style="padding:4rem;text-align:center">No answers yet. Share your experience!</p>`;
+            answersList.innerHTML = `<p class="text-muted" style="padding:4rem;text-align:center">No responses yet. Share your experience!</p>`;
             return;
         }
 
@@ -236,7 +176,6 @@
                         <span class="material-symbols-outlined" style="font-size:18px">thumb_up</span>
                     </button>
                     <div class="answer-vote-count">${ans.votes || 0}</div>
-                    <div class="vote-label">votes</div>
                 </div>
                 <div class="answer-body-col">
                     <div class="answer-text">${escHtml(ans.answer)}</div>
@@ -254,7 +193,7 @@
                             ${isAccepted ? `<span class="accepted-tag"><span class="material-symbols-outlined">check_circle</span> Accepted</span>` : ''}
                             ${(isOwner && !acceptedId) ? `
                                 <button class="accept-btn" data-aid="${ans.id}">
-                                    <span class="material-symbols-outlined">check</span> Accept
+                                    <span class="material-symbols-outlined" style="font-size:16px">check</span> Accept
                                 </button>
                             ` : ''}
                         </div>
@@ -263,7 +202,7 @@
             </div>`;
         }).join('');
 
-        // Listeners for Upvote & Accept
+        // Listeners
         answersList.querySelectorAll('.vote-btn[data-aid]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const aid = btn.dataset.aid;
@@ -274,7 +213,7 @@
                     votedBy: firebase.firestore.FieldValue.arrayUnion(session.userId)
                 });
                 if (ans.userId) BadgeEngine.awardAction(ans.userId, 'upvote_received');
-                showToast('Answer upvoted! +2 pts awarded.', 'success');
+                showToast('Answer upvoted!', 'success');
             });
         });
 
@@ -289,21 +228,24 @@
                         status: 'resolved'
                     });
                     if (ans.userId) BadgeEngine.awardAction(ans.userId, 'accepted');
-                    showToast('Answer accepted! Doubt marked as resolved.', 'success');
+                    showToast('Response accepted! +15 pts rewarded.', 'success');
                 } catch (err) {
-                    showToast('Failed to accept answer.', 'error');
+                    showToast('Failed to accept.', 'error');
                 }
             });
         });
     }
 
-    // ── Post Answer ──
+    // ── Post Response ──
     answerForm?.addEventListener('submit', async e => {
         e.preventDefault();
         const text = answerInput?.value.trim();
         if (!text) return;
 
         postAnswerBtn.disabled = true;
+        const profile = isAdmin ? null : Storage.getProfile(session.userId);
+        const currentName = profile?.name || session.displayName || 'Intern';
+
         try {
             await fbDb.collection('answers').add({
                 questionId, userId: session.userId, authorName: currentName,
@@ -314,9 +256,9 @@
             });
             BadgeEngine.awardAction(session.userId, 'answer');
             answerInput.value = '';
-            showToast('Answer shared! Points awarded.', 'success');
+            showToast('Response shared! +10 pts awarded.', 'success');
         } catch (err) {
-            showToast('Failed to post answer.', 'error');
+            showToast('Failed to post.', 'error');
         } finally {
             postAnswerBtn.disabled = false;
         }

@@ -70,63 +70,9 @@ const IMAGE_UPLOAD_ENABLED = false;
             : 'Post messages, get answers from your admin, and clear the wall.';
     }
 
-    // ── Populate sidebar user info ──
-    const profile = isAdmin
-        ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null)
-        : Storage.getProfile(session.userId);
-    const currentName = profile?.name || session.displayName;
-
-    if (userAvatarSb) userAvatarSb.textContent = currentName[0].toUpperCase();
-    if (userNameSb)   userNameSb.textContent = currentName;
-    if (userRoleSb)   userRoleSb.textContent = isAdmin ? 'Administrator' : 'Intern';
-    if (topbarBadge) {
-        topbarBadge.textContent = isAdmin ? 'Admin' : 'Intern';
-        topbarBadge.className   = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
-    }
-
-    // ── Build Sidebar Nav ──
-    const NAV_INTERN = [
-        { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-        { label: 'My Profile',   href: 'student-profile.html', icon: 'person' },
-        { label: 'Leaderboard',  href: 'leaderboard.html',  icon: 'leaderboard' },
-        { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-        { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
-        { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'The Wall',     href: 'doubts.html',       icon: 'chat', active: true },
-    ];
-    const NAV_ADMIN = [
-        { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-        { label: 'My Profile',   href: 'admin-profile.html', icon: 'person' },
-        { label: 'Interns',      href: 'students.html',     icon: 'group' },
-        { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-        { label: 'The Wall',     href: 'doubts.html',       icon: 'chat', active: true },
-    ];
-    const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
-
-    if (sidebarNav) {
-        sidebarNav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-            navItems.map(item => `
-                <a class="nav-item${item.active ? ' active' : ''}" href="${item.href}"
-                   aria-current="${item.active ? 'page' : 'false'}">
-                    <span class="nav-icon" aria-hidden="true">
-                        <span class="material-symbols-outlined">${item.icon}</span>
-                    </span>
-                    <span>${item.label}</span>
-                </a>`).join('');
-    }
-
-    // ── Sidebar Mobile Toggle ──
-    if (hamburgerBtn && appSidebar && sidebarOverlay) {
-        hamburgerBtn.addEventListener('click', () => {
-            const open = appSidebar.classList.toggle('open');
-            sidebarOverlay.classList.toggle('visible', open);
-            hamburgerBtn.setAttribute('aria-expanded', String(open));
-        });
-        sidebarOverlay.addEventListener('click', () => {
-            appSidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('visible');
-            hamburgerBtn.setAttribute('aria-expanded', 'false');
-        });
+    // Sidebar logic handled by global SidebarEngine.init() in sidebar-engine.js
+    if (typeof SidebarEngine !== 'undefined') {
+        SidebarEngine.init();
     }
 
     logoutBtn?.addEventListener('click', () => Auth.logout());

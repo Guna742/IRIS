@@ -46,7 +46,7 @@ const SidebarEngine = (() => {
             { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
             { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
             { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'The Wall', href: 'doubts.html', icon: 'forum' }, // Changed icon to 'forum' for 'The Wall'
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
         const NAV_ADMIN = [
@@ -54,7 +54,7 @@ const SidebarEngine = (() => {
             { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
             { label: 'Interns', href: 'students.html', icon: 'group' },
             { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'The Wall', href: 'doubts.html', icon: 'forum' }, // Changed icon to 'forum' for 'The Wall'
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
         const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;

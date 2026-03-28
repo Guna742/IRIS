@@ -348,55 +348,6 @@
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // ── Global Sidebar Engine ──
-    window.SidebarEngine = {
-        init: function(session, activePage) {
-            const nav = document.getElementById('sidebar-nav');
-            const avatar = document.getElementById('user-avatar-sidebar');
-            const nameEl = document.getElementById('user-name-sidebar');
-            const roleEl = document.getElementById('user-role-sidebar');
-
-            const isAdmin = session.role === 'admin';
-            const p = isAdmin ? null : Storage.getProfile(session.userId);
-            const currentName = p?.name || session.displayName || 'Intern';
-
-            if (avatar) avatar.textContent = currentName[0].toUpperCase();
-            if (nameEl) nameEl.textContent = currentName;
-            if (roleEl) roleEl.textContent = isAdmin ? 'Administrator' : 'Intern';
-
-            const items = isAdmin ? [
-                { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-                { label: 'My Profile',   href: 'admin-profile.html', icon: 'person' },
-                { label: 'Interns',      href: 'students.html',     icon: 'group' },
-                { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-                { label: 'The Wall',     href: 'doubts.html',       icon: 'chat' },
-            ] : [
-                { label: 'Dashboard',    href: 'dashboard.html',    icon: 'grid_view' },
-                { label: 'My Profile',   href: 'student-profile.html', icon: 'person' },
-                { label: 'Leaderboard',  href: 'leaderboard.html',  icon: 'leaderboard' },
-                { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-                { label: 'Projects',     href: 'projects.html',     icon: 'folder' },
-                { label: 'The Wall',     href: 'doubts.html',       icon: 'chat' },
-            ];
-
-            if (nav) {
-                nav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-                    items.map(item => `
-                    <a class="nav-item${activePage === item.href ? ' active' : ''}" href="${item.href}">
-                        <span class="nav-icon"><span class="material-symbols-outlined">${item.icon}</span></span>
-                        <span>${item.label}</span>
-                    </a>`).join('');
-            }
-
-            // Mobile menu logic
-            const ham = document.getElementById('hamburger-btn');
-            const sb = document.getElementById('app-sidebar');
-            const ov = document.getElementById('sidebar-overlay');
-            if (ham && sb && ov) {
-                ham.onclick = () => { sb.classList.toggle('open'); ov.classList.toggle('visible'); };
-                ov.onclick = () => { sb.classList.remove('open'); ov.classList.remove('visible'); };
-            }
-        }
-    };
+    // Sidebar logic handled by global SidebarEngine in sidebar-engine.js
 
 })();
