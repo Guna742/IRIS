@@ -5,10 +5,10 @@
 
 /* ── Page Layout ── */
 .doubts-page {
-    width: 80%;
-    max-width: 1400px;
+    width: 100%;
+    max-width: var(--content-max);
     margin: 0 auto;
-    padding: 0 0 var(--sp-12);
+    padding: var(--sp-2) 0 var(--sp-12);
 }
 
 /* ── Page Header ── */
@@ -453,10 +453,10 @@
    ======================================================== */
 
 .detail-page {
-    width: 80%;
-    max-width: 1400px;
+    width: 100%;
+    max-width: var(--content-max);
     margin: 0 auto;
-    padding: 0 0 var(--sp-12);
+    padding: var(--sp-2) 0 var(--sp-12);
 }
 
 .detail-back-btn {
