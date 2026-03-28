@@ -10,8 +10,7 @@
     const session = Auth.requireAuth(['admin']);
     if (!session) return;
 
-    // ── Sidebar setup (shared pattern) ──
-    SidebarEngine.init(session, 'profile-builder.html');
+    // Sidebar is handled by js/sidebar-engine.js automatically
 
     // ── DOM refs ──
     const saveBtn = document.getElementById('save-btn');
@@ -348,61 +347,6 @@
         }, 3200);
     }
 
-    // ── Shared sidebar builder ──
-    function SidebarEngine.init(session, activePage) {
-        const nav = document.getElementById('sidebar-nav');
-        const avatar = document.getElementById('user-avatar-sidebar');
-        const nameEl = document.getElementById('user-name-sidebar');
-        const roleEl = document.getElementById('user-role-sidebar');
-
-        const p = Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null;
-        const currentName = p?.name || session.displayName;
-
-        if (avatar) {
-            if (p?.avatar) {
-                avatar.innerHTML = `<img src="${p.avatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-            } else {
-                avatar.textContent = currentName[0].toUpperCase();
-            }
-        }
-        if (nameEl) nameEl.textContent = currentName;
-        if (roleEl) roleEl.textContent = p?.role || 'Administrator';
-
-
-        const items = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
-            { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-        ];
-
-        if (nav) {
-            nav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-                items.map(item => `
-          <a class="nav-item${item.href === activePage ? ' active' : ''}" href="${item.href}" aria-current="${item.href === activePage ? 'page' : 'false'}">
-            <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
-            <span>${item.label}</span>
-          </a>`).join('');
-        }
-
-        // Mobile sidebar
-        const hamburger = document.getElementById('hamburger-btn');
-        const sidebar = document.getElementById('app-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (hamburger && sidebar && overlay) {
-            hamburger.addEventListener('click', () => {
-                const open = sidebar.classList.toggle('open');
-                overlay.classList.toggle('visible', open);
-                hamburger.setAttribute('aria-expanded', String(open));
-            });
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('visible');
-                hamburger.setAttribute('aria-expanded', 'false');
-            });
-        }
-    }
     // ── Auto-trigger Actions from URL ──
     setTimeout(() => {
         if (urlAction === 'new-intern') {
