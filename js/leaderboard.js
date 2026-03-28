@@ -5,8 +5,7 @@
 
 'use strict';
 
-(() => {
-    // Prevent multiple initializations if the script is re-run by a transition engine
+(async () => {
     if (window.LeaderboardInitialized) {
         console.log('Leaderboard already initialized, skipping.');
         return;
@@ -18,8 +17,9 @@
     const session = Auth.requireAuth();
     if (!session) return;
 
+    // Fetch latest data from Firestore before first render
     if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
-        Storage.fetchEverything();
+        await Storage.fetchEverything();
     }
 
     const isAdmin = session.role === 'admin';
@@ -99,21 +99,29 @@
     if (sidebarNav) sidebarNav.innerHTML = navHTML;
 
     // ── Data Computation ──
-    const profiles = Storage.getProfiles();
-    const projects = Storage.getProjects();
-    const now = Date.now();
-    const internList = Object.values(profiles).filter(p => !p.suspendedUntil || p.suspendedUntil < now);
+    function getEnrichedData() {
+        const profiles = Storage.getProfiles();
+        const projects = Storage.getProjects();
+        const now = Date.now();
+        const internList = Object.values(profiles).filter(p => !p.suspendedUntil || p.suspendedUntil < now);
 
-    const enriched = internList.map(p => {
-        const myProjects = projects.filter(proj => String(proj.ownerId) === String(p.userId));
-        const liveCount = myProjects.filter(pr => pr.liveLink && pr.liveLink.trim()).length;
-        const demoCount = myProjects.filter(pr => !pr.liveLink || !pr.liveLink.trim()).length;
-        const score = Storage.computeInternScore(p);
-        const rating = parseFloat((score / 20).toFixed(1));
-        return { ...p, score, rating, liveCount, demoCount, totalProjects: myProjects.length };
-    });
+        return internList.map(p => {
+            const myProjects = projects.filter(proj => String(proj.ownerId) === String(p.userId));
+            
+            // Accurate counts based on metadata
+            const liveCount = myProjects.filter(pr => 
+                (pr.liveLinkType === 'Live' || !pr.liveLinkType) && pr.liveLink && pr.liveLink.trim()
+            ).length;
+            
+            const demoCount = myProjects.filter(pr => 
+                pr.liveLinkType === 'Demo' || (!pr.liveLink || !pr.liveLink.trim())
+            ).length;
 
-    if (totalCount) totalCount.textContent = enriched.length;
+            const score = Storage.computeInternScore(p);
+            const rating = parseFloat((score / 20).toFixed(1));
+            return { ...p, score, rating, liveCount, demoCount, totalProjects: myProjects.length };
+        });
+    }
 
     // ── Filter Sort Logic ──
     let currentFilter = 'overall';
@@ -126,8 +134,8 @@
         rating: { sort: (a, b) => (b.rating - a.rating) || a.name.localeCompare(b.name), label: 'Rating Based', icon: 'grade', header: 'Rating' },
     };
 
-    function getFilteredAndSortedData() {
-        let data = [...enriched];
+    function getFilteredAndSortedData(enrichedData) {
+        let data = [...enrichedData];
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
             data = data.filter(p => (p.name || '').toLowerCase().includes(q));
@@ -236,7 +244,10 @@
 
     function render() {
         console.log('Rendering leaderboard with filter:', currentFilter);
-        const sorted = getFilteredAndSortedData();
+        const enriched = getEnrichedData();
+        if (totalCount) totalCount.textContent = enriched.length;
+        
+        const sorted = getFilteredAndSortedData(enriched);
         renderPodium(sorted);
         renderTable(sorted);
         updateHeader(currentFilter);

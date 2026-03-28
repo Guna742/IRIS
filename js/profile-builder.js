@@ -10,8 +10,7 @@
     const session = Auth.requireAuth(['admin']);
     if (!session) return;
 
-    // ── Sidebar setup (shared pattern) ──
-    SidebarEngine.init(session, 'profile-builder.html');
+    // Sidebar is handled by js/sidebar-engine.js automatically
 
     // ── DOM refs ──
     const saveBtn = document.getElementById('save-btn');
@@ -45,8 +44,10 @@
 
     // ── Multi-profile State ──
     let allProfiles = Storage.getProfiles();
-    // Support deep-link: profile-builder.html?student=userId
-    const urlStudentId = new URLSearchParams(window.location.search).get('student');
+    // Support deep-link: profile-builder.html?student=userId&action=new-intern|new-admin
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlStudentId = urlParams.get('student');
+    const urlAction = urlParams.get('action');
     let currentStudentId = (urlStudentId && allProfiles[urlStudentId])
         ? urlStudentId
         : (Object.keys(allProfiles)[0] || 'u_intern1');
@@ -146,40 +147,21 @@
 
         const confirmBtn = document.getElementById('admin-modal-confirm');
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Creating...';
+        confirmBtn.innerHTML = '<span class="material-symbols-outlined anim-spin" style="font-size:16px;vertical-align:middle;margin-right:4px">sync</span> Creating...';
 
         try {
-            // Create Firebase Auth account using a secondary app instance to avoid signing out current admin
-            const secondaryApp = firebase.initializeApp(firebase.app().options, 'AdminCreation_' + Date.now());
-            const secAuth = secondaryApp.auth();
-            const cred = await secAuth.createUserWithEmailAndPassword(email, password);
-            const newUid = cred.user.uid;
-            await secAuth.signOut();
-            secondaryApp.delete();
-
-            // Save admin profile to Firestore users collection
-            const adminData = {
-                userId:    newUid,
-                name:      name,
-                email:     email,
-                role:      'admin',
-                roleTitle: roleTitle,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                createdBy: session.userId
-            };
-            await fbDb.collection('users').doc(newUid).set(adminData);
-
-            // Save locally for immediate UI use
-            if (Storage.saveAdminProfile) {
-                Storage.saveAdminProfile(newUid, { ...adminData, createdAt: Date.now() });
+            // Use the new Storage method which handles permissions and dual-collection sync
+            const result = await Storage.createAdminAccount({ name, email, roleTitle }, password);
+            
+            if (result.success) {
+                closeAdminModal();
+                showToast(`Admin account created for ${name}! ✅`, 'success');
+            } else {
+                throw new Error(result.error);
             }
-
-            closeAdminModal();
-            showToast(`Admin account created for ${name}! ✅`, 'success');
-
         } catch (err) {
             console.error('[AddAdmin] Error:', err);
-            showToast('Error: ' + (err.message || 'Could not create admin account.'), 'error');
+            showToast('Permission Error: ' + (err.message || 'Could not create admin.'), 'error');
         } finally {
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">person_add</span> Create Admin';
@@ -365,60 +347,13 @@
         }, 3200);
     }
 
-    // ── Shared sidebar builder ──
-    function SidebarEngine.init(session, activePage) {
-        const nav = document.getElementById('sidebar-nav');
-        const avatar = document.getElementById('user-avatar-sidebar');
-        const nameEl = document.getElementById('user-name-sidebar');
-        const roleEl = document.getElementById('user-role-sidebar');
-
-        const p = Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null;
-        const currentName = p?.name || session.displayName;
-
-        if (avatar) {
-            if (p?.avatar) {
-                avatar.innerHTML = `<img src="${p.avatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-            } else {
-                avatar.textContent = currentName[0].toUpperCase();
-            }
+    // ── Auto-trigger Actions from URL ──
+    setTimeout(() => {
+        if (urlAction === 'new-intern') {
+            if (addStudentBtn) addStudentBtn.click();
+        } else if (urlAction === 'new-admin') {
+            if (openAdminModal) openAdminModal();
         }
-        if (nameEl) nameEl.textContent = currentName;
-        if (roleEl) roleEl.textContent = p?.role || 'Administrator';
-
-
-        const items = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
-            { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
-            { label: 'Doubts', href: 'doubts.html', icon: 'help_center' },
-        ];
-
-        if (nav) {
-            nav.innerHTML = '<div class="nav-section-label">Menu</div>' +
-                items.map(item => `
-          <a class="nav-item${item.href === activePage ? ' active' : ''}" href="${item.href}" aria-current="${item.href === activePage ? 'page' : 'false'}">
-            <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
-            <span>${item.label}</span>
-          </a>`).join('');
-        }
-
-        // Mobile sidebar
-        const hamburger = document.getElementById('hamburger-btn');
-        const sidebar = document.getElementById('app-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (hamburger && sidebar && overlay) {
-            hamburger.addEventListener('click', () => {
-                const open = sidebar.classList.toggle('open');
-                overlay.classList.toggle('visible', open);
-                hamburger.setAttribute('aria-expanded', String(open));
-            });
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('visible');
-                hamburger.setAttribute('aria-expanded', 'false');
-            });
-        }
-    }
+    }, 500);
 
 })();

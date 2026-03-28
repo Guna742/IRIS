@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — Admin Profile</title>
     <meta name="description" content="I.R.I.S admin profile management and platform settings.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/admin-profile.css">
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -16,6 +17,8 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -221,24 +224,24 @@
                                 </div>
                                 <div class="admin-section-body">
                                     <div class="quick-actions">
-                                        <a href="profile-builder.html" class="quick-action-btn">
+                                        <a href="profile-builder.html?action=new-intern" class="quick-action-btn">
                                             <div class="quick-action-icon material-symbols-outlined"
-                                                style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
-                                                aria-hidden="true">edit</div>
+                                                style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                                aria-hidden="true">person_add</div>
                                             <div>
-                                                <div class="quick-action-label">Profile Builder</div>
-                                                <div class="quick-action-desc">Edit intern profiles & skills</div>
+                                                <div class="quick-action-label">Create Intern</div>
+                                                <div class="quick-action-desc">Add new intern profile</div>
                                             </div>
                                             <div class="quick-action-arrow material-symbols-outlined"
                                                 aria-hidden="true">chevron_right</div>
                                         </a>
-                                        <a href="students.html" class="quick-action-btn">
+                                        <a href="profile-builder.html?action=new-admin" class="quick-action-btn">
                                             <div class="quick-action-icon material-symbols-outlined"
-                                                style="background:rgba(34,211,238,.1); display: flex; align-items: center; justify-content: center;"
-                                                aria-hidden="true">school</div>
+                                                style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                                aria-hidden="true">admin_panel_settings</div>
                                             <div>
-                                                <div class="quick-action-label">Student Directory</div>
-                                                <div class="quick-action-desc">Browse all intern records</div>
+                                                <div class="quick-action-label">Create Admin</div>
+                                                <div class="quick-action-desc">Build admin account</div>
                                             </div>
                                             <div class="quick-action-arrow material-symbols-outlined"
                                                 aria-hidden="true">chevron_right</div>
@@ -311,7 +314,6 @@
 
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-    <script src="js/page-transition.js"></script>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>

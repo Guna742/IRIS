@@ -79,6 +79,16 @@
             });
         }
 
+        // Attach admin edit/delete actions (admins can manage all)
+        if (isAdmin) {
+            grid.querySelectorAll('[data-admin-delete]').forEach(btn => {
+                btn.addEventListener('click', () => handleDelete(btn.dataset.adminDelete, btn.dataset.title));
+            });
+            grid.querySelectorAll('[data-admin-edit]').forEach(btn => {
+                btn.addEventListener('click', () => openModal(btn.dataset.adminEdit));
+            });
+        }
+
         // Attach rating handlers for admins
         if (isAdmin) {
             grid.querySelectorAll('.star-rating .star').forEach(star => {
@@ -147,21 +157,30 @@
               <span class="material-symbols-outlined" style="font-size: 18px; color:var(--clr-danger)">delete</span>
             </button>
           </div>` : isAdmin ? `
-          <div class="card-rating-zone">
-            <span class="rating-label">Quality Rating:</span>
-            <div class="star-rating" data-id="${p.id}" role="group" aria-label="Project rating">
-                ${[1, 2, 3, 4, 5].map(v => `
-                    <span class="star ${p.rating >= v ? 'active' : ''}" 
-                          data-value="${v}" 
-                          role="button" 
-                          tabindex="0"
-                          aria-label="Rate ${v} stars"
-                          title="Rate ${v} star${v > 1 ? 's' : ''}">${p.rating >= v ? '★' : '☆'}</span>
-                `).join('')}
-                <span class="rating-value-hint">${p.rating ? `${p.rating}/5` : 'Not Rated'}</span>
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div class="card-rating-zone" style="flex:1">
+              <span class="rating-label">Quality Rating:</span>
+              <div class="star-rating" data-id="${p.id}" role="group" aria-label="Project rating">
+                  ${[1, 2, 3, 4, 5].map(v => `
+                      <span class="star ${p.rating >= v ? 'active' : ''}" 
+                            data-value="${v}" 
+                            role="button" 
+                            tabindex="0"
+                            aria-label="Rate ${v} stars"
+                            title="Rate ${v} star${v > 1 ? 's' : ''}">${p.rating >= v ? '★' : '☆'}</span>
+                  `).join('')}
+                  <span class="rating-value-hint">${p.rating ? `${p.rating}/5` : 'Not Rated'}</span>
+              </div>
             </div>
-          </div>
-          ` : p.rating ? `
+            <div style="display:flex; gap:4px; flex-shrink:0;">
+              <button class="btn btn-icon btn-sm" data-admin-edit="${p.id}" title="Edit / Reassign" aria-label="Edit ${p.title}">
+                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+              </button>
+              <button class="btn btn-icon btn-sm" data-admin-delete="${p.id}" data-title="${p.title}" title="Delete project" aria-label="Delete ${p.title}">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-danger)">delete</span>
+              </button>
+            </div>
+          </div>` : p.rating ? `
           <div class="card-rating-display">
             <div class="stars active">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
           </div>
@@ -209,6 +228,8 @@
     const projDesc = document.getElementById('proj-desc');
     const projGithub = document.getElementById('proj-github');
     const projLive = document.getElementById('proj-live');
+    const projOwnerGroup = document.getElementById('proj-owner-group');
+    const projOwnerSelect = document.getElementById('proj-owner');
     const stackInput = document.getElementById('proj-stack-input');
     const stackTagsList = document.getElementById('stack-tags-list');
     const screenshotFile = document.getElementById('proj-screenshot');
@@ -222,11 +243,25 @@
     let screenshotB64 = '';
     let editingId = null;
 
+    // If admin, populate the owner dropdown with all interns
+    if (isAdmin && projOwnerGroup) {
+        projOwnerGroup.style.display = 'flex';
+        const profiles = Storage.getProfiles();
+        const internList = Object.values(profiles);
+        if (projOwnerSelect) {
+            projOwnerSelect.innerHTML = '<option value="">Select Intern</option>' +
+                internList.map(p => `<option value="${p.userId}" data-name="${p.name || ''}">${
+                    p.name || p.userId
+                }</option>`).join('');
+        }
+    }
+
     function resetModal() {
         projTitle.value = '';
         projDesc.value = '';
         projGithub.value = '';
         projLive.value = '';
+        if (projOwnerSelect) projOwnerSelect.value = '';
         const linkTypeEl = document.getElementById('proj-link-type');
         if (linkTypeEl) {
             linkTypeEl.value = 'Live';
@@ -240,7 +275,8 @@
     }
 
     function openModal(editId = null) {
-        if (!isUser) { shakeNoPermission(); return; }
+        // Both admins and interns (users) can open the modal
+        if (!isAdmin && !isUser) { shakeNoPermission(); return; }
         resetModal();
 
         if (editId) {
@@ -265,6 +301,10 @@
                 document.getElementById('screenshot-placeholder').style.display = 'none';
             }
             projStatus.value = p.status || 'Ongoing';
+            // Pre-select owner if admin editing
+            if (isAdmin && projOwnerSelect && p.ownerId) {
+                projOwnerSelect.value = p.ownerId;
+            }
             modalTitle.textContent = 'Edit Project';
         } else {
             modalTitle.textContent = 'Add New Project';
@@ -355,6 +395,22 @@
         if (!title) { projTitle.focus(); projTitle.classList.add('anim-shake'); setTimeout(() => projTitle.classList.remove('anim-shake'), 600); showToast('Project title is required.', 'error'); return; }
         if (!desc) { projDesc.focus(); projDesc.classList.add('anim-shake'); setTimeout(() => projDesc.classList.remove('anim-shake'), 600); showToast('Description is required.', 'error'); return; }
 
+        // Determine owner: intern uses their own session; admin picks from dropdown
+        let ownerId, ownerName;
+        if (isUser) {
+            ownerId = session.userId;
+            ownerName = session.displayName || session.name || '';
+        } else if (isAdmin) {
+            ownerId = projOwnerSelect ? projOwnerSelect.value : '';
+            const selectedOption = projOwnerSelect ? projOwnerSelect.options[projOwnerSelect.selectedIndex] : null;
+            ownerName = selectedOption ? selectedOption.dataset.name : '';
+            if (!ownerId) {
+                showToast('Please select a student to assign this project to.', 'error');
+                projOwnerSelect && projOwnerSelect.focus();
+                return;
+            }
+        }
+
         const project = {
             id: editingId || null,
             title,
@@ -365,9 +421,9 @@
             liveLink: projLive.value.trim() || '',
             liveLinkType: document.getElementById('proj-link-type') ? document.getElementById('proj-link-type').value : 'Live',
             screenshot: screenshotB64 || '',
-            ownerId: isUser ? session.userId : null,
-            ownerName: isUser ? session.name : null,
-            createdAt: editingId ? Storage.getProjectById(editingId).createdAt : Date.now()
+            ownerId: ownerId || null,
+            ownerName: ownerName || null,
+            createdAt: editingId ? Storage.getProjectById(editingId)?.createdAt : Date.now()
         };
 
         const saved = Storage.saveProject(project);

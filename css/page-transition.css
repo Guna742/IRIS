@@ -1,0 +1,146 @@
+/* =============================================
+   I.R.I.S — Page Loader / Transition Overlay
+   ============================================= */
+
+/* ── Overlay ── */
+#iris-page-loader {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #0e0b1e 0%, #060912 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+
+#iris-page-loader.ipl-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#iris-page-loader.ipl-hiding {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease 0.1s;
+}
+
+/* ── Content box ── */
+.ipl-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    animation: ipl-slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes ipl-slide-up {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Logo ── */
+.ipl-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ipl-logo-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #8b5cf6;
+    padding: 2px;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    animation: ipl-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ipl-pulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(139, 92, 246, 0.5); }
+    50%       { box-shadow: 0 0 26px rgba(139, 92, 246, 0.9), 0 0 50px rgba(139, 92, 246, 0.3); }
+}
+
+.ipl-logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, #ddd6fe 0%, #8b5cf6 55%, #7c5cfc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+}
+
+/* ── Spinner ── */
+.ipl-spinner {
+    position: relative;
+    width: 48px;
+    height: 48px;
+}
+
+.ipl-arc {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #8b5cf6;
+    border-right-color: rgba(139, 92, 246, 0.4);
+    animation: ipl-spin 0.8s linear infinite;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+
+@keyframes ipl-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Page name label ── */
+.ipl-page-name {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: none;
+}
+
+.ipl-page-name.ipl-name-in {
+    animation: ipl-name-appear 0.5s ease 0.2s both;
+}
+
+@keyframes ipl-name-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Progress bar ── */
+.ipl-bar-wrap {
+    width: 160px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.ipl-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c5cfc, #8b5cf6, #a78bfa);
+    border-radius: 99px;
+    animation: ipl-bar-fill 0.85s ease-out 0.1s both;
+}
+
+@keyframes ipl-bar-fill {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+/* ── Page entry — NO body opacity trick, overlay handles it ── */

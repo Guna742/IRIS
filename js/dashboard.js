@@ -185,8 +185,8 @@
 
   // ── Quick Actions ──
   const ACTIONS_ADMIN = [
-    { label: 'Profile Builder', desc: 'Edit intern profile', href: 'profile-builder.html', icon: 'construction', color: 'rgba(79,124,255,.12)' },
-    { label: 'All Projects', desc: 'Browse showcase', href: 'projects.html', icon: 'folder_shared', color: 'rgba(168,85,247,.08)' },
+    { label: 'Create Intern', desc: 'Add new intern profile', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(79,124,255,.12)' },
+    { label: 'Create Admin', desc: 'Build admin account', href: 'profile-builder.html?action=new-admin', icon: 'admin_panel_settings', color: 'rgba(139,92,246,.12)' },
     { label: 'Intern Directory', desc: 'View intern details', href: 'students.html', icon: 'school', color: 'rgba(34,211,238,.1)' },
   ];
   const ACTIONS_USER = [

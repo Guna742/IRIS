@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — Student Analytics</title>
     <meta name="description" content="I.R.I.S student analytics: performance tracking and project metrics.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/student-analytics.css">
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -16,6 +17,8 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -91,7 +94,6 @@
 
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-    <script src="js/page-transition.js"></script>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>

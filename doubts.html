@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — The Wall</title>
     <meta name="description" content="Ask questions, share knowledge, and clear the wall with your fellow IRIS interns.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/doubts.css">
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="stylesheet" href="css/glowing-effect.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -160,7 +163,6 @@
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <!-- Scripts -->
-    <script src="js/page-transition.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>
     <script src="js/badge-engine.js"></script>

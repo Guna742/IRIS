@@ -7,6 +7,7 @@
     <title>I.R.I.S — Leaderboard</title>
     <meta name="description"
         content="I.R.I.S leaderboard: see top-performing interns ranked by overall score, demo projects, live projects, and rating.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/students.css">
     <link rel="stylesheet" href="css/leaderboard.css">
     <!-- Firebase CDN -->
@@ -18,6 +19,8 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -158,7 +161,6 @@
     <!-- Toast container -->
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-    <script src="js/page-transition.js"></script>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>

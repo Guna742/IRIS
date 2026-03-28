@@ -7,6 +7,7 @@
     <title>I.R.I.S — Interns</title>
     <meta name="description"
         content="I.R.I.S interns overview: view intern profiles, performance scores, and project contributions.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/students.css">
     <link rel="stylesheet" href="css/glowing-effect.css">
     <!-- Firebase CDN -->
@@ -18,6 +19,8 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -111,7 +114,7 @@
                         </div>
                     </div>
                     <div class="header-actions">
-                        <a href="profile-builder.html" id="add-student-btn" class="btn btn-primary btn-sm"
+                        <a href="profile-builder.html?action=new-intern" id="add-student-btn" class="btn btn-primary btn-sm"
                             aria-label="Add new intern profile">
                             <span class="material-symbols-outlined" style="font-size: 16px;">person_add</span>
                             Add Intern
@@ -131,7 +134,7 @@
     <!-- Toast container -->
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-    <script src="js/page-transition.js"></script>
+
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>

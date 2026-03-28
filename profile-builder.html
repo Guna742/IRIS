@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — Profile Builder</title>
     <meta name="description" content="I.R.I.S Admin: Build and manage intern portfolio profiles.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/profile-builder.css">
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -18,6 +19,8 @@
     <link rel="stylesheet" href="css/glowing-effect.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -297,7 +300,6 @@
         </div>
     </div>
 
-    <script src="js/page-transition.js"></script>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>

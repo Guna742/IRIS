@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — Projects</title>
     <meta name="description" content="I.R.I.S project portfolio showcase — browse and manage intern projects.">
+    <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/projects.css">
     <link rel="stylesheet" href="css/glowing-effect.css">
     <!-- Firebase CDN -->
@@ -17,6 +18,8 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
 </head>
 
 <body>
@@ -115,6 +118,14 @@
                 </button>
             </div>
             <div class="modal-body">
+                <div class="field-group" id="proj-owner-group" style="display:none">
+                    <label class="field-label" for="proj-owner">Student / Owner <span
+                            style="color:var(--clr-danger)">*</span></label>
+                    <select class="field-input" id="proj-owner">
+                        <option value="">Select Intern</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                </div>
                 <div class="field-group">
                     <label class="field-label" for="proj-title">Project Title <span
                             style="color:var(--clr-danger)">*</span></label>
@@ -198,7 +209,6 @@
 
     <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-    <script src="js/page-transition.js"></script>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>
