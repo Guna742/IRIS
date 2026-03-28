@@ -45,8 +45,10 @@
 
     // ── Multi-profile State ──
     let allProfiles = Storage.getProfiles();
-    // Support deep-link: profile-builder.html?student=userId
-    const urlStudentId = new URLSearchParams(window.location.search).get('student');
+    // Support deep-link: profile-builder.html?student=userId&action=new-intern|new-admin
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlStudentId = urlParams.get('student');
+    const urlAction = urlParams.get('action');
     let currentStudentId = (urlStudentId && allProfiles[urlStudentId])
         ? urlStudentId
         : (Object.keys(allProfiles)[0] || 'u_intern1');
@@ -146,40 +148,21 @@
 
         const confirmBtn = document.getElementById('admin-modal-confirm');
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Creating...';
+        confirmBtn.innerHTML = '<span class="material-symbols-outlined anim-spin" style="font-size:16px;vertical-align:middle;margin-right:4px">sync</span> Creating...';
 
         try {
-            // Create Firebase Auth account using a secondary app instance to avoid signing out current admin
-            const secondaryApp = firebase.initializeApp(firebase.app().options, 'AdminCreation_' + Date.now());
-            const secAuth = secondaryApp.auth();
-            const cred = await secAuth.createUserWithEmailAndPassword(email, password);
-            const newUid = cred.user.uid;
-            await secAuth.signOut();
-            secondaryApp.delete();
-
-            // Save admin profile to Firestore users collection
-            const adminData = {
-                userId:    newUid,
-                name:      name,
-                email:     email,
-                role:      'admin',
-                roleTitle: roleTitle,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                createdBy: session.userId
-            };
-            await fbDb.collection('users').doc(newUid).set(adminData);
-
-            // Save locally for immediate UI use
-            if (Storage.saveAdminProfile) {
-                Storage.saveAdminProfile(newUid, { ...adminData, createdAt: Date.now() });
+            // Use the new Storage method which handles permissions and dual-collection sync
+            const result = await Storage.createAdminAccount({ name, email, roleTitle }, password);
+            
+            if (result.success) {
+                closeAdminModal();
+                showToast(`Admin account created for ${name}! ✅`, 'success');
+            } else {
+                throw new Error(result.error);
             }
-
-            closeAdminModal();
-            showToast(`Admin account created for ${name}! ✅`, 'success');
-
         } catch (err) {
             console.error('[AddAdmin] Error:', err);
-            showToast('Error: ' + (err.message || 'Could not create admin account.'), 'error');
+            showToast('Permission Error: ' + (err.message || 'Could not create admin.'), 'error');
         } finally {
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">person_add</span> Create Admin';
@@ -420,5 +403,13 @@
             });
         }
     }
+    // ── Auto-trigger Actions from URL ──
+    setTimeout(() => {
+        if (urlAction === 'new-intern') {
+            if (addStudentBtn) addStudentBtn.click();
+        } else if (urlAction === 'new-admin') {
+            if (openAdminModal) openAdminModal();
+        }
+    }, 500);
 
 })();

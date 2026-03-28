@@ -27,14 +27,15 @@ const AdminPopup = (() => {
         });
 
         const adminCapabilities = [
-            { icon: 'edit', label: 'Profile Builder', desc: 'Create & edit intern profiles' },
-            { icon: 'school', label: 'Student Management', desc: 'View all intern details' },
-            { icon: 'folder_shared', label: 'Project Oversight', desc: 'Monitor all project submissions' },
+            { icon: 'person_add', label: 'Create Intern', desc: 'Add a new intern profile', href: 'profile-builder.html?action=new-intern' },
+            { icon: 'admin_panel_settings', label: 'Create Admin', desc: 'Create new admin account', href: 'profile-builder.html?action=new-admin' },
+            { icon: 'school', label: 'Student Management', desc: 'View all intern details', href: 'students.html' },
+            { icon: 'folder_shared', label: 'Project Oversight', desc: 'Monitor submissons', href: 'projects.html' },
         ];
 
         const internCapabilities = [
-            { icon: 'person', label: 'My Profile', desc: 'View your own portfolio' },
-            { icon: 'folder', label: 'Projects', desc: 'Submit & manage your projects' },
+            { icon: 'person', label: 'My Profile', desc: 'View your own portfolio', href: 'student-profile.html' },
+            { icon: 'folder', label: 'Projects', desc: 'Manage your projects', href: 'projects.html' },
         ];
 
         const caps = isAdmin ? adminCapabilities : internCapabilities;
@@ -46,17 +47,19 @@ const AdminPopup = (() => {
             <div class="apop-identity">
                 <div class="apop-name">${currentName}</div>
                 <div class="apop-email">${session.email}</div>
-                <span class="apop-badge ${isAdmin ? 'apop-badge-admin' : 'apop-badge-user'}">
-                    <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">${isAdmin ? 'shield' : 'school'}</span>
-                    ${isAdmin ? 'Administrator' : 'Intern'}
-                </span>
+                <div style="display:flex; gap:4px; align-items:center; margin-top:2px;">
+                    <span class="apop-badge ${isAdmin ? 'apop-badge-admin' : 'apop-badge-user'}">
+                        <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">${isAdmin ? 'shield' : 'school'}</span>
+                        ${isAdmin ? 'Administrator' : 'Intern'}
+                    </span>
+                </div>
             </div>
         </div>
         <div class="apop-divider"></div>
-        <div class="apop-section-label">Permissions</div>
+        <div class="apop-section-label">Quick Actions</div>
         <ul class="apop-caps">
             ${caps.map(c => `
-            <li class="apop-cap-item">
+            <li class="apop-cap-item" ${c.href ? `onclick="window.location.href='${c.href}'"` : ''} style="${c.href ? 'cursor:pointer' : ''}">
                 <span class="apop-cap-icon material-symbols-outlined" aria-hidden="true">${c.icon}</span>
                 <div>
                     <div class="apop-cap-label">${c.label}</div>

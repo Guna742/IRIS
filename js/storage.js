@@ -482,6 +482,52 @@ const Storage = (() => {
     }
 
     /**
+     * Create Admin Firebase Auth account and initial Firestore profile.
+     * Writes to both 'users' and 'admins' collections.
+     */
+    async function createAdminAccount(data, password) {
+        const { email, name, roleTitle } = data;
+        const tempAppName = 'admin_creation_' + Date.now();
+        let tempApp;
+        try {
+            tempApp = firebase.initializeApp(firebaseConfig, tempAppName);
+            const tempAuth = tempApp.auth();
+            const cred = await tempAuth.createUserWithEmailAndPassword(email.toLowerCase().trim(), password);
+            const userId = cred.user.uid;
+
+            const adminProfile = {
+                userId,
+                name,
+                email: email.toLowerCase().trim(),
+                role: 'admin',
+                roleTitle: roleTitle || 'Administrator',
+                createdAt: Date.now()
+            };
+
+            // Write to BOTH collections for consistency
+            const tempDb = tempApp.firestore();
+            const clean = _sanitizeData(adminProfile);
+
+            // 1. users collection (for general lookup)
+            await tempDb.collection('users').doc(userId).set(clean);
+            // 2. admins collection (for secure/extended lookup)
+            await tempDb.collection('admins').doc(userId).set(clean);
+
+            console.log('[Storage] Admin created in both users/admins collections.');
+
+            // Save locally
+            saveAdminProfile(userId, adminProfile);
+
+            return { success: true, userId };
+        } catch (err) {
+            console.error('[Storage] Admin creation error:', err);
+            return { success: false, error: err.message };
+        } finally {
+            if (tempApp) await tempApp.delete();
+        }
+    }
+
+    /**
      * Pulls all core collections from Firestore into localStorage.
      * Prevents redundant fetches by checking FETCH_COOLDOWN.
      */
@@ -556,6 +602,7 @@ const Storage = (() => {
         saveActivityReportToFirebase,
         saveProfileToFirebase,   // legacy alias
         createInternAccount,
+        createAdminAccount,
         testFirestore,
         fetchEverything,
         syncAllUsers,
