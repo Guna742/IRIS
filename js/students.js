@@ -117,47 +117,9 @@
   studentsCountEl.textContent = `${profileList.length} intern${profileList.length !== 1 ? 's' : ''}`;
 
   // ── Helpers ──
-  function computeScore(profile) {
-    let score = 50;
-    if (profile.skills && profile.skills.length) score += Math.min(profile.skills.length * 3, 20);
-    if (profile.bio && profile.bio.length > 40) score += 10;
-    if (profile.internship && profile.internship.company) score += 10;
-    if (profile.avatar) score += 5;
-    if (profile.socialLinks) {
-      if (profile.socialLinks.github) score += 2;
-      if (profile.socialLinks.linkedin) score += 3;
-    }
-    return Math.min(score, 100);
-  }
-
-  function computeRating(score) {
-    return (score / 20).toFixed(1);
-  }
-
-  function renderStars(rating) {
-    const full = Math.floor(rating);
-    const hasHalf = rating - full >= 0.3 && rating - full < 0.8;
-    const empty = 5 - full - (hasHalf ? 1 : 0);
-    return [
-      ...Array(full).fill('<span class="star filled">★</span>'),
-      ...(hasHalf ? ['<span class="star half">★</span>'] : []),
-      ...Array(empty).fill('<span class="star empty">☆</span>'),
-    ].join('');
-  }
-
   function getProjectsForStudent(profile) {
     if (!profile || !profile.userId) return [];
     return allProjects.filter(p => String(p.ownerId) === String(profile.userId));
-  }
-
-  function getProgress(profile) {
-    let filled = 0;
-    const fields = ['name', 'email', 'tagline', 'bio', 'location', 'avatar'];
-    fields.forEach(f => { if (profile[f]) filled++; });
-    if (profile.skills && profile.skills.length > 0) filled++;
-    if (profile.internship && profile.internship.company) filled++;
-    if (profile.socialLinks && (profile.socialLinks.github || profile.socialLinks.linkedin)) filled++;
-    return Math.round((filled / (fields.length + 3)) * 100);
   }
 
   // ── Render cards ──
@@ -179,10 +141,19 @@
     }
   }
 
+  function renderStars(rating) {
+    const full = Math.floor(rating);
+    const hasHalf = (rating - full) >= 0.3 && (rating - full) < 0.8;
+    const empty = Math.max(0, 5 - full - (hasHalf ? 1 : 0));
+    return [
+      ...Array(full).fill('<span class="star">★</span>'),
+      ...(hasHalf ? ['<span class="star half">★</span>'] : []),
+      ...Array(empty).fill('<span class="star empty">★</span>'),
+    ].join('');
+  }
+
   function buildStudentCardHTML(profile, i) {
-    const score = computeScore(profile);
-    const rating = computeRating(score);
-    const progress = getProgress(profile);
+    const { completion: progress, score, rating } = Storage.getProfileMetrics(profile);
     const projects = getProjectsForStudent(profile);
     const scoreDeg = Math.round((score / 100) * 360);
     const initial = (profile.name || profile.userId || '?')[0].toUpperCase();

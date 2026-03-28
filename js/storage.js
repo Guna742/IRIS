@@ -263,16 +263,68 @@ const Storage = (() => {
         } catch (e) { console.error('Failed to save admin profile', e); }
     }
 
+    /**
+     * Calculate profile completion percentage (0-100)
+     */
+    function getCompletionStatus(profile) {
+        if (!profile) return 0;
+        let filled = 0;
+        const coreFields = ['name', 'email', 'tagline', 'bio', 'location', 'avatar'];
+        coreFields.forEach(f => { if (profile[f]) filled++; });
+        
+        // Complex fields
+        if (profile.skills && profile.skills.length > 0) filled++;
+        if (profile.internship && profile.internship.company) filled++;
+        if (profile.socialLinks && (profile.socialLinks.github || profile.socialLinks.linkedin)) filled++;
+        
+        const totalFields = coreFields.length + 3; // 9 fields
+        return Math.round((filled / totalFields) * 100);
+    }
+
     /** Centralized scoring logic (shared across leaderboard/profile/analytics) */
     function computeInternScore(p) {
         if (!p || !p.userId) return 0;
         const projects = getProjects().filter(proj => String(proj.ownerId) === String(p.userId));
         const ratedProjects = projects.filter(proj => proj.rating);
-        if (ratedProjects.length === 0) return 0;
+        
+        // Base score if no projects are rated, but profile is filled
+        if (ratedProjects.length === 0) {
+            return Math.min(Math.round(getCompletionStatus(p) / 2.5), 30); // Max 30% for full profile but no work
+        }
 
         const totalRating = ratedProjects.reduce((sum, proj) => sum + proj.rating, 0);
         const avg = totalRating / ratedProjects.length;
-        return Math.round((avg / 5) * 100);
+        
+        // Combine average rating (70% weight) and completion (30% weight)
+        const ratingScore = (avg / 5) * 100;
+        const completionScore = getCompletionStatus(p);
+        
+        return Math.round((ratingScore * 0.7) + (completionScore * 0.3));
+    }
+
+    /** Compute all metrics for a profile */
+    function getProfileMetrics(profile) {
+        if (!profile) return { completion: 0, score: 0, rating: 0 };
+        
+        // Prefer stored metrics from database
+        if (profile.metrics) {
+            return {
+                completion: profile.metrics.completion || 0,
+                score: profile.metrics.score || 0,
+                rating: profile.metrics.rating || 0
+            };
+        }
+        
+        const completion = getCompletionStatus(profile);
+        const score = computeInternScore(profile);
+        
+        const projects = getProjects().filter(proj => String(proj.ownerId) === String(profile.userId));
+        const ratedProjects = projects.filter(proj => proj.rating);
+        const avgRating = ratedProjects.length > 0 
+            ? (ratedProjects.reduce((s, p) => s + p.rating, 0) / ratedProjects.length).toFixed(1)
+            : "0.0";
+            
+        return { completion, score, rating: parseFloat(avgRating) };
     }
 
     /** Calculate rank for a specific intern based on overall score */
@@ -342,15 +394,19 @@ const Storage = (() => {
     async function syncInternProfile(internId, data) {
         if (!internId || !data) return;
         try {
+            // Compute metrics for database storage
+            const metrics = getProfileMetrics(data);
+            
             const clean = _sanitizeData({ ...data });
             delete clean.password;
             delete clean._isNew;
             delete clean._isSkeleton;
             await fbDb.collection('users').doc(internId).set({
                 ...clean,
+                metrics: metrics, // Store calculated metrics for easy fetching
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
-            console.log(`[Storage] Intern profile synced: ${internId}`);
+            console.log(`[Storage] Intern profile synced with metrics: ${internId}`);
         } catch (err) {
             console.error('[Storage] syncInternProfile error:', err);
             throw err;
@@ -449,11 +505,11 @@ const Storage = (() => {
             delete finalProfile._isNew;
 
             // 4. Write to users/{userId} using the CURRENT ADMIN context (fbDb)
-            // newly created users on tempApp don't have permission to initialize their own profiles yet
-            const cleanedForDb = _sanitizeData(finalProfile);
+            const metrics = getProfileMetrics(finalProfile);
+            const cleanedForDb = _sanitizeData({ ...finalProfile, metrics });
             delete cleanedForDb.password;
             await fbDb.collection('users').doc(userId).set(cleanedForDb, { merge: true });
-            console.log('[Storage] Intern user doc created via Admin context.');
+            console.log('[Storage] Intern user doc created with metrics.');
 
             // 5. Write credential record to admins/{adminId}/interns/{internId}
             const adminSession = Auth.getSession();
@@ -505,8 +561,8 @@ const Storage = (() => {
             };
 
             // Write to BOTH collections for consistency using CURRENT ADMIN context (fbDb)
-            // Note: tempDb context fails because the NEW admin is not authorized until the record is created.
-            const clean = _sanitizeData(adminProfile);
+            const metrics = getProfileMetrics(adminProfile);
+            const clean = _sanitizeData({ ...adminProfile, metrics });
             delete clean.password;
 
             // 1. users collection (for general lookup)
@@ -514,7 +570,7 @@ const Storage = (() => {
             // 2. admins collection (for secure/extended lookup)
             await fbDb.collection('admins').doc(userId).set(clean, { merge: true });
 
-            console.log('[Storage] Admin created via active Admin context.');
+            console.log('[Storage] Admin created with metrics.');
 
             // Save locally
             saveAdminProfile(userId, adminProfile);
@@ -586,6 +642,8 @@ const Storage = (() => {
         getAdminProfile,
         saveAdminProfile,
         computeInternScore,
+        getCompletionStatus,
+        getProfileMetrics,
         getInternRank,
         getHourlyReports,
         saveHourlyReport,
