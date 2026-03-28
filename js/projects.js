@@ -10,17 +10,61 @@
     const session = Auth.requireAuth();
     if (!session) return;
 
+    // ── Initial Fetch & Sync ──
+    // ── Real-Time Cloud Watcher (No more polling!) ──
+    const syncPill = document.getElementById('project-count-label');
+    if (typeof Storage !== 'undefined' && Storage.watchProjects) {
+        Storage.watchProjects((liveProjects) => {
+            console.log('[Projects] LIVE SYNC: Got ' + liveProjects.length + ' projects.');
+            if (syncPill) {
+                syncPill.innerHTML = `${liveProjects.length} project${liveProjects.length !== 1 ? 's' : ''} in cloud portfolio 
+                    <span style="font-size:10px; color:var(--clr-success); margin-left:8px">• Live Connection Active</span>`;
+            }
+            renderProjects();
+        });
+    }
+
+    // Still sync other data once (users, sessions etc)
     if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
         Storage.fetchEverything();
     }
 
-    const isAdmin = session.role === 'admin';
-    const isUser = session.role === 'user';
-    
-    if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
-        Storage.fetchEverything();
+    const pushBtn = document.getElementById('push-cloud-btn');
+    if (pushBtn) {
+        pushBtn.addEventListener('click', () => {
+            if (!(isUser)) return;
+            const myProjects = Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(session.userId));
+            if (myProjects.length === 0) { showToast('No projects to push.', 'info'); return; }
+            
+            showToast(`Syncing ${myProjects.length} projects...`, 'info');
+            Promise.all(myProjects.map(p => {
+                // Minor compat fix on fly
+                p.userId = p.userId || p.ownerId;
+                return Storage.syncProject(p);
+            }))
+            .then(() => showToast('All projects synced correctly!', 'success'))
+            .catch(err => showToast('Some projects failed to push.', 'error'));
+        });
+    }
+
+    // Manual Refresh button
+    const syncBtn = document.getElementById('sync-now-btn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            syncBtn.classList.add('anim-spin');
+            Storage.fetchEverything(true).then(() => {
+                setTimeout(() => {
+                    syncBtn.classList.remove('anim-spin');
+                    showToast('Cloud sync complete!', 'success');
+                    renderProjects();
+                }, 800);
+            });
+        });
     }
     
+    const isAdmin = session.role === 'admin';
+    const isUser = session.role === 'user';
+
     SidebarEngine.init();
 
     // ── Topbar ──
@@ -34,6 +78,7 @@
     if (isUser) {
         document.getElementById('fab-btn').style.display = 'flex';
         document.getElementById('add-btn-top').style.display = 'flex';
+        document.getElementById('push-cloud-btn').style.display = 'flex';
         document.getElementById('no-permission-tip').style.display = 'none';
     } else if (isAdmin) {
         document.getElementById('fab-btn').style.display = 'none';
@@ -108,10 +153,11 @@
             : '';
 
         // Resolve owner name: stored on project, or look up from profiles
-        let ownerName = p.ownerName || '';
-        if (!ownerName && p.ownerId) {
-            const ownerProfile = Storage.getProfile(p.ownerId);
-            ownerName = ownerProfile ? ownerProfile.name : '';
+        let userName = p.userName || p.ownerName || '';
+        const userId = p.userId || p.ownerId;
+        if (!userName && userId) {
+            const ownerProfile = Storage.getProfile(userId);
+            userName = ownerProfile ? ownerProfile.name : '';
         }
 
         return `
@@ -187,9 +233,9 @@
           ` : ''}
         </div>
         <!-- Student owner name -->
-        <div class="card-owner" aria-label="Project by ${ownerName || 'Unknown'}">
+        <div class="card-owner" aria-label="Project by ${userName || 'Unknown'}">
           <span class="card-owner-icon" aria-hidden="true"><span class="material-symbols-outlined" style="font-size: 14px;">person</span></span>
-          <span class="card-owner-name">${ownerName || 'Unassigned'}</span>
+          <span class="card-owner-name">${userName || 'Unassigned'}</span>
         </div>
       </article>`;
     }
@@ -199,6 +245,7 @@
         const p = Storage.getProjectById(id);
         if (!p) return;
         p.rating = rating;
+        p.userId = p.userId || p.ownerId; // Compat
         const updated = Storage.saveProject(p);
         // Sync rating to Firestore
         if (Storage.syncProject) Storage.syncProject(updated || p);
@@ -359,13 +406,34 @@
     // ── Screenshot ──
     function setScreenshot(file) {
         if (!file) return;
-        if (file.size > 3 * 1024 * 1024) { showToast('Image too large. Max 3MB.', 'error'); return; }
+        
+        // Use a Canvas to downscale image if it's large (Firestore 1MB limit friendly)
         const reader = new FileReader();
         reader.onload = ev => {
-            screenshotB64 = ev.target.result;
-            screenshotImg.src = screenshotB64;
-            screenshotPrev.style.display = 'block';
-            document.getElementById('screenshot-placeholder').style.display = 'none';
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Compress quality to 70% to stay super low size
+                screenshotB64 = canvas.toDataURL('image/jpeg', 0.7);
+                screenshotImg.src = screenshotB64;
+                screenshotPrev.style.display = 'block';
+                document.getElementById('screenshot-placeholder').style.display = 'none';
+            };
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     }
@@ -396,15 +464,15 @@
         if (!desc) { projDesc.focus(); projDesc.classList.add('anim-shake'); setTimeout(() => projDesc.classList.remove('anim-shake'), 600); showToast('Description is required.', 'error'); return; }
 
         // Determine owner: intern uses their own session; admin picks from dropdown
-        let ownerId, ownerName;
+        let userId, userName;
         if (isUser) {
-            ownerId = session.userId;
-            ownerName = session.displayName || session.name || '';
+            userId = session.userId;
+            userName = session.displayName || session.name || '';
         } else if (isAdmin) {
-            ownerId = projOwnerSelect ? projOwnerSelect.value : '';
+            userId = projOwnerSelect ? projOwnerSelect.value : '';
             const selectedOption = projOwnerSelect ? projOwnerSelect.options[projOwnerSelect.selectedIndex] : null;
-            ownerName = selectedOption ? selectedOption.dataset.name : '';
-            if (!ownerId) {
+            userName = selectedOption ? selectedOption.dataset.name : '';
+            if (!userId) {
                 showToast('Please select a student to assign this project to.', 'error');
                 projOwnerSelect && projOwnerSelect.focus();
                 return;
@@ -421,17 +489,30 @@
             liveLink: projLive.value.trim() || '',
             liveLinkType: document.getElementById('proj-link-type') ? document.getElementById('proj-link-type').value : 'Live',
             screenshot: screenshotB64 || '',
-            ownerId: ownerId || null,
-            ownerName: ownerName || null,
+            userId: userId || null,
+            userName: userName || null,
             createdAt: editingId ? Storage.getProjectById(editingId)?.createdAt : Date.now()
         };
 
         const saved = Storage.saveProject(project);
-        // Sync project to Firestore
-        if (Storage.syncProject) Storage.syncProject(saved || project);
-        closeModal();
-        renderProjects();
-        showToast(editingId ? 'Project updated!' : 'Project added!', 'success');
+        
+        // Final Sync to Cloud with Explicit Feedback
+        showToast('Syncing to Cloud...', 'info');
+        if (Storage.syncProject) {
+            Storage.syncProject(saved || project)
+                .then(() => {
+                    showToast(editingId ? 'Project updated in Cloud!' : 'Project posted to Cloud!', 'success');
+                    closeModal();
+                    renderProjects();
+                })
+                .catch(err => {
+                    console.error('[Projects] Sync failed:', err);
+                    showToast('Failed to sync with Database. Check Rules/Size.', 'error');
+                });
+        } else {
+            closeModal();
+            renderProjects();
+        }
     });
 
     // ── Modal events ──

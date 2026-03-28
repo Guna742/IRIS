@@ -10,7 +10,7 @@ const Storage = (() => {
     const PROJECTS_KEY = 'interntrack_projects';
     const REPORTS_KEY = 'interntrack_hourly_reports';
     const SYNC_KEY    = 'interntrack_last_sync';
-    const FETCH_COOLDOWN = 1000 * 60 * 5; // 5 minutes cache
+    const FETCH_COOLDOWN = 1000 * 30; // 30 seconds cache (snappy sync)
 
 
     // ── Default seed data (loaded on first run) ──
@@ -284,7 +284,7 @@ const Storage = (() => {
     /** Centralized scoring logic (shared across leaderboard/profile/analytics) */
     function computeInternScore(p) {
         if (!p || !p.userId) return 0;
-        const projects = getProjects().filter(proj => String(proj.ownerId) === String(p.userId));
+        const projects = getProjects().filter(proj => String(proj.userId || proj.ownerId) === String(p.userId));
         const ratedProjects = projects.filter(proj => proj.rating);
         
         // Base score if no projects are rated, but profile is filled
@@ -318,7 +318,7 @@ const Storage = (() => {
         const completion = getCompletionStatus(profile);
         const score = computeInternScore(profile);
         
-        const projects = getProjects().filter(proj => String(proj.ownerId) === String(profile.userId));
+        const projects = getProjects().filter(proj => String(proj.userId || proj.ownerId) === String(profile.userId));
         const ratedProjects = projects.filter(proj => proj.rating);
         const avgRating = ratedProjects.length > 0 
             ? (ratedProjects.reduce((s, p) => s + p.rating, 0) / ratedProjects.length).toFixed(1)
@@ -437,9 +437,12 @@ const Storage = (() => {
                 ...clean,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
-            console.log(`[Storage] Project synced: ${project.id}`);
+            console.log(`[Storage] Project synced successfully: ${project.id}`);
+            return { success: true };
         } catch (err) {
-            console.error('[Storage] syncProject error:', err);
+            console.error('[Storage] syncProject CRITICAL ERROR:', err);
+            // Throw so the caller (UI) can show a toast
+            throw err;
         }
     }
 
@@ -588,25 +591,40 @@ const Storage = (() => {
      * Pulls all core collections from Firestore into localStorage.
      * Prevents redundant fetches by checking FETCH_COOLDOWN.
      */
+    /**
+     * Pulls all core collections from Firestore and starts real-time listeners.
+     * This keeps Dashboard, Leaderboard, and Projects in sync globally.
+     */
     async function fetchEverything(force = false) {
-        const lastSync = localStorage.getItem(SYNC_KEY);
-        const now = Date.now();
+        // Start listeners once per session
+        if (window._iris_sync_active) return;
+        window._iris_sync_active = true;
 
-        if (!force && lastSync && (now - lastSync < FETCH_COOLDOWN)) {
-            console.log('[Storage] Skipping sync, cache is still fresh.');
-            return;
-        }
-
-        console.log('[Storage] Starting global sync from Firestore...');
+        console.log('[Storage] Connecting real-time cloud streams...');
         try {
-            await Promise.all([
-                syncAllUsers(),
-                syncAllProjects()
-            ]);
-            localStorage.setItem(SYNC_KEY, now.toString());
-            console.log('[Storage] Global sync complete.');
+            // Projects Listener
+            fbDb.collection('projects').onSnapshot(snap => {
+                console.log('[Storage] LIVE PROJECTS: ' + snap.size);
+                const projects = [];
+                snap.forEach(doc => projects.push({ ...doc.data(), id: doc.id }));
+                localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+                // Dispatch event for UI re-renderers
+                window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'projects', count: snap.size } }));
+            }, e => console.warn('[Storage] Projects stream error:', e));
+
+            // Users/Profiles Listener (for Leaderboard/Interns list)
+            fbDb.collection('users').onSnapshot(snap => {
+                console.log('[Storage] LIVE USERS: ' + snap.size);
+                const profiles = getProfiles();
+                snap.forEach(doc => {
+                    profiles[doc.id] = { ...doc.data(), userId: doc.id };
+                });
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+                window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'users', count: snap.size } }));
+            }, e => console.warn('[Storage] Users stream error:', e));
+
         } catch (err) {
-            console.error('[Storage] Global sync failed:', err);
+            console.error('[Storage] sync-init high-level error:', err);
         }
     }
 
@@ -626,6 +644,29 @@ const Storage = (() => {
             projects.push({ ...doc.data(), id: doc.id });
         });
         localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+    }
+
+    /**
+     * Real-time listener for the projects collection.
+     * Triggers callback whenever any project is added/updated/deleted.
+     */
+    function watchProjects(callback) {
+        if (typeof fbDb === 'undefined' || !fbDb) {
+            console.warn('[Storage] fbDb not found, fallback to local only.');
+            return null;
+        }
+        return fbDb.collection('projects').onSnapshot(snap => {
+            console.log('[Storage] Projects fetched from Cloud:', snap.size);
+            const projects = [];
+            snap.forEach(doc => {
+                projects.push({ ...doc.data(), id: doc.id });
+            });
+            // Auto-update cache the moment database changes
+            localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+            if (callback) callback(projects);
+        }, err => {
+            console.error('[Storage] watchProjects live sync error:', err);
+        });
     }
 
 
@@ -665,7 +706,8 @@ const Storage = (() => {
         testFirestore,
         fetchEverything,
         syncAllUsers,
-        syncAllProjects
+        syncAllProjects,
+        watchProjects
     };
 
 })();

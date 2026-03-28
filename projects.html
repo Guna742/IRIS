@@ -78,7 +78,15 @@
             <div class="container">
                 <div class="projects-header anim-fadeInDown">
                     <div class="page-header" style="margin-bottom:0">
-                        <h1 class="page-title">Project Showcase</h1>
+                        <div style="display:flex; align-items:center; gap:var(--sp-3)">
+                            <h1 class="page-title">Project Showcase</h1>
+                            <button class="btn btn-icon btn-sm" id="sync-now-btn" title="Sync from cloud" aria-label="Sync from cloud">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">sync</span>
+                            </button>
+                            <button class="btn btn-icon btn-sm" id="push-cloud-btn" title="Push all to cloud" style="display:none" aria-label="Push all to cloud">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color:var(--clr-accent)">cloud_upload</span>
+                            </button>
+                        </div>
                         <p class="page-subtitle" id="project-count-label">Loading projects...</p>
                     </div>
                     <!-- Admin desktop Add button (alternative to FAB) -->
