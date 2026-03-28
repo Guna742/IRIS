@@ -448,12 +448,12 @@ const Storage = (() => {
             };
             delete finalProfile._isNew;
 
-            // 4. Write to users/{userId} using temp app (intern context)
-            const tempDb = tempApp.firestore();
+            // 4. Write to users/{userId} using the CURRENT ADMIN context (fbDb)
+            // newly created users on tempApp don't have permission to initialize their own profiles yet
             const cleanedForDb = _sanitizeData(finalProfile);
             delete cleanedForDb.password;
-            await tempDb.collection('users').doc(userId).set(cleanedForDb);
-            console.log('[Storage] Intern user doc created in Firestore.');
+            await fbDb.collection('users').doc(userId).set(cleanedForDb, { merge: true });
+            console.log('[Storage] Intern user doc created via Admin context.');
 
             // 5. Write credential record to admins/{adminId}/interns/{internId}
             const adminSession = Auth.getSession();
@@ -504,16 +504,17 @@ const Storage = (() => {
                 createdAt: Date.now()
             };
 
-            // Write to BOTH collections for consistency
-            const tempDb = tempApp.firestore();
+            // Write to BOTH collections for consistency using CURRENT ADMIN context (fbDb)
+            // Note: tempDb context fails because the NEW admin is not authorized until the record is created.
             const clean = _sanitizeData(adminProfile);
+            delete clean.password;
 
             // 1. users collection (for general lookup)
-            await tempDb.collection('users').doc(userId).set(clean);
+            await fbDb.collection('users').doc(userId).set(clean, { merge: true });
             // 2. admins collection (for secure/extended lookup)
-            await tempDb.collection('admins').doc(userId).set(clean);
+            await fbDb.collection('admins').doc(userId).set(clean, { merge: true });
 
-            console.log('[Storage] Admin created in both users/admins collections.');
+            console.log('[Storage] Admin created via active Admin context.');
 
             // Save locally
             saveAdminProfile(userId, adminProfile);
