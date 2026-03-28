@@ -6,13 +6,13 @@
 
 'use strict';
 
-(() => {
+(async () => {
     // ── Auth Guard (admin or intern) ──
     const session = Auth.requireAuth(['admin', 'user']);
     if (!session) return;
 
     if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
-        Storage.fetchEverything();
+        await Storage.fetchEverything();
     }
 
     const isAdmin = session.role === 'admin';
@@ -73,17 +73,24 @@
         outputEl.innerHTML = buildDashHTML(profile, myProjects || []);
 
             // Post-render: animate stats + charts
-            setTimeout(() => {
+            const runRefresh = () => {
                 try { animateCounters(); } catch (e) { console.warn('Counter animation failed', e); }
                 try {
                     refreshCharts();
                 } catch (e) { console.warn('Charts failed', e); }
                 try { renderBarChart(profile.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
-    
+            };
+
+            // Phase 1: Immediate-ish
+            setTimeout(() => {
+                runRefresh();
                 // Critical: Always reveal content
                 initReveal();
                 setupDetailHandlers();
             }, 300);
+
+            // Phase 2: Secondary pulse to catch async data updates
+            setTimeout(runRefresh, 2000);
     } catch (err) {
         console.error('Analytics render failed', err);
         showError('Encountered an error while rendering your dashboard. Please check your profile data.');

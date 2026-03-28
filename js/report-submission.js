@@ -38,8 +38,14 @@
     const demoBtn = document.getElementById('download-demo-pdf-btn');
 
     // ── Initialize ──
-    function init() {
+    async function init() {
         SidebarEngine.init();
+        
+        // Critical: Wait for data sync before rendering charts
+        if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
+            await Storage.fetchEverything();
+        }
+
         updateUI();
         initReveal();
         setInterval(updateUI, 30000); // Check every 30s
@@ -51,6 +57,9 @@
         
         // Initialize Chart
         setTimeout(() => refreshAnalyticsChart(), 500);
+        
+        // Secondary pulse for late data
+        setTimeout(() => refreshAnalyticsChart(), 2000);
 
         if (hamburgerBtn) {
             hamburgerBtn.addEventListener('click', () => {
