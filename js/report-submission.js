@@ -503,39 +503,46 @@
     }
 
     function renderSVGChart(wrap, data, labels) {
-        const W = wrap.clientWidth || 400;
+        const rect = wrap.getBoundingClientRect();
+        const W = rect.width || 400;
         const H = 200;
-        const pad = { top: 20, right: 10, bottom: 20, left: 30 };
+        
+        if (W === 0 || H === 0) {
+            setTimeout(() => renderSVGChart(wrap, data, labels), 100);
+            return;
+        }
+
+        const pad = { top: 20, right: 20, bottom: 30, left: 40 };
         const cW = W - pad.left - pad.right;
         const cH = H - pad.top - pad.bottom;
 
-        const xScale = (i) => pad.left + (i / (data.length - 1)) * cW;
+        // Ensure data.length is at least 2 for scaling
+        const displayData = data.length >= 2 ? data : (data.length === 1 ? [data[0], data[0]] : [0, 0]);
+        const displayLabels = labels.length >= 2 ? labels : (labels.length === 1 ? [labels[0], labels[0]] : ['—', '—']);
+
+        const xScale = (i) => pad.left + (i / (displayData.length - 1)) * cW;
         const yScale = (v) => pad.top + cH - (v / 100) * cH;
 
-        const pathD = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(v)}`).join(' ');
-        const areaD = `${pathD} L ${xScale(data.length - 1)} ${pad.top + cH} L ${pad.left} ${pad.top + cH} Z`;
+        const pathD = displayData.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(v).toFixed(1)}`).join(' ');
+        const areaD = `${pathD} L ${xScale(displayData.length - 1).toFixed(1)} ${(pad.top + cH).toFixed(1)} L ${pad.left.toFixed(1)} ${(pad.top + cH).toFixed(1)} Z`;
 
         wrap.innerHTML = `
-            <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%; border-radius:12px; background:rgba(0,0,0,0.05)">
+            <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100% text-shadow: none;">
                 <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+                        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.2"/>
                         <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
                     </linearGradient>
                 </defs>
-                <!-- Grid -->
-                <line x1="${pad.left}" y1="${yScale(50)}" x2="${W - pad.right}" y2="${yScale(50)}" stroke="rgba(255,255,255,0.03)" />
-                <line x1="${pad.left}" y1="${yScale(100)}" x2="${W - pad.right}" y2="${yScale(100)}" stroke="rgba(255,255,255,0.03)" />
-                
                 <path d="${areaD}" fill="url(#areaGrad)" />
                 <path d="${pathD}" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                 
-                ${data.map((v, i) => `<circle cx="${xScale(i)}" cy="${yScale(v)}" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" />`).join('')}
+                ${displayData.map((v, i) => `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(v).toFixed(1)}" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" />`).join('')}
                 
-                <!-- Labels -->
-                ${labels.map((l, i) => `<text x="${xScale(i)}" y="${H - 5}" text-anchor="middle" fill="#9898a6" font-size="8">${l}</text>`).join('')}
-                <text x="5" y="${yScale(50)}" fill="#5a5a6a" font-size="8">50%</text>
-                <text x="5" y="${yScale(100)}" fill="#5a5a6a" font-size="8">100%</text>
+                ${displayLabels.map((l, i) => `<text x="${xScale(i)}" y="${H - 5}" text-anchor="middle" fill="#9898a6" font-size="9" font-family="Inter, system-ui">${l}</text>`).join('')}
+                <text x="10" y="${yScale(0)}" fill="#5a5a6a" font-size="9" font-family="Inter, system-ui">0%</text>
+                <text x="10" y="${yScale(50)}" fill="#5a5a6a" font-size="9" font-family="Inter, system-ui">50%</text>
+                <text x="10" y="${yScale(100)}" fill="#5a5a6a" font-size="9" font-family="Inter, system-ui">100%</text>
             </svg>
         `;
     }
