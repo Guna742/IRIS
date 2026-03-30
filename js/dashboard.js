@@ -70,6 +70,8 @@
       const adminProfile = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : null;
       const currentName = (isAdmin ? adminProfile?.name : profile?.name) || session.displayName || 'I.R.I.S User';
       const currentAvatar = isAdmin ? adminProfile?.avatar : profile?.avatar;
+      const roleBadgeMain = document.getElementById('role-badge-main');
+      const roleBadgeTopbar = document.getElementById('topbar-role-badge');
 
       if (userAvatarSb) {
         if (currentAvatar) {
@@ -81,6 +83,15 @@
       if (userNameSb) userNameSb.textContent = currentName;
       if (userRoleSb) userRoleSb.textContent = isAdmin ? (adminProfile?.roleTitle || 'Administrator') : 'Intern';
       
+      if (roleBadgeMain) {
+        roleBadgeMain.textContent = isAdmin ? 'Admin' : 'Intern';
+        roleBadgeMain.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+      }
+      if (roleBadgeTopbar) {
+        roleBadgeTopbar.textContent = isAdmin ? 'Admin' : 'Intern';
+        roleBadgeTopbar.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+      }
+
       if (welcomeTitle) {
           welcomeTitle.innerHTML = `<span class="anim-title"><span>Welcome back, ${currentName}!</span></span>`;
       }

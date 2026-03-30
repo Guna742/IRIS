@@ -17,6 +17,7 @@ const SidebarEngine = (() => {
         const userAvatarSb = document.getElementById('user-avatar-sidebar');
         const userNameSb = document.getElementById('user-name-sidebar');
         const userRoleSb = document.getElementById('user-role-sidebar');
+        const roleBadgeTopbar = document.getElementById('topbar-role-badge');
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const appSidebar = document.getElementById('app-sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -37,6 +38,10 @@ const SidebarEngine = (() => {
         }
         if (userNameSb) userNameSb.textContent = currentName;
         if (userRoleSb) userRoleSb.textContent = isAdmin ? (adminProfile?.role || 'Administrator') : 'Intern';
+        if (roleBadgeTopbar) {
+            roleBadgeTopbar.textContent = isAdmin ? 'Admin' : 'Intern';
+            roleBadgeTopbar.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+        }
 
         // ── Build Sidebar Nav ──
         const NAV_INTERN = [
