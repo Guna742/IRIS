@@ -36,6 +36,7 @@
     const historyContainer = document.getElementById('report-history');
     const downloadBtn = document.getElementById('download-report-btn');
     const demoBtn = document.getElementById('download-demo-pdf-btn');
+    const emailBtn = document.getElementById('send-email-btn');
 
     // ── Initialize ──
     async function init() {
@@ -54,6 +55,7 @@
         logoutBtn.addEventListener('click', () => Auth.logout());
         downloadBtn.addEventListener('click', generateDailyPDF);
         if (demoBtn) demoBtn.addEventListener('click', generateDemoPDF);
+        if (emailBtn) emailBtn.addEventListener('click', sendEmailReport);
         
         // Initialize Chart
         setTimeout(() => refreshAnalyticsChart(), 500);
@@ -368,6 +370,26 @@
         });
 
         doc.save(`IRIS_DailyReport_${now.toISOString().split('T')[0]}.pdf`);
+    }
+    
+    async function sendEmailReport() {
+        const now = new Date();
+        const reports = Storage.getHourlyReports(userId);
+        const todayStr = now.toDateString();
+        const todayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === todayStr);
+        
+        if (todayReports.length === 0) {
+            await IrisModal.alert("No reports recorded today to send via email.");
+            return;
+        }
+
+        const summary = await generateReportSummary(todayReports);
+        const subject = `Daily Progress Report - ${session.displayName} - ${todayStr}`;
+        const body = `Hi Team, \n\nHere is my report summary for today: \n\n${summary}\n\nBest regards, \n${session.displayName}`;
+        
+        // Open default mail client (Outlook/etc)
+        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
     }
 
     async function generateDemoPDF() {
