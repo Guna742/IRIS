@@ -66,9 +66,21 @@ class ReminderSystem {
 // Global instance
 window.irisReminder = new ReminderSystem();
 window.addEventListener('DOMContentLoaded', () => {
+    // Check role from sessionStorage
+    const currentRole = sessionStorage.getItem('role') || 'intern'; // Default to intern if not set, or you can be stricter
+    
+    // Only proceed if user is an intern
+    if (currentRole.toLowerCase() !== 'intern') {
+        console.log("Reminder system disabled for non-intern user.");
+        return;
+    }
+
     // We wait for the first user interaction to help with audio autoplay browser restrictions
     const firstInteractionHandler = () => {
-        window.irisReminder.init();
+        if (!window.irisReminder.initialized) {
+            window.irisReminder.init();
+            window.irisReminder.initialized = true;
+        }
         document.removeEventListener('click', firstInteractionHandler);
     };
     document.addEventListener('click', firstInteractionHandler);
