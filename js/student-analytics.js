@@ -46,17 +46,9 @@
     const allProjects = Storage.getProjects();
     const myProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(targetUid));
 
-    // ── Update topbar title ──
-    const topbarTitle = document.getElementById('topbar-title');
+    // Sidebar and role badges handled by SidebarEngine.init()
     if (topbarTitle) {
         topbarTitle.textContent = isAdmin ? `${profile.name || 'Intern'}'s Analytics` : 'My Analytics';
-    }
-
-    // ── Update role badge ──
-    const roleBadge = document.getElementById('topbar-role-badge');
-    if (roleBadge) {
-        roleBadge.textContent = isAdmin ? 'Admin' : 'Intern';
-        roleBadge.className = isAdmin ? 'badge badge-admin' : 'badge badge-user';
     }
     // ── Compute analytics values ──
     const skillCount = (profile.skills || []).length;

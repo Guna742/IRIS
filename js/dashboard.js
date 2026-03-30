@@ -70,28 +70,6 @@
       const adminProfile = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : null;
       const currentName = (isAdmin ? adminProfile?.name : profile?.name) || session.displayName || 'I.R.I.S User';
       const currentAvatar = isAdmin ? adminProfile?.avatar : profile?.avatar;
-      const roleBadgeMain = document.getElementById('role-badge-main');
-      const roleBadgeTopbar = document.getElementById('topbar-role-badge');
-
-      if (userAvatarSb) {
-        if (currentAvatar) {
-          userAvatarSb.innerHTML = `<img src="${currentAvatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-        } else {
-          userAvatarSb.textContent = currentName[0].toUpperCase();
-        }
-      }
-      if (userNameSb) userNameSb.textContent = currentName;
-      if (userRoleSb) userRoleSb.textContent = isAdmin ? (adminProfile?.roleTitle || 'Administrator') : 'Intern';
-      
-      if (roleBadgeMain) {
-        roleBadgeMain.textContent = isAdmin ? 'Admin' : 'Intern';
-        roleBadgeMain.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
-      }
-      if (roleBadgeTopbar) {
-        roleBadgeTopbar.textContent = isAdmin ? 'Admin' : 'Intern';
-        roleBadgeTopbar.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
-      }
-
       if (welcomeTitle) {
           welcomeTitle.innerHTML = `<span class="anim-title"><span>Welcome back, ${currentName}!</span></span>`;
       }
@@ -135,11 +113,10 @@
       const myProjects = projects.filter(p => (p.userId || p.ownerId) === session.userId).length;
       const teamSize = allProfiles.filter(p => p.internship?.company && p.internship.company === profile?.internship?.company).length;
       
-      const totalDays = 156;
-      let daysLeft = totalDays;
+      let dayNumber = 1;
       if (profile && profile.createdAt) {
-        const elapsed = Math.floor((Date.now() - profile.createdAt) / (1000 * 60 * 60 * 24));
-        daysLeft = Math.max(0, totalDays - elapsed);
+        const diffTime = Math.abs(Date.now() - profile.createdAt);
+        dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
       }
 
       // ── Get Reward Points for Intern ──
@@ -151,7 +128,7 @@
         { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', color: '#f59e0b', trend: 'Global status', clickable: true, href: 'leaderboard.html' },
         { label: 'Reward Points', value: points, icon: 'stars', color: '#8b5cf6', trend: 'Lifetime pts', clickable: false },
         { label: 'Badges Earned', value: badgesCount, icon: 'military_tech', color: '#22d3ee', trend: 'Achievements', clickable: true, href: 'student-profile.html' },
-        { label: 'Days Left', value: daysLeft, icon: 'calendar_month', color: '#10b981', trend: 'On track' },
+        { label: 'Internship Day', value: dayNumber, icon: 'calendar_month', color: '#10b981', trend: 'Keep going!', prefix: 'Day ' },
       ];
     }
 

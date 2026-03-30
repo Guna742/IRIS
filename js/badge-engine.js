@@ -19,6 +19,7 @@ const BadgeEngine = (() => {
     // ── Badge definitions ──
     const BADGES = [
         {
+            order: 1,
             id: 'newbie',
             label: 'Newbie',
             emoji: '🌱',
@@ -26,6 +27,7 @@ const BadgeEngine = (() => {
             check: () => true 
         },
         {
+            order: 2,
             id: 'learner',
             label: 'Learner',
             emoji: '📚',
@@ -33,6 +35,7 @@ const BadgeEngine = (() => {
             check: (stats) => (stats.questionsAsked || 0) >= 20
         },
         {
+            order: 3,
             id: 'contributor',
             label: 'Contributor',
             emoji: '✍️',
@@ -40,6 +43,7 @@ const BadgeEngine = (() => {
             check: (stats) => (stats.answersPosted || 0) >= 15
         },
         {
+            order: 4,
             id: 'helper',
             label: 'Helper',
             emoji: '🤝',
@@ -47,6 +51,7 @@ const BadgeEngine = (() => {
             check: (stats) => (stats.answerUpvotesReceived || 0) >= 30
         },
         {
+            order: 5,
             id: 'active-intern',
             label: 'Active Intern',
             emoji: '⚡',
@@ -65,7 +70,7 @@ const BadgeEngine = (() => {
 
         const pointsToAdd = POINTS[action];
         const userRef = fbDb.collection('users').doc(userId);
-        let newBadges = [];
+        let earnedBadges = [];
 
         try {
             await fbDb.runTransaction(async (tx) => {
@@ -85,22 +90,40 @@ const BadgeEngine = (() => {
                 if (action === 'answer')           updatedStats.answersPosted = (stats.answersPosted || 0) + 1;
                 if (action === 'upvote_received')  updatedStats.answerUpvotesReceived = (stats.answerUpvotesReceived || 0) + 1;
 
-                // Check eligibility for new badges
-                newBadges = BADGES
-                    .filter(b => !currentBadges.includes(b.id) && b.check(updatedStats))
-                    .map(b => b.id);
+                // Check eligibility for new badges IN ORDER
+                // Sequential requirement: badge[n] can only be earned if badge[n-1] is already owned.
+                earnedBadges = [...currentBadges];
+                
+                const potentiallyNew = BADGES.filter(b => !earnedBadges.includes(b.id));
+                const sortedPotentiallyNew = potentiallyNew.sort((a,b) => a.order - b.order);
+
+                let newlyAwarded = [];
+                for (const badge of sortedPotentiallyNew) {
+                    const prevBadgeId = BADGES.find(b => b.order === badge.order - 1)?.id;
+                    const hasPrerequisite = !prevBadgeId || earnedBadges.includes(prevBadgeId);
+
+                    if (hasPrerequisite && badge.check(updatedStats)) {
+                        earnedBadges.push(badge.id);
+                        newlyAwarded.push(badge.id);
+                    } else {
+                        // Stop awarding once common prerequisites fail
+                        break; 
+                    }
+                }
 
                 tx.update(userRef, {
                     points: newPoints,
-                    badges: [...currentBadges, ...newBadges],
+                    badges: earnedBadges,
                     qaStats: updatedStats
                 });
+                
+                earnedBadges = newlyAwarded; // Return only the NEWLY earned ones
             });
         } catch (err) {
             console.error('[BadgeEngine] awardAction failed:', err);
         }
 
-        return { points: pointsToAdd, newBadges };
+        return { points: pointsToAdd, newBadges: earnedBadges };
     }
 
     /**

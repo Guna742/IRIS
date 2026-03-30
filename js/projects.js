@@ -65,13 +65,7 @@
     const isAdmin = session.role === 'admin';
     const isUser = session.role === 'user';
 
-    SidebarEngine.init();
-
-    // ── Topbar ──
-    const badge = document.getElementById('topbar-role-badge');
-    badge.textContent = isAdmin ? 'Admin' : 'Intern';
-    badge.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
-
+    // SidebarEngine.init() handles badges and banners globally
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
     // ── UI visibility (Add project only for Interns) ──

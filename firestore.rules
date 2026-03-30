@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ── Helper Functions ──
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ── Users & Profiles ──
+    // Standard intern profiles and admin descriptors
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
+      
+      // Hourly reports (4-hour updates)
+      match /reports/{reportId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      
+      // Missed report requests
+      match /missed_requests/{requestId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      
+      // Analytics summaries
+      match /analytics/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ── Projects ──
+    // Shared project showcase
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // ── The Wall (Doubts/Questions) ──
+    match /questions/{questionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      // Allow updates for voting (anyone) and status changes (author/admin)
+      allow update: if isSignedIn(); 
+      allow delete: if isAdmin();
+      
+      // Sub-collection for detailed answers
+      match /answers/{answerId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ── Admin-Only Space ──
+    // Secure collection for admin-specific configurations or audit logs
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+      
+      match /{allPaths=**} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // ── Health Check ──
+    match /_health_check/{docId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

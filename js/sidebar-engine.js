@@ -38,9 +38,21 @@ const SidebarEngine = (() => {
         }
         if (userNameSb) userNameSb.textContent = currentName;
         if (userRoleSb) userRoleSb.textContent = isAdmin ? (adminProfile?.role || 'Administrator') : 'Intern';
-        if (roleBadgeTopbar) {
-            roleBadgeTopbar.textContent = isAdmin ? 'Admin' : 'Intern';
-            roleBadgeTopbar.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+        
+        // ── Global Role Badges ──
+        const roleBadges = [document.getElementById('topbar-role-badge'), document.getElementById('role-badge-main')];
+        roleBadges.forEach(badge => {
+            if (badge) {
+                badge.textContent = isAdmin ? 'Admin' : 'Intern';
+                badge.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+            }
+        });
+
+        // ── Global Role Banners ──
+        const roleBanner = document.getElementById('role-banner');
+        if (roleBanner) {
+            roleBanner.classList.remove('admin', 'user');
+            roleBanner.classList.add(isAdmin ? 'admin' : 'user');
         }
 
         // ── Build Sidebar Nav ──

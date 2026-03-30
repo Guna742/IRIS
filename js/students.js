@@ -37,21 +37,8 @@
   const studentsCountEl = document.getElementById('students-count');
   const projectIndices = {}; // Track current project index per student
 
-  // ── User info ──
-  const adminProfile = Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null;
-  const currentName = adminProfile?.name || session.displayName;
-
-  if (adminProfile?.avatar) {
-    userAvatarSb.innerHTML = `<img src="${adminProfile.avatar}" alt="${currentName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  } else {
-    userAvatarSb.textContent = currentName[0].toUpperCase();
-  }
-  userNameSb.textContent = currentName;
-  userRoleSb.textContent = adminProfile?.role || 'Administrator';
-
   welcome.textContent = `Intern Directory`;
   welcomeSub.textContent = 'Review intern profiles, performance metrics, and project contributions.';
-  roleBanner.classList.add('admin');
 
   // ── Global Search Filter ──
   const applySearchFilter = function () {
@@ -99,14 +86,8 @@
     }
   }
 
-  ['badge-admin', 'badge-user'].forEach(c => {
-    roleBadgeMain.classList.remove(c);
-    topbarRoleBadge.classList.remove(c);
-  });
-  roleBadgeMain.textContent = 'Admin';
-  roleBadgeMain.className = 'badge badge-admin';
-  topbarRoleBadge.textContent = 'Admin';
-  topbarRoleBadge.className = 'badge badge-admin';
+  // Bind search on load
+  bindSearch();
 
 
   // ── Load data ──
