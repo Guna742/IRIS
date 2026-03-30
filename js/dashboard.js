@@ -89,7 +89,7 @@
       renderStats(projects, allProfiles, profile);
       renderActions();
       renderRecentProjects(projects);
-      if (isAdmin) renderRecentReports(allProfiles);
+      renderRecentReports(allProfiles);
 
       // 4. Polish
       animateCounters();
@@ -131,10 +131,15 @@
         daysLeft = Math.max(0, totalDays - elapsed);
       }
 
+      // ── Get Reward Points for Intern ──
+      const points = profile.points || 0;
+      const badgesCount = (profile.badges || []).length;
+      const rank = (Storage.getInternRank && profile.userId) ? Storage.getInternRank(profile.userId) : 0;
+
       statsData = [
-        { label: 'My Projects', value: myProjects, icon: 'folder', color: '#8b5cf6', trend: 'Active', clickable: true, href: 'projects.html' },
-        { label: 'Skills', value: profile.skills?.length || 0, icon: 'bolt', color: '#22d3ee', trend: 'Listed' },
-        { label: 'My Team', value: Math.max(1, teamSize), icon: 'group_work', color: '#a855f7', trend: 'Collaborators' },
+        { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', color: '#f59e0b', trend: 'Global status', clickable: true, href: 'leaderboard.html' },
+        { label: 'Reward Points', value: points, icon: 'stars', color: '#8b5cf6', trend: 'Lifetime pts', clickable: false },
+        { label: 'Badges Earned', value: badgesCount, icon: 'military_tech', color: '#22d3ee', trend: 'Achievements', clickable: true, href: 'student-profile.html' },
         { label: 'Days Left', value: daysLeft, icon: 'calendar_month', color: '#10b981', trend: 'On track' },
       ];
     }
@@ -150,6 +155,7 @@
             </div>
         </div>
         <div class="stat-card-value">
+          ${s.prefix ? `<span class="stat-prefix">${s.prefix}</span>` : ''}
           <span class="counter-num" data-target="${s.value}">${s.value}</span>
           ${s.suffix ? `<span class="stat-suffix">${s.suffix}</span>` : ''}
         </div>
@@ -169,9 +175,9 @@
       { label: 'Create Intern', desc: 'Add new intern profile', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(79,124,255,.12)' },
       { label: 'Intern Directory', desc: 'View intern details', href: 'students.html', icon: 'school', color: 'rgba(34,211,238,.1)' },
     ] : [
-      { label: 'My Profile', desc: 'View your portfolio', href: 'student-profile.html', icon: 'person', color: 'rgba(34,211,238,.08)' },
-      { label: 'My Analytics', desc: 'Track your performance', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(139,92,246,.12)' },
-      { label: 'Projects', desc: 'Browse all projects', href: 'projects.html', icon: 'folder', color: 'rgba(79,124,255,.12)' },
+      { label: 'Report Submission', desc: 'Submit hourly progress', href: 'report-submission.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
+      { label: 'My Analytics', desc: 'Performance & metrics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(139,92,246,.12)' },
+      { label: 'Leaderboard', desc: 'Global intern ranking', href: 'leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
     ];
     quickActions.innerHTML = actions.map((a, i) => `
       <a class="action-tile btn-magnetic anim-stagger visible" style="transition-delay: ${i * 0.1}s" href="${a.href}">
@@ -209,14 +215,25 @@
 
   function renderRecentReports(allProfiles) {
     const list = document.getElementById('recent-reports-list');
-    if (!list) return;
+    const card = document.getElementById('reports-card');
+    const title = card ? card.querySelector('.dash-card-title') : null;
+    if (!list || !card) return;
 
-    const reports = Storage.getHourlyReports() || [];
+    if (!isAdmin) {
+      if (title) title.textContent = 'My Recent Reports';
+    }
+
+    const reportsAll = Storage.getHourlyReports() || [];
+    const reports = isAdmin ? reportsAll : reportsAll.filter(r => String(r.userId) === String(session.userId));
+
     if (reports.length === 0) {
-      list.innerHTML = `<p class="text-muted" style="padding: 20px 0">No activity reports found.</p>`;
+      list.innerHTML = `<p class="text-muted" style="padding: 20px 0; font-size: 13px;">No reports submitted yet.</p>`;
+      // Keep card hidden if no project data either? No, we show empty state.
+      card.style.display = 'block';
       return;
     }
-    document.getElementById('reports-card').style.display = 'block';
+    card.style.display = 'block';
+    list.innerHTML = '';
     
     reports.sort((a,b) => (b.timestamp || b.createdAt || 0) - (a.timestamp || a.createdAt || 0)).slice(0, 5).forEach((r, i) => {
       const p = allProfiles.find(prof => prof.userId === r.userId) || { name: 'Unknown' };
@@ -224,8 +241,8 @@
         <div class="proj-item visible card-3d" style="padding: 8px 12px; margin-bottom: 8px; transition-delay: ${i * 0.05}s">
           <div class="glare" aria-hidden="true"></div>
           <div class="proj-info" style="margin:0">
-            <div style="font-weight:600; font-size:14px; color: var(--clr-text-main)">${p.name}</div>
-            <div style="font-size:12px; color:var(--clr-text-muted)">Slot ${r.window}:00 — ${r.task || 'Activity'}</div>
+            <div style="font-weight:600; font-size:14px; color: var(--clr-text-main)">${isAdmin ? p.name : 'Report Slot '+r.window+':00'}</div>
+            <div style="font-size:12px; color:var(--clr-text-muted)">${isAdmin ? 'Slot ' + r.window + ':00 — ' : ''}${r.note || r.task || 'Progress update'}</div>
           </div>
         </div>
       `;
@@ -235,6 +252,9 @@
   function animateCounters() {
     document.querySelectorAll('.counter-num').forEach(el => {
       const target = parseInt(el.dataset.target, 10) || 0;
+      const prefix = el.parentElement.querySelector('.stat-prefix')?.textContent || '';
+      const suffix = el.parentElement.querySelector('.stat-suffix')?.textContent || '';
+      
       if (target === 0) { el.textContent = '0'; return; }
       const duration = 1500;
       const start = performance.now();
@@ -242,7 +262,8 @@
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - (1 - progress) ** 4;
-        el.textContent = Math.floor(eased * target);
+        const val = Math.floor(eased * target);
+        el.textContent = val;
         if (progress < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
