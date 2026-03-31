@@ -16,3 +16,14 @@ _agent/
 .env.*.local
 dist/
 build/
+
+# Temporary and Error logs (IRIS Cleanup)
+*.txt
+*.json_result.json
+check_missing.js
+temp_output.txt
+push_error*
+git_check.txt
+log_check.txt
+branch_check.txt
+remote_check.txt

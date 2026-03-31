@@ -8,9 +8,13 @@ const mimeTypes = {
   '.css': 'text/css',
   '.json': 'application/json',
   '.png': 'image/png',
-  '.jpg': 'image/jpg',
+  '.jpg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
 };
 
 const server = http.createServer((request, response) => {

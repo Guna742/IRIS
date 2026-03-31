@@ -1,0 +1,19 @@
+{
+  "name": "iris-web",
+  "version": "1.0.0",
+  "description": "Intern Review & Intelligence System (I.R.I.S) — A platform for managing intern profiles, progress, and collaboration.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "internship",
+    "management",
+    "portfolio",
+    "iris"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {}
+}
