@@ -564,62 +564,84 @@
             return s === 'nil' || s === '0' || s === 'none' || s === 'null';
         };
 
+        const tasks = d.tasksCompleted || [];
+        const hasTasks = tasks.some(t => !isPlaceholder(t.desc));
+
         const content = `
-            <div style="text-align:left; max-width:600px; max-height: 70vh; overflow-y: auto; padding-right: 10px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <h2 style="color: var(--clr-primary); margin-top:0">Technical Daily Report</h2>
+            <div style="text-align:left; max-width:600px; max-height: 70vh; overflow-y: auto; padding-right: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px; border-bottom: 2px solid var(--clr-primary); padding-bottom:12px;">
+                    <h2 style="color: var(--clr-primary); margin:0; font-size:1.4rem;">Technical Daily Report</h2>
                     ${report.resubmittedAt ? `
                         <div style="text-align:right; border:1px solid var(--clr-accent); padding:4px 8px; border-radius:6px; background:rgba(139,92,246,0.1);">
                             <div style="font-size:8px; text-transform:uppercase; color:var(--clr-accent); font-weight:800;">Resubmitted</div>
-                            <div style="font-size:10px; color:var(--clr-text-main); font-weight:600;">${new Date(report.resubmittedAt).toLocaleDateString()} ${new Date(report.resubmittedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                            <div style="font-size:10px; color:var(--clr-text-main); font-weight:600;">${new Date(report.resubmittedAt).toLocaleDateString()}</div>
                         </div>
                     ` : ''}
                 </div>
 
-                <div style="display:flex; gap:10px; margin-bottom: 20px; font-size: 0.85rem; opacity: 0.8; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
-                    <span><strong>Login:</strong> ${d.loginTime || 'N/A'}</span> | 
-                    <span><strong>Logout:</strong> ${d.logoutTime || 'N/A'}</span>
+                <div style="display:flex; gap:15px; margin-bottom: 20px; font-size: 0.85rem; opacity: 0.9; background: rgba(255,255,255,0.03); padding: 10px; border-radius:8px;">
+                    <span><strong style="color:var(--clr-primary)">Date:</strong> ${new Date(report.createdAt || report.timestamp).toLocaleDateString()}</span>
+                    <span><strong style="color:var(--clr-primary)">Login:</strong> ${d.loginTime || 'N/A'}</span>
+                    <span><strong style="color:var(--clr-primary)">Logout:</strong> ${d.logoutTime || 'N/A'}</span>
                 </div>
                 
-                ${!isPlaceholder(d.task1Desc) || !isPlaceholder(d.task2Desc) ? `
-                <h4 style="color:var(--clr-cyan); margin-bottom: 8px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Tasks Completed:</h4>
-                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
-                    ${!isPlaceholder(d.task1Desc) ? `
-                    <div style="margin-bottom: 12px;">
-                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 6px; color:var(--clr-text-main);">1. ${d.task1Name || 'Project Module'}</div>
-                        <div style="font-size: 0.9rem; line-height: 1.5; color: rgba(255,255,255,0.7);">${d.task1Desc.replace(/\n/g, '<br>')}</div>
-                    </div>` : ''}
-                    
-                    ${!isPlaceholder(d.task2Desc) ? `
-                    <div>
-                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 6px; color:var(--clr-text-main);">2. ${d.task2Name || 'Project Module'}</div>
-                        <div style="font-size: 0.9rem; line-height: 1.5; color: rgba(255,255,255,0.7);">${d.task2Desc.replace(/\n/g, '<br>')}</div>
-                    </div>` : ''}
+                <div style="margin-bottom:20px;">
+                    <h4 style="color:var(--clr-cyan); margin-bottom: 8px; text-transform:uppercase; font-size:11px; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-outlined" style="font-size:16px;">assignment</span> Tasks Assigned:
+                    </h4>
+                    <div style="font-size: 0.95rem; color: var(--clr-text-main); padding-left:24px;">${d.tasksAssigned || 'No tasks specified'}</div>
+                </div>
+
+                ${hasTasks ? `
+                <h4 style="color:var(--clr-cyan); margin-bottom: 8px; text-transform:uppercase; font-size:11px; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">task_alt</span> Tasks Completed:
+                </h4>
+                <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 20px;">
+                    ${tasks.map((tc, idx) => !isPlaceholder(tc.desc) ? `
+                        <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 8px; color:var(--clr-primary); font-size:0.9rem;">
+                                ${idx+1}. ${tc.name || 'Project Module'}
+                            </div>
+                            <div style="font-size: 0.9rem; line-height: 1.6; color: var(--clr-text-main);">${tc.desc.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    ` : '').join('')}
                 </div>` : ''}
 
-                ${!isPlaceholder(d.taskExtra) ? `
-                <h4 style="color:var(--clr-cyan); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Additional Work:</h4>
-                <div style="font-size: 0.9rem; margin-bottom: 20px; color: rgba(255,255,255,0.7); background: rgba(139, 92, 246, 0.05); padding: 10px; border-radius: 8px;">
-                    ${d.taskExtra.replace(/\n/g, '<br>')}
+                ${!isPlaceholder(d.extraWork) ? `
+                <div style="margin-bottom:20px;">
+                    <h4 style="color:var(--clr-cyan); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Additional Work:</h4>
+                    <div style="font-size: 0.9rem; color: var(--clr-text-main); background: rgba(139, 92, 246, 0.05); padding: 12px; border-radius: 8px;">
+                        ${d.extraWork.replace(/\n/g, '<br>')}
+                    </div>
                 </div>` : ''}
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
                     ${!isPlaceholder(d.workInProgress) ? `
-                    <div>
-                        <h4 style="color:var(--clr-warning); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Work in Progress:</h4>
-                        <div style="font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">${d.workInProgress.replace(/\n/g, '<br>')}</div>
+                    <div style="background: rgba(245, 158, 11, 0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.05);">
+                        <h4 style="color:var(--clr-warning); margin-bottom: 8px; text-transform:uppercase; font-size:10px; letter-spacing:1px;">Work in Progress</h4>
+                        <div style="font-size: 0.85rem; color: var(--clr-text-main); line-height: 1.5;">${d.workInProgress.replace(/\n/g, '<br>')}</div>
                     </div>` : ''}
                     
-                    ${!isPlaceholder(d.whatLearned) ? `
-                    <div>
-                        <h4 style="color:var(--clr-success); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">What I Learned:</h4>
-                        <div style="font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">${d.whatLearned.replace(/\n/g, '<br>')}</div>
+                    ${!isPlaceholder(d.pendingTasks) ? `
+                    <div style="background: rgba(239, 68, 68, 0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.05);">
+                        <h4 style="color:var(--clr-danger); margin-bottom: 8px; text-transform:uppercase; font-size:10px; letter-spacing:1px;">Pending Items</h4>
+                        <div style="font-size: 0.85rem; color: var(--clr-text-main); line-height: 1.5;">${d.pendingTasks.replace(/\n/g, '<br>')}</div>
                     </div>` : ''}
                 </div>
 
-                <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; text-align: right;">
-                    <div style="color:var(--clr-text-muted); font-size: 11px; margin-bottom: 4px;">Respectfully,</div>
-                    <div style="font-family: 'Dancing Script', cursive, serif; font-size: 1.2rem; color: var(--clr-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; margin-left: auto;">${d.signature || 'Intern'}</div>
+                <div style="margin-bottom:25px; background: rgba(16, 185, 129, 0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.05);">
+                    <h4 style="color:var(--clr-success); margin-bottom: 8px; text-transform:uppercase; font-size:10px; letter-spacing:1px;">Today's Learning</h4>
+                    <div style="font-size: 0.9rem; color: var(--clr-text-main); line-height: 1.5;">${d.whatLearned ? d.whatLearned.replace(/\n/g, '<br>') : 'N/A'}</div>
+                </div>
+
+                <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; display:flex; justify-content:space-between; align-items:flex-end;">
+                    <div style="font-size:0.75rem; color:var(--clr-text-muted);">
+                        Submitted via I.R.I.S Secure Portal
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color:var(--clr-text-muted); font-size: 11px; margin-bottom: 4px;">Respectfully,</div>
+                        <div style="font-family: 'Dancing Script', cursive, serif; font-size: 1.3rem; color: var(--clr-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${d.signature || 'Intern'}</div>
+                    </div>
                 </div>
             </div>
         `;
