@@ -138,7 +138,6 @@
             const stars = Array.from({ length: 5 }, (_, s) => `<span class="lb-star ${s < Math.round(intern.rating) ? 'on' : ''}">★</span>`).join('');
             return `
                 <div class="lb-table-row card-3d visible" style="animation-delay: ${i * 0.05}s">
-                    <div class="glare" aria-hidden="true"></div>
                     <div class="lb-row-rank ${rank <= 5 ? `top-rank rank-${rank}` : ''}">#${rank}</div>
                     <div class="lb-row-name">
                         <div class="lb-row-avatar">${intern.avatar ? `<img src="${intern.avatar}">` : intern.name[0]}</div>
@@ -147,7 +146,7 @@
                           <div class="lb-row-intern-role">${intern.internship?.role || 'Intern'}</div>
                         </div>
                     </div>
-                    <div class="lb-row-score" style="text-align:right">${getVal(intern)}</div>
+                    <div class="lb-row-score" style="text-align:left; color: var(--clr-accent); font-weight:800;">${getVal(intern)}</div>
                     <div class="lb-row-projects">
                       <div class="lb-proj-badge"><span class="dot live"></span>${intern.liveCount} Live</div>
                       <div class="lb-proj-badge"><span class="dot demo"></span>${intern.demoCount} Demo</div>
@@ -155,6 +154,7 @@
                     <div class="lb-row-rating">
                       <div class="lb-stars">${stars}</div>
                     </div>
+                    <div class="glare" aria-hidden="true"></div>
                 </div>
             `;
         }).join('');
@@ -176,21 +176,50 @@
         });
     }
 
+    if (filterBtn) {
+        filterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = filterMenu.classList.contains('visible');
+            if (isVisible) {
+                filterMenu.classList.remove('visible');
+                filterBtn.setAttribute('aria-expanded', 'false');
+            } else {
+                filterMenu.classList.add('visible');
+                filterBtn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+
     if (filterMenu) {
         filterMenu.addEventListener('click', (e) => {
             const item = e.target.closest('.lb-dropdown-item');
             if (item) {
                 currentFilter = item.dataset.filter;
+                // Update active states
+                filterMenu.querySelectorAll('.lb-dropdown-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+
                 const filterData = FILTERS[currentFilter];
                 if (currentFilterLabel) currentFilterLabel.textContent = filterData.label;
                 if (currentFilterIcon) {
                     currentFilterIcon.textContent = filterData.icon;
                     currentFilterIcon.className = 'material-symbols-outlined';
                 }
+                
+                filterMenu.classList.remove('visible');
+                filterBtn.setAttribute('aria-expanded', 'false');
                 render();
             }
         });
     }
+
+    // Close menu on outside click
+    document.addEventListener('click', () => {
+        if (filterMenu && filterMenu.classList.contains('visible')) {
+            filterMenu.classList.remove('visible');
+            if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
 
     // ── Initialize ──
     SidebarEngine.init();
