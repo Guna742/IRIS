@@ -223,14 +223,25 @@
     card.style.display = 'block';
     list.innerHTML = '';
     
-    reports.sort((a,b) => (b.timestamp || b.createdAt || 0) - (a.timestamp || a.createdAt || 0)).slice(0, 5).forEach((r, i) => {
+    reports.sort((a,b) => (b.timestamp || b.createdAt || 0) - (a.timestamp || a.createdAt || 0)).slice(0, 6).forEach((r, i) => {
       const p = allProfiles.find(prof => prof.userId === r.userId) || { name: 'Unknown' };
+      const subDate = new Date(r.timestamp || r.createdAt);
+      const deadline = r.window === 1 ? 13 : 18;
+      const isLate = subDate.getHours() >= deadline;
+      const statusColor = isLate ? '#f59e0b' : '#10b981';
+
       list.innerHTML += `
-        <div class="proj-item visible card-3d" style="padding: 8px 12px; margin-bottom: 8px; transition-delay: ${i * 0.05}s">
+        <div class="proj-item visible card-3d" style="padding: 10px 12px; margin-bottom: 8px; transition-delay: ${i * 0.05}s; border-left: 3px solid ${statusColor}">
           <div class="glare" aria-hidden="true"></div>
-          <div class="proj-info" style="margin:0">
-            <div style="font-weight:600; font-size:14px; color: var(--clr-text-main)">${isAdmin ? p.name : 'Report Slot '+r.window+':00'}</div>
-            <div style="font-size:12px; color:var(--clr-text-muted)">${isAdmin ? 'Slot ' + r.window + ':00 — ' : ''}${r.note || r.task || 'Progress update'}</div>
+          <div class="proj-info" style="margin:0; width:100%">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                <div style="font-weight:600; font-size:14px; color: var(--clr-text-main)">${isAdmin ? p.name : 'Report Slot '+r.window+':00'}</div>
+                <div style="font-size:10px; font-weight:800; color:${statusColor}; background:${statusColor}20; padding:2px 6px; border-radius:4px;">${isLate ? 'LATE' : 'ON TIME'}</div>
+            </div>
+            <div style="font-size:12px; color:var(--clr-text-muted); display:flex; justify-content:space-between; margin-top:2px;">
+                <span>${isAdmin ? 'Slot ' + r.window + ':00 — ' : ''}${r.note || r.task || 'Progress update'}</span>
+                <span style="opacity:0.6">${subDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
           </div>
         </div>
       `;

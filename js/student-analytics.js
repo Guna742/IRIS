@@ -115,7 +115,68 @@
             <span class="badge ${isAdmin ? 'badge-admin' : 'badge-user'}">${isAdmin ? 'Admin View' : 'My Stats'}</span>
         </div>
 
-        <!-- ═══ HOURLY REPORT WIDGET (REMOVED) ═══ -->
+        <!-- ═══ HOURLY REPORT WIDGET ═══ -->
+        ${(() => {
+            const reports = Storage.getHourlyReports(p.userId);
+            const todayStr = new Date().toDateString();
+            const todayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === todayStr);
+            
+            const w1 = todayReports.find(r => r.window === 1);
+            const w2 = todayReports.find(r => r.window === 2);
+            
+            const getStatusCard = (winId, report, label) => {
+                const endHour = winId === 1 ? 13 : 18;
+                let statusColor = '#94a3b8'; // default grey
+                let statusText = 'Pending';
+                let subTimeStr = '--:--';
+                let isLate = false;
+                let showDot = true;
+
+                if (report) {
+                    const subTime = new Date(report.createdAt || report.timestamp);
+                    isLate = subTime.getHours() >= endHour;
+                    subTimeStr = subTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    statusColor = isLate ? '#f59e0b' : '#10b981';
+                    statusText = isLate ? 'Late Submission' : 'On Time';
+                } else {
+                    const currentHour = new Date().getHours();
+                    if (currentHour >= endHour) {
+                        statusColor = '#ef4444';
+                        statusText = 'Not Submitted';
+                    } else {
+                        statusText = 'Awaiting...';
+                        showDot = false;
+                    }
+                }
+
+                return `
+                    <div class="report-status-item" style="padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--clr-border); border-radius: 12px; flex: 1">
+                        <div style="font-size: 0.8rem; color: var(--clr-text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${label}</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${showDot ? `<div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; box-shadow: 0 0 10px ${statusColor}"></div>` : ''}
+                            <div style="font-weight: 700; color: ${statusColor === '#94a3b8' ? 'var(--clr-text-main)' : statusColor}">${statusText}</div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--clr-text-muted); margin-top: 4px;">${report ? `Received at ${subTimeStr}` : (statusText === 'Not Submitted' ? `Deadline missed (${endHour}:00)` : `Window open until ${endHour}:00`)}</div>
+                    </div>
+                `;
+            };
+
+            return `
+            <div class="reports-overview reveal anim-d1" style="margin-bottom: var(--sp-6);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--clr-primary)">history_edu</span>
+                        Daily Reporting Activity
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--clr-text-muted);">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    ${getStatusCard(1, w1, 'Morning window (09:00 - 13:00)')}
+                    ${getStatusCard(2, w2, 'Afternoon window (14:00 - 18:00)')}
+                </div>
+            </div>
+            `;
+        })()}
 
         <!-- ═══ STATS ROW ═══ -->
         <div class="stats-row">
@@ -183,15 +244,24 @@
 
             <div class="stat-card reveal anim-d5">
                 <div class="stat-card-head">
-                    <div class="stat-card-label">Leaderboard Rank</div>
-                    <div class="stat-card-icon" style="background:rgba(255,215,0,.12)" aria-hidden="true">🏆</div>
+                    <div class="stat-card-label">Reporting Reliability</div>
+                    <div class="stat-card-icon" style="background:rgba(16,185,129,.1)" aria-hidden="true">
+                        <span class="material-symbols-outlined" style="color:var(--clr-success)">history</span>
+                    </div>
                 </div>
-                <div class="stat-card-value counter-num" data-target="${Storage.getInternRank ? Storage.getInternRank(p.userId) : 0}" data-prefix="#">#0</div>
-                <div class="stat-card-trend up">
-                    ${arrowUp()}
-                    <span>Rank among peers</span>
+                <div class="stat-card-value counter-num" data-target="${(() => {
+                    const reports = Storage.getHourlyReports(p.userId);
+                    const now = new Date();
+                    // Basic heuristic: 2 reports per weekday since start date
+                    const start = new Date(p.internship?.startDate || Date.now() - 7*24*60*60*1000);
+                    const daysDiff = Math.max(1, Math.ceil((now - start) / (1000 * 60 * 60 * 24)));
+                    const expected = daysDiff * 2;
+                    return Math.min(100, Math.round((reports.length / expected) * 100));
+                })()}" data-suffix="%">0%</div>
+                <div class="stat-card-trend neutral">
+                    <span>Consistency Score</span>
                 </div>
-                ${sparklineSVG('#FFD700')}
+                ${sparklineSVG('#10b981')}
             </div>
 
         </div>
@@ -273,10 +343,10 @@
             </div>
         </div>
 
-        <!-- ═══ HISTORICAL TRACK TABLE ═══ -->
+        <!-- ═══ HISTORICAL TRACK TABLE (PROJECTS) ═══ -->
         <div class="history-section reveal anim-d2">
             <div class="history-head">
-                <div class="history-title">Performance Log</div>
+                <div class="history-title">Performance Log (Projects)</div>
                 <div class="history-actions">
                     ${isAdmin ? `<a href="students.html" class="btn btn-secondary btn-sm"><span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span> Back to Interns</a>` : `
                     <a href="projects.html" class="btn btn-primary btn-sm"><span class="material-symbols-outlined" style="font-size: 16px;">edit</span> Edit Project</a>`}
@@ -291,7 +361,6 @@
             <table class="history-table" aria-label="Project history">
                 <thead>
                     <tr>
-                        <th><input type="checkbox" class="row-checkbox" aria-label="Select all"></th>
                         <th>Project</th>
                         <th>Performance</th>
                         <th>Submitted</th>
@@ -303,45 +372,211 @@
                 <tbody>
                     ${projects.map((proj, i) => {
             const status = statusPool[i % statusPool.length];
-            const stackArr = (proj.techStack || []).slice(0, 3);
-            const initials = (proj.ownerName || profile.name || 'I')[0].toUpperCase();
+            const initials = (profile.name || 'I')[0].toUpperCase();
             return `
                     <tr>
-                        <td><input type="checkbox" class="row-checkbox"></td>
                         <td>
                             <div class="proj-info">
                                 <div class="proj-name">${proj.title}</div>
                                 <div class="proj-stack">
-                                    ${stackArr.map(s => `<span>${s}</span>`).join('')}
+                                    ${(proj.techStack || []).slice(0, 3).map(s => `<span>${s}</span>`).join('')}
                                 </div>
                             </div>
                         </td>
                         <td>
                             <div class="progress-mini">
-                                <div class="progress-mini-bar" style="width:${proj.rating ? (proj.rating / 5) * 100 : 0}%; background:${proj.rating ? 'var(--clr-violet)' : '#eee'}"></div>
+                                <div class="progress-mini-bar" style="width:${proj.rating ? (proj.rating / 5) * 100 : 0}%; background:var(--clr-violet)"></div>
                             </div>
                         </td>
-                        <td><div class="history-date">${proj.createdAt ? fmtDateShort(proj.createdAt) : 'N/A'}</div></td>
-                        <td><span class="badge badge-${status}">${capitalize(status)}</span></td>
+                        <td><div class="history-date">${proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : 'N/A'}</div></td>
+                        <td><span class="badge badge-${status}">${status.toUpperCase()}</span></td>
                         <td>
-                             <div class="table-user">
+                            <div class="table-user">
                                 <div class="table-user-avatar" style="background:var(--clr-violet-alpha)">${initials}</div>
                                 <span>Intern</span>
-                             </div>
-                        </td>
-                        <td>${proj.liveLink ? `<a href="${proj.liveLink}" target="_blank" rel="noopener" class="more-btn">Live ↗</a>` : `<button class="more-btn detail-trigger" data-id="${proj.id}">Details ▾</button>`}</td>
-                    </tr>
-                    <tr class="expandable-details-row" id="details-${proj.id}" style="display:none">
-                        <td colspan="7">
-                                </div>
                             </div>
                         </td>
+                        <td>${proj.liveLink ? `<a href="${proj.liveLink}" target="_blank" rel="noopener" class="more-btn">Live ↗</a>` : `<button class="more-btn detail-trigger" data-id="${proj.id}">Details ▾</button>`}</td>
                     </tr>`;
         }).join('')}
                 </tbody>
             </table>`}
+        </div>
+
+        <!-- ═══ REPORTING HISTORY TABLE (REPORTS) ═══ -->
+        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)">
+            <div class="history-head">
+                <div class="history-title">Technical Reporting Log</div>
+                <div class="history-actions">
+                    <span style="font-size: 0.8rem; color: var(--clr-text-muted);">Historical tracking of daily updates</span>
+                </div>
+            </div>
+            ${(() => {
+            const reports = Storage.getHourlyReports(p.userId).sort((a, b) => (b.createdAt || b.timestamp) - (a.createdAt || a.timestamp));
+            if (reports.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon material-symbols-outlined">description</div>
+                        <div class="empty-state-title">No reports found</div>
+                        <div class="empty-state-desc">This intern has not submitted any technical reports yet.</div>
+                    </div>`;
+            }
+            return `
+                <table class="history-table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Window</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reports.map(r => {
+                const date = new Date(r.createdAt || r.timestamp);
+                const endHour = r.window === 1 ? 13 : 18;
+                const isLate = date.getHours() >= endHour;
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                return `
+                            <tr>
+                                <td>${dateStr}</td>
+                                <td>${r.window === 1 ? 'Morning (W1)' : 'Afternoon (W2)'}</td>
+                                <td>${timeStr}</td>
+                                <td>
+                                    <span class="badge ${isLate ? 'badge-warning' : 'badge-success'}" style="font-size: 10px; padding: 2px 8px;">
+                                        ${isLate ? 'LATE SUBMISSION' : 'ON TIME'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="more-btn" onclick="viewDetailedReport('${r.id}')">View Details</button>
+                                </td>
+                            </tr>`;
+            }).join('')}
+                    </tbody>
+                </table>`;
+        })()}
+        </div>
+
+        <!-- ═══ REPORTING CONSISTENCY GRID (30 DAYS) ═══ -->
+        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)">
+            <div class="history-head">
+                <div class="history-title">Consistency Tracker (30 Days)</div>
+                <div style="display:flex; gap:15px; font-size:10px;">
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#10b981; border-radius:2px;"></div> On Time</div>
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div> Late</div>
+                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#ef4444; border-radius:2px;"></div> Missed</div>
+                </div>
+            </div>
+            <div class="consistency-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(10px, 1fr)); gap: 4px; padding: 15px 0;">
+                ${(() => {
+                    const reports = Storage.getHourlyReports(p.userId);
+                    const now = new Date();
+                    let gridHTML = "";
+                    for (let i = 29; i >= 0; i--) {
+                        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                        if (isWeekend) continue; // Skip weekends for better clarity
+
+                        const ds = d.toDateString();
+                        const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === ds);
+                        
+                        const w1 = dayReports.find(r => r.window === 1);
+                        const w2 = dayReports.find(r => r.window === 2);
+                        
+                        const getDot = (rep, winId) => {
+                            const deadline = winId === 1 ? 13 : 18;
+                            if (!rep) {
+                                // If day is in past and window closed
+                                const dClose = new Date(d); dClose.setHours(deadline, 0, 0);
+                                return (now > dClose) ? '#ef4444' : 'rgba(255,255,255,0.05)';
+                            }
+                            const subT = new Date(rep.createdAt || rep.timestamp);
+                            return subT.getHours() >= deadline ? '#f59e0b' : '#10b981';
+                        };
+
+                        const dateTitle = d.toLocaleDateString();
+                        gridHTML += `
+                            <div title="${dateTitle} Morning" style="height:12px; background:${getDot(w1, 1)}; border-radius:2px;"></div>
+                            <div title="${dateTitle} Afternoon" style="height:12px; background:${getDot(w2, 2)}; border-radius:2px;"></div>
+                        `;
+                    }
+                    return gridHTML;
+                })()}
+            </div>
+            <div style="font-size: 0.7rem; color: var(--clr-text-muted); text-align: right; margin-top: 5px;">Morning & Afternoon windows per weekday</div>
         </div>`;
     }
+
+    // ── Global helper for technical reports ──
+    window.viewDetailedReport = async (reportId) => {
+        if (typeof Storage === 'undefined' || !Storage.getHourlyReportById) {
+            console.error('Storage module incomplete');
+            return;
+        }
+
+        const report = Storage.getHourlyReportById(reportId);
+        if (!report) {
+            await IrisModal.alert("Oops! Report details could not be found.");
+            return;
+        }
+
+        const d = report.data;
+        // If it's the old style report without structured data
+        if (!d) {
+            await IrisModal.alert(`
+                <div style="text-align:left">
+                    <h3 style="color:var(--clr-primary)">Daily Update</h3>
+                    <p style="white-space:pre-wrap">${report.note || 'No content'}</p>
+                </div>
+            `);
+            return;
+        }
+
+        const content = `
+            <div style="text-align:left; max-width:600px; max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+                <h2 style="color: var(--clr-primary); margin-top:0">Technical Daily Report</h2>
+                <div style="display:flex; gap:10px; margin-bottom: 20px; font-size: 0.85rem; opacity: 0.8;">
+                    <span><strong>Login:</strong> ${d.loginTime || 'N/A'}</span> | 
+                    <span><strong>Logout:</strong> ${d.logoutTime || 'N/A'}</span>
+                </div>
+                
+                <h4 style="color:var(--clr-cyan); margin-bottom: 5px;">Tasks Completed:</h4>
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 4px;">1. ${d.task1Name || 'Project Module'}</div>
+                        <div style="font-size: 0.9rem; line-height: 1.4; color: #a1a1aa;">${(d.task1Desc || '').replace(/\n/g, '<br>')}</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 4px;">2. ${d.task2Name || 'Project Module'}</div>
+                        <div style="font-size: 0.9rem; line-height: 1.4; color: #a1a1aa;">${(d.task2Desc || '').replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>
+
+                ${d.taskExtra ? `<h4 style="color:var(--clr-cyan); margin-bottom: 5px;">Optional Task:</h4><div style="font-size: 0.9rem; margin-bottom: 15px;">${d.taskExtra.replace(/\n/g, '<br>')}</div>` : ''}
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <h4 style="color:var(--clr-warning); margin-bottom: 5px;">Work in Progress:</h4>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">${(d.workInProgress || 'None').replace(/\n/g, '<br>')}</div>
+                    </div>
+                    <div>
+                        <h4 style="color:var(--clr-success); margin-bottom: 5px;">What I Learned:</h4>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">${(d.whatLearned || 'None').replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--clr-border); padding-top: 15px; text-align: right;">
+                    <strong style="color:var(--clr-primary)">Respectfully,</strong><br>
+                    <em style="font-family: 'Dancing Script', cursive, serif; font-size: 1.1rem;">${d.signature || 'Intern'}</em>
+                </div>
+            </div>
+        `;
+
+        await IrisModal.alert(content);
+    };
 
     // ────────────────────────────────────────────────────────
     // CHART: SVG LINE CHART
