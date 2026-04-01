@@ -36,7 +36,7 @@ const Auth = (() => {
       const firebaseUser = cred.user;
 
       // Look up role from Firestore
-      let storedRole = role;
+      let storedRole = null;
       let displayName = firebaseUser.displayName || '';
       try {
         let data = null;
@@ -47,15 +47,16 @@ const Auth = (() => {
 
         // Fetch role - prefer Firestore data
         if (data) {
-          storedRole = data.role || role;
+          storedRole = data.role;
           displayName = data.displayName || data.name || displayName;
         }
 
         // If admin, also try admins/ collection for richer profile
-        if (storedRole === 'admin' || role === 'admin') {
+        if (role === 'admin') {
           try {
             const adminDoc = await fbDb.collection('admins').doc(firebaseUser.uid).get();
             if (adminDoc.exists) {
+              storedRole = 'admin'; // Confirm they are indeed an admin
               const adminData = adminDoc.data();
               displayName = adminData.name || displayName;
               if (typeof Storage !== 'undefined' && Storage.saveAdminProfile) {
@@ -75,9 +76,12 @@ const Auth = (() => {
       }
 
       // Verify role matches what the user selected
-      if (storedRole !== role) {
+      if (!storedRole || storedRole !== role) {
         await fbAuth.signOut();
-        return { success: false, error: `This account is not registered as ${role === 'admin' ? 'an Admin' : 'an Intern'}. Please select the correct role.` };
+        const errorMessage = !storedRole 
+          ? "Unauthorized access. This account has no assigned role in the system."
+          : `This account is registered as ${storedRole === 'admin' ? 'an Admin' : 'an Intern'}, not ${role === 'admin' ? 'an Admin' : 'an Intern'}.`;
+        return { success: false, error: errorMessage };
       }
 
       // Sync everything from the cloud to local storage (force = true)
