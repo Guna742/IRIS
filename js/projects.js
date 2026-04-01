@@ -255,7 +255,7 @@
               </div>`}
           ${p.status ? `<span class="card-status-badge ${p.status.toLowerCase().replace(/\s+/g, '-')}">${p.status}</span>` : ''}
           ${displayDate ? `<span class="card-date" style="font-size: 0.65rem; padding: 4px 10px;">Submitted: ${displayDate}</span>` : ''}
-          <button class="discussion-btn" data-discussion="${p.id}" title="Project Discussion">
+          <button class="discussion-btn" data-discussion="${p.id}" title="Open Project Feedback & Discussion">
             <span class="material-symbols-outlined">forum</span>
             ${p.comments?.length ? `<span class="comment-count">${p.comments.length}</span>` : ''}
           </button>
@@ -393,63 +393,100 @@
 
     // ── Discussion System ──
     async function openDiscussion(id) {
+        console.log(`[Discussion] Opening thread for project: ${id}`);
         const p = Storage.getProjectById(id);
-        if (!p) return;
+        if (!p) { showToast('Project data not found.', 'error'); return; }
 
-        const profile = Storage.getProfile(session.userId) || {};
-        const userName = profile.name || session.displayName || 'User';
+        // Attempt to resolve the best name for the current speaker
+        let speakerName = 'Unknown User';
+        if (isAdmin) {
+             const adminProfile = Storage.getAdminProfile(session.userId);
+             speakerName = adminProfile?.name || session.displayName || 'Administrator';
+        } else {
+             const userProfile = Storage.getProfile(session.userId);
+             speakerName = userProfile?.name || session.displayName || 'Intern';
+        }
 
         const modalHtml = `
-            <div class="discussion-modal">
-                <div class="comment-list" id="comment-list-${id}" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="discussion-modal-container">
+                <div class="comment-list" id="comment-list-${id}" style="scroll-behavior: smooth;">
                     ${(p.comments || []).length > 0 
                         ? p.comments.map(c => `
-                            <div class="comment-item ${c.userId === session.userId ? 'own' : ''}" style="max-width: 85%; align-self: ${c.userId === session.userId ? 'flex-end' : 'flex-start'}">
-                                <div style="display:flex; justify-content:space-between; font-size: 10px; color: var(--clr-text-muted); margin-bottom: 4px;">
-                                    <strong>${c.name}</strong>
-                                    <span>${new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <div class="comment-item ${c.userId === session.userId ? 'own' : 'other'}">
+                                <div class="comment-meta">
+                                    <span class="user">${c.name} ${c.role === 'admin' ? '<span style="font-size:8px; opacity:0.6; margin-left:4px;">(Admin)</span>' : ''}</span>
+                                    <span class="time">${new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                 </div>
-                                <div style="background: ${c.userId === session.userId ? 'var(--clr-primary-alpha)' : 'rgba(255,255,255,0.05)'}; padding: 10px 15px; border-radius: 12px; font-size: 13px; color: var(--clr-text-main); border: 1px solid ${c.userId === session.userId ? 'var(--clr-primary-alpha)' : 'rgba(255,255,255,0.05)'}">
+                                <div class="comment-bubble">
                                     ${c.text}
                                 </div>
                             </div>
                         `).join('')
-                        : '<div style="text-align:center; color:var(--clr-text-muted); padding: 40px 0;">No comments yet. Start the discussion!</div>'
+                        : '<div class="empty-discussion">No feedback recorded yet. Share your thoughts to start the discussion!</div>'
                     }
                 </div>
-                <div class="comment-input-area" style="display:flex; gap: 10px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
-                    <textarea id="comment-text-${id}" class="field-input" placeholder="Type your comment..." rows="2" style="flex:1; resize:none;"></textarea>
-                    <button class="btn btn-primary" id="send-comment-${id}" style="padding: 0 20px;">
+                <div class="comment-input-area">
+                    <textarea id="comment-text-${id}" class="comment-field" placeholder="Type your comment here..." rows="2" style="background: rgba(255,255,255,0.05);"></textarea>
+                    <button class="btn btn-primary btn-icon" id="send-comment-${id}" title="Send Message">
                         <span class="material-symbols-outlined">send</span>
                     </button>
                 </div>
             </div>
         `;
 
-        const modal = await IrisModal.custom(modalHtml, `Discussion: ${p.title}`, [{ label: 'Close', type: 'secondary' }]);
+        // IMPORTANT: We do NOT await here because we need to attach listeners 
+        // to the modal DOM elements immediately after they are injected.
+        IrisModal.custom(modalHtml, `Project Feedback: ${p.title}`, [{ label: 'Close', type: 'secondary' }])
+            .catch(err => console.error('[Discussion] Modal encounter:', err));
         
         const sendBtn = document.getElementById(`send-comment-${id}`);
         const input = document.getElementById(`comment-text-${id}`);
+        const list = document.getElementById(`comment-list-${id}`);
         
-        sendBtn?.addEventListener('click', async () => {
+        if (list) list.scrollTop = list.scrollHeight;
+
+        const handleSend = async () => {
             const text = input.value.trim();
             if (!text) return;
             
+            console.log(`[Discussion] Sending comment as: ${speakerName}`);
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.5';
+
             p.comments = p.comments || [];
             p.comments.push({
                 userId: session.userId,
-                name: userName,
+                name: speakerName,
+                role: session.role,
                 text,
                 timestamp: Date.now()
             });
 
-            const updated = Storage.saveProject(p);
-            if (Storage.syncProject) await Storage.syncProject(updated || p);
-            
-            // Re-open discussion to refresh
-            IrisModal.close();
-            openDiscussion(id);
+            try {
+                const saved = Storage.saveProject(p);
+                if (Storage.syncProject) await Storage.syncProject(saved || p);
+                
+                showToast('Comment posted successfully!', 'success');
+                IrisModal.close();
+                // Delay re-open slightly to ensure DOM is ready
+                setTimeout(() => openDiscussion(id), 100);
+            } catch (err) {
+                console.error('[Discussion] Sync failed:', err);
+                showToast('Failed to post comment to cloud.', 'error');
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
+            }
+        };
+
+        sendBtn?.addEventListener('click', handleSend);
+        input?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
         });
+
+        setTimeout(() => input?.focus(), 350);
     }
 
     // ── Modal state ──

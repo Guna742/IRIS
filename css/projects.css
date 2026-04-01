@@ -723,3 +723,117 @@
     50% { transform: scale(1.05); }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* -- Discussion Modal UI -- */
+.discussion-modal-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 450px;
+    max-height: 70vh;
+}
+
+.comment-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--clr-accent) transparent;
+}
+
+.comment-item {
+    max-width: 85%;
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-item.own {
+    align-self: flex-end;
+}
+
+.comment-item.other {
+    align-self: flex-start;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 0 4px;
+    gap: 15px;
+}
+
+.comment-meta .user {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--clr-text-muted);
+}
+
+.comment-meta .time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+}
+
+.comment-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.own .comment-bubble {
+    background: linear-gradient(135deg, var(--clr-primary-alpha), rgba(139, 92, 246, 0.2));
+    color: var(--clr-text-main);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-bottom-right-radius: 4px;
+}
+
+.other .comment-bubble {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--clr-text-main);
+    border: 1px solid var(--glass-border);
+    border-bottom-left-radius: 4px;
+}
+
+.comment-input-area {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-border);
+    align-items: center;
+}
+
+.comment-field {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px 15px;
+    color: var(--clr-text-main);
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    transition: all 0.2s ease;
+}
+
+.comment-field:focus {
+    outline: none;
+    border-color: var(--clr-accent);
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.empty-discussion {
+    padding: 60px 0;
+    text-align: center;
+    color: var(--clr-text-muted);
+    font-size: 14px;
+    font-style: italic;
+    opacity: 0.6;
+}

@@ -56,13 +56,26 @@ const SidebarEngine = (() => {
         }
 
         // ── Build Sidebar Nav ──
+        // ── Notification Logic ──
+        const projects = typeof Storage !== 'undefined' ? Storage.getProjects() : [];
+        let hasProjectAlert = false;
+        
+        if (isAdmin) {
+            // Admin alert if any project is 'Resubmitted'
+            hasProjectAlert = projects.some(p => p.status === 'Resubmitted');
+        } else {
+            // Intern alert if any of THEIR projects has 'Changes Requested' or new comments
+            const myProjs = projects.filter(p => String(p.userId || p.ownerId) === String(session.userId));
+            hasProjectAlert = myProjs.some(p => p.status === 'Changes Requested' || (p.comments?.length && p.comments[p.comments.length - 1].role === 'admin'));
+        }
+
         const NAV_INTERN = [
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
             { label: 'My Profile', href: 'student-profile.html', icon: 'person' },
             { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
             { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
             { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', hasNotification: hasProjectAlert },
             { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
@@ -70,7 +83,7 @@ const SidebarEngine = (() => {
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
             { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
             { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder' },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', hasNotification: hasProjectAlert },
             { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
@@ -84,7 +97,10 @@ const SidebarEngine = (() => {
                 const isActive = (currentPath === itemBase) || (currentPath === 'index.html' && itemBase === 'dashboard.html');
                 navHTML += `
                     <a class="nav-item${isActive ? ' active' : ''}" href="${item.href}" aria-current="${isActive ? 'page' : 'false'}">
-                        <span class="nav-icon" aria-hidden="true"><span class="material-symbols-outlined">${item.icon}</span></span>
+                        <span class="nav-icon" aria-hidden="true" style="position:relative;">
+                            <span class="material-symbols-outlined">${item.icon}</span>
+                            ${item.hasNotification ? '<span class="nav-dot" style="position:absolute; top:0; right:0; width:8px; height:8px; background:var(--clr-accent, #8b5cf6); border-radius:50%; border:2px solid var(--clr-bg-surface); box-shadow:0 0 10px var(--clr-accent);"></span>' : ''}
+                        </span>
                         <span>${item.label}</span>
                     </a>`;
             });

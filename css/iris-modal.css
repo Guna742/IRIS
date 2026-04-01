@@ -45,6 +45,10 @@
     opacity: 1;
 }
 
+.iris-modal-box.wide {
+    max-width: 600px;
+}
+
 .iris-modal-header {
     display: flex;
     align-items: center;

@@ -133,6 +133,8 @@ class IrisModal {
         const root = document.getElementById('iris-modal-root');
         if (root) {
             root.classList.remove('show');
+            const box = root.querySelector('.iris-modal-box');
+            if (box) box.classList.remove('wide');
         }
         this._currentResolve = null;
         this._currentReject = null;
@@ -150,6 +152,55 @@ class IrisModal {
 
     static prompt(message, defaultValue = '', title) {
         return this.open({ type: 'prompt', message, defaultValue, title });
+    }
+
+    /**
+     * Highly flexible custom modal for complex UIs (like the Discussion chat).
+     * @param {string} html - The inner HTML for the modal body.
+     * @param {string} title - Modal header title.
+     * @param {Array} buttons - Array of {label, type, onClick} buttons.
+     */
+    static custom(html, title, buttons = [{ label: 'Close', type: 'secondary' }]) {
+        this.init();
+        const root = document.getElementById('iris-modal-root');
+        const box = root.querySelector('.iris-modal-box');
+        const iconEl = document.getElementById('iris-modal-icon');
+        const titleEl = document.getElementById('iris-modal-title');
+        const bodyEl = document.getElementById('iris-modal-body');
+        const inputEl = document.getElementById('iris-modal-input');
+        const actionsEl = document.getElementById('iris-modal-actions');
+
+        // Setup
+        box.classList.add('wide');
+        iconEl.className = 'iris-modal-icon custom';
+        iconEl.innerHTML = '<span class="material-symbols-outlined">chat_bubble</span>';
+        titleEl.textContent = title || 'Discussion';
+        bodyEl.innerHTML = html;
+        inputEl.style.display = 'none';
+        actionsEl.innerHTML = '';
+
+        return new Promise((resolve) => {
+            this._currentResolve = resolve;
+
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.className = `iris-modal-btn iris-modal-btn-${btn.type || 'confirm'}`;
+                b.textContent = btn.label;
+                b.onclick = () => {
+                    if (btn.onClick) {
+                        btn.onClick();
+                    } else {
+                        this.close();
+                        resolve(btn.label);
+                    }
+                };
+                actionsEl.appendChild(b);
+            });
+
+            requestAnimationFrame(() => {
+                root.classList.add('show');
+            });
+        });
     }
 }
 

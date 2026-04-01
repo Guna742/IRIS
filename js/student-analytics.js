@@ -460,33 +460,51 @@
         })()}
         </div>
 
-        <!-- ═══ REPORTING CONSISTENCY GRID (30 DAYS) ═══ -->
+        <!-- ═══ WEEKLY CONSISTENCY TRACKER (7 DAYS) ═══ -->
         <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)">
             <div class="history-head">
-                <div class="history-title">Consistency Tracker (30 Days)</div>
-                <div style="display:flex; gap:15px; font-size:10px;">
-                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#10b981; border-radius:2px;"></div> On Time</div>
-                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div> Late</div>
-                    <div style="display:flex; align-items:center; gap:5px;"><div style="width:8px; height:8px; background:#ef4444; border-radius:2px;"></div> Missed</div>
+                <div class="history-title">Weekly Consistency Tracker</div>
+                <div style="display:flex; gap:12px; font-size:10px;">
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#10b981; border-radius:2px;"></div> On Time</div>
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div> Late</div>
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#ef4444; border-radius:2px;"></div> Missed</div>
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.1); border-radius:2px;"></div> Holiday</div>
                 </div>
             </div>
-            <div class="consistency-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(10px, 1fr)); gap: 4px; padding: 15px 0;">
+            
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--glass-border);">
+                ${(() => {
+                    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    return days.map(d => `<div style="text-align:center; font-size:10px; font-weight:700; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">${d}</div>`).join('');
+                })()}
+                
                 ${(() => {
                     const reports = Storage.getHourlyReports(p.userId);
                     const now = new Date();
-                    let gridHTML = "";
-                    for (let i = 29; i >= 0; i--) {
-                        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-                        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                        if (isWeekend) continue; // Skip weekends for better clarity
+                    
+                    // Logic to find this week's Monday
+                    const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday
+                    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+                    const monday = new Date(now);
+                    monday.setDate(now.getDate() + diffToMonday);
+                    monday.setHours(0,0,0,0);
 
+                    let gridHTML = "";
+                    for (let i = 0; i < 7; i++) {
+                        const d = new Date(monday);
+                        d.setDate(monday.getDate() + i);
+                        const isSunday = d.getDay() === 0;
                         const ds = d.toDateString();
+                        const isFuture = d > now;
+
                         const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === ds);
-                        
                         const w1 = dayReports.find(r => r.window === 1);
                         const w2 = dayReports.find(r => r.window === 2);
                         
                         const getDot = (rep, winId) => {
+                            if (isSunday) return 'transparent'; // Sunday is blank/holiday
+                            if (isFuture) return 'rgba(255,255,255,0.03)';
+                            
                             const deadline = winId === 1 ? 13 : 18;
                             if (!rep) {
                                 // If day is in past and window closed
@@ -497,16 +515,21 @@
                             return subT.getHours() >= deadline ? '#f59e0b' : '#10b981';
                         };
 
-                        const dateTitle = d.toLocaleDateString();
+                        const dateTitle = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const sundayStyle = isSunday ? 'border: 1px dashed rgba(255,255,255,0.1); background: rgba(255,255,255,0.02) !important;' : '';
+
                         gridHTML += `
-                            <div title="${dateTitle} Morning" style="height:12px; background:${getDot(w1, 1)}; border-radius:2px;"></div>
-                            <div title="${dateTitle} Afternoon" style="height:12px; background:${getDot(w2, 2)}; border-radius:2px;"></div>
+                            <div class="day-slot-group" style="display:flex; flex-direction:column; gap:4px; padding:8px; background:rgba(255,255,255,0.03); border-radius:8px; ${sundayStyle}">
+                                <div class="slot-dot" title="${dateTitle} Morning" style="height:10px; background:${getDot(w1, 1)}; border-radius:2px; transition: all 0.3s ease;"></div>
+                                <div class="slot-dot" title="${dateTitle} Afternoon" style="height:10px; background:${getDot(w2, 2)}; border-radius:2px; transition: all 0.3s ease;"></div>
+                                <div style="font-size:8px; color:var(--clr-text-muted); text-align:center; margin-top:2px; font-weight:600;">${d.getDate()}</div>
+                            </div>
                         `;
                     }
                     return gridHTML;
                 })()}
             </div>
-            <div style="font-size: 0.7rem; color: var(--clr-text-muted); text-align: right; margin-top: 5px;">Morning & Afternoon windows per weekday</div>
+            <div style="font-size: 0.7rem; color: var(--clr-text-muted); text-align: right; margin-top: 8px; font-style: italic;">Weekly cycle tracking: Morning & Afternoon reporting windows</div>
         </div>`;
     }
 
@@ -535,42 +558,68 @@
             return;
         }
 
+        const isPlaceholder = (val) => {
+            if (!val) return true;
+            const s = String(val).toLowerCase().trim();
+            return s === 'nil' || s === '0' || s === 'none' || s === 'null';
+        };
+
         const content = `
             <div style="text-align:left; max-width:600px; max-height: 70vh; overflow-y: auto; padding-right: 10px;">
-                <h2 style="color: var(--clr-primary); margin-top:0">Technical Daily Report</h2>
-                <div style="display:flex; gap:10px; margin-bottom: 20px; font-size: 0.85rem; opacity: 0.8;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <h2 style="color: var(--clr-primary); margin-top:0">Technical Daily Report</h2>
+                    ${report.resubmittedAt ? `
+                        <div style="text-align:right; border:1px solid var(--clr-accent); padding:4px 8px; border-radius:6px; background:rgba(139,92,246,0.1);">
+                            <div style="font-size:8px; text-transform:uppercase; color:var(--clr-accent); font-weight:800;">Resubmitted</div>
+                            <div style="font-size:10px; color:var(--clr-text-main); font-weight:600;">${new Date(report.resubmittedAt).toLocaleDateString()} ${new Date(report.resubmittedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom: 20px; font-size: 0.85rem; opacity: 0.8; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
                     <span><strong>Login:</strong> ${d.loginTime || 'N/A'}</span> | 
                     <span><strong>Logout:</strong> ${d.logoutTime || 'N/A'}</span>
                 </div>
                 
-                <h4 style="color:var(--clr-cyan); margin-bottom: 5px;">Tasks Completed:</h4>
-                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                    <div style="margin-bottom: 10px;">
-                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 4px;">1. ${d.task1Name || 'Project Module'}</div>
-                        <div style="font-size: 0.9rem; line-height: 1.4; color: #a1a1aa;">${(d.task1Desc || '').replace(/\n/g, '<br>')}</div>
-                    </div>
+                ${!isPlaceholder(d.task1Desc) || !isPlaceholder(d.task2Desc) ? `
+                <h4 style="color:var(--clr-cyan); margin-bottom: 8px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Tasks Completed:</h4>
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                    ${!isPlaceholder(d.task1Desc) ? `
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 6px; color:var(--clr-text-main);">1. ${d.task1Name || 'Project Module'}</div>
+                        <div style="font-size: 0.9rem; line-height: 1.5; color: rgba(255,255,255,0.7);">${d.task1Desc.replace(/\n/g, '<br>')}</div>
+                    </div>` : ''}
+                    
+                    ${!isPlaceholder(d.task2Desc) ? `
                     <div>
-                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 4px;">2. ${d.task2Name || 'Project Module'}</div>
-                        <div style="font-size: 0.9rem; line-height: 1.4; color: #a1a1aa;">${(d.task2Desc || '').replace(/\n/g, '<br>')}</div>
-                    </div>
+                        <div style="font-weight: 700; border-bottom: 1px solid var(--clr-border); padding-bottom: 4px; margin-bottom: 6px; color:var(--clr-text-main);">2. ${d.task2Name || 'Project Module'}</div>
+                        <div style="font-size: 0.9rem; line-height: 1.5; color: rgba(255,255,255,0.7);">${d.task2Desc.replace(/\n/g, '<br>')}</div>
+                    </div>` : ''}
+                </div>` : ''}
+
+                ${!isPlaceholder(d.taskExtra) ? `
+                <h4 style="color:var(--clr-cyan); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Additional Work:</h4>
+                <div style="font-size: 0.9rem; margin-bottom: 20px; color: rgba(255,255,255,0.7); background: rgba(139, 92, 246, 0.05); padding: 10px; border-radius: 8px;">
+                    ${d.taskExtra.replace(/\n/g, '<br>')}
+                </div>` : ''}
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    ${!isPlaceholder(d.workInProgress) ? `
+                    <div>
+                        <h4 style="color:var(--clr-warning); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Work in Progress:</h4>
+                        <div style="font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">${d.workInProgress.replace(/\n/g, '<br>')}</div>
+                    </div>` : ''}
+                    
+                    ${!isPlaceholder(d.whatLearned) ? `
+                    <div>
+                        <h4 style="color:var(--clr-success); margin-bottom: 5px; text-transform:uppercase; font-size:11px; letter-spacing:1px;">What I Learned:</h4>
+                        <div style="font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">${d.whatLearned.replace(/\n/g, '<br>')}</div>
+                    </div>` : ''}
                 </div>
 
-                ${d.taskExtra ? `<h4 style="color:var(--clr-cyan); margin-bottom: 5px;">Optional Task:</h4><div style="font-size: 0.9rem; margin-bottom: 15px;">${d.taskExtra.replace(/\n/g, '<br>')}</div>` : ''}
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div>
-                        <h4 style="color:var(--clr-warning); margin-bottom: 5px;">Work in Progress:</h4>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">${(d.workInProgress || 'None').replace(/\n/g, '<br>')}</div>
-                    </div>
-                    <div>
-                        <h4 style="color:var(--clr-success); margin-bottom: 5px;">What I Learned:</h4>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">${(d.whatLearned || 'None').replace(/\n/g, '<br>')}</div>
-                    </div>
-                </div>
-
-                <div style="border-top: 1px solid var(--clr-border); padding-top: 15px; text-align: right;">
-                    <strong style="color:var(--clr-primary)">Respectfully,</strong><br>
-                    <em style="font-family: 'Dancing Script', cursive, serif; font-size: 1.1rem;">${d.signature || 'Intern'}</em>
+                <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; text-align: right;">
+                    <div style="color:var(--clr-text-muted); font-size: 11px; margin-bottom: 4px;">Respectfully,</div>
+                    <div style="font-family: 'Dancing Script', cursive, serif; font-size: 1.2rem; color: var(--clr-primary); font-weight: 600;">${d.signature || 'Intern'}</div>
                 </div>
             </div>
         `;
