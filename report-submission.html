@@ -184,18 +184,83 @@
                         </div>
 
                         <form id="report-form">
-                            <div class="form-group">
-                                <label class="form-label">Progress Description</label>
-                                <textarea id="report-note" class="form-textarea" rows="4" placeholder="What have you accomplished in the last 4 hours?" required></textarea>
+                            <!-- Basic Header Row -->
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                                <div class="form-group">
+                                    <label class="form-label" for="login-time">Login Time</label>
+                                    <input type="time" id="login-time" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="logout-time">Logout Time</label>
+                                    <input type="time" id="logout-time" class="form-input" required>
+                                </div>
                             </div>
+
+                            <!-- Tasks Assigned -->
                             <div class="form-group">
-                                <label class="form-label">Optional Notes / Challenges</label>
-                                <textarea id="report-meta" class="form-textarea" rows="2" placeholder="Any blockers or additional context?"></textarea>
+                                <label class="form-label">Tasks Assigned for the Day</label>
+                                <textarea id="tasks-assigned" class="form-textarea" rows="2" placeholder="List assigned tasks (Task 1, Task 2...)" required></textarea>
                             </div>
-                            <div style="display:flex; justify-content:flex-end">
+
+                            <!-- Tasks Completed (Technical) -->
+                            <div class="form-group" style="margin-top:25px">
+                                <label class="form-label" style="font-size:1.1rem; border-left:4px solid var(--clr-primary); padding-left:12px; margin-bottom:15px">Tasks Completed (Technical Explanation)</label>
+                                
+                                <div style="display:flex; flex-direction:column; gap:15px">
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Module / Project 1</label>
+                                        <input type="text" id="task-1-name" class="form-input" style="margin-bottom:10px" placeholder="e.g., Dashboard UI Enhancements">
+                                        <textarea id="task-1-desc" class="form-textarea" rows="3" placeholder="Tasks completed with technical details..."></textarea>
+                                    </div>
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Module / Project 2</label>
+                                        <input type="text" id="task-2-name" class="form-input" style="margin-bottom:10px" placeholder="e.g., Backend API Integration">
+                                        <textarea id="task-2-desc" class="form-textarea" rows="3" placeholder="Tasks completed with technical details..."></textarea>
+                                    </div>
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Optional Additional Work</label>
+                                        <textarea id="task-extra" class="form-textarea" rows="2" placeholder="Any extra items or bug fixes done today"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress & Learnings -->
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top:25px">
+                                <div class="form-group">
+                                    <label class="form-label">Work in Progress</label>
+                                    <textarea id="work-in-progress" class="form-textarea" rows="3" placeholder="What are you currently working on?"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Pending / Yet-to-be-Completed</label>
+                                    <textarea id="pending-tasks" class="form-textarea" rows="3" placeholder="What is parked for later?"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">What I Learned Today</label>
+                                <textarea id="what-learned" class="form-textarea" rows="2" placeholder="New concepts, tools, or research..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Challenges Faced</label>
+                                <textarea id="challenges" class="form-textarea" rows="2" placeholder="Issues faced and how you handled them"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Next Steps / Tomorrow's Plan</label>
+                                <textarea id="next-steps" class="form-textarea" rows="2" placeholder="What's on the roadmap for tomorrow?"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Signature (Outlook Style)</label>
+                                <input type="text" id="signature" class="form-input" placeholder="e.g., Regards, [Your Name] | I.R.I.S Intern">
+                            </div>
+
+                            <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:30px">
+                                <button type="button" class="btn btn-secondary" id="cancel-edit-btn" style="display:none">Cancel Edit</button>
                                 <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
-                                    <span class="material-symbols-outlined" style="margin-right:8px">send</span>
-                                    Submit Progress Update
+                                    <span class="material-symbols-outlined" style="margin-right:8px">rocket_launch</span>
+                                    <span id="submit-btn-text">Submit Full Report</span>
                                 </button>
                             </div>
                         </form>
