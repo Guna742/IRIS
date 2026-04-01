@@ -397,6 +397,19 @@
                             </div>
                         </td>
                         <td>${proj.liveLink ? `<a href="${proj.liveLink}" target="_blank" rel="noopener" class="more-btn">Live ↗</a>` : `<button class="more-btn detail-trigger" data-id="${proj.id}">Details ▾</button>`}</td>
+                    </tr>
+                    <tr class="expandable-details-row" id="details-${proj.id}" style="display:none;">
+                        <td colspan="6">
+                            <div class="expand-content" style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 8px; margin: 10px; border: 1px solid var(--glass-border);">
+                                <h4 style="color:var(--clr-primary); margin-bottom: 8px; font-size: 0.9rem;">Project Description</h4>
+                                <p style="font-size: 0.85rem; color: var(--clr-text-main); line-height: 1.6; margin-bottom: 15px;">${proj.description || 'No detailed description available for this project yet.'}</p>
+                                <div style="display:flex; gap:15px; font-size: 0.75rem; color: var(--clr-text-muted);">
+                                    <span><strong>Project ID:</strong> ${proj.id.substring(0, 8)}...</span>
+                                    <span><strong>Category:</strong> ${proj.category || 'Development'}</span>
+                                    ${proj.updatedAt ? `<span><strong>Last Updated:</strong> ${new Date(proj.updatedAt).toLocaleDateString()}</span>` : ''}
+                                </div>
+                            </div>
+                        </td>
                     </tr>`;
         }).join('')}
                 </tbody>

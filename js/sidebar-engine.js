@@ -133,8 +133,11 @@ const SidebarEngine = (() => {
             }) || { label: 'I.R.I.S', icon: 'auto_awesome' };
 
             topbarTitle.innerHTML = `
-                <span class="desktop-title">${activeItem.label}</span>
-                <span class="mobile-title material-symbols-outlined">${activeItem.icon}</span>
+                <div class="desktop-title-wrap desktop-title">
+                    <span class="material-symbols-outlined topbar-title-icon">${activeItem.icon}</span>
+                    <span>${activeItem.label}</span>
+                </div>
+                <span class="mobile-title material-symbols-outlined" style="font-size:24px;">${activeItem.icon}</span>
             `;
         }
 
@@ -179,6 +182,11 @@ const SidebarEngine = (() => {
                 e.preventDefault();
                 if (typeof Auth !== 'undefined') Auth.logout();
             });
+        }
+
+        // ── Ensure Admin Popup is initialized for this page ──
+        if (typeof AdminPopup !== 'undefined' && AdminPopup.init) {
+            AdminPopup.init();
         }
     };
 

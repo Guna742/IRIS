@@ -115,17 +115,29 @@ const AdminPopup = (() => {
         const footer = document.querySelector('.sidebar-footer');
         if (!footer) return;
 
+        // Prevent duplicate creation
+        if (document.getElementById('admin-popup')) {
+            // Already initialized, just ensure logic is tied to user-info
+            setupListeners(session);
+            return;
+        }
+
         // Create popup container anchored inside sidebar-footer
         popupEl = document.createElement('div');
         popupEl.className = 'admin-popup';
         popupEl.id = 'admin-popup';
         popupEl.setAttribute('role', 'dialog');
         popupEl.setAttribute('aria-label', 'User profile');
+        popupEl.style.zIndex = '2500'; // Override to ensure it's above sidebar
         footer.insertBefore(popupEl, footer.firstChild);
 
-        // Wire click on user-info
+        setupListeners(session);
+    }
+
+    function setupListeners(session) {
         const userInfo = document.getElementById('user-info-sidebar');
-        if (userInfo) {
+        if (userInfo && !userInfo.dataset.bound) {
+            userInfo.dataset.bound = "true";
             userInfo.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (isOpen) {

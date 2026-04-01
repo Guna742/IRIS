@@ -688,8 +688,36 @@ textarea.field-input {
 }
 
 .topbar-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
     font-size: var(--fs-md);
-    font-weight: var(--fw-semi);
+    font-weight: var(--fw-bold);
+    color: var(--clr-text-primary);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    letter-spacing: 0.1px;
+}
+
+.desktop-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topbar-title-icon {
+    font-size: 18px;
+    color: var(--clr-accent);
+    opacity: 0.9;
+    background: rgba(139, 92, 246, 0.1);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
 }
 
 #hamburger-btn {
@@ -704,6 +732,39 @@ textarea.field-input {
 #hamburger-btn:hover {
     color: var(--clr-text-primary);
     background: var(--glass-bg);
+}
+
+/* ── Responsive Title Logic ── */
+.desktop-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.mobile-title {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .desktop-title {
+        display: none !important;
+    }
+    .mobile-title {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(139, 92, 246, 0.1);
+        border-radius: var(--radius-md);
+        color: var(--clr-accent);
+    }
+    
+    .topbar-title {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
 }
 
 /* ── Page Header ── */
