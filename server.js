@@ -18,7 +18,10 @@ const mimeTypes = {
 };
 
 const server = http.createServer((request, response) => {
-    let filePath = '.' + request.url;
+    // Strip query strings from the path
+    let urlPath = request.url.split('?')[0];
+    let filePath = '.' + urlPath;
+    
     if (filePath == './') {
         filePath = './login.html';
     }
