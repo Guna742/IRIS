@@ -619,7 +619,7 @@
 
                 <div style="border-top: 1px solid var(--glass-border); padding-top: 20px; text-align: right;">
                     <div style="color:var(--clr-text-muted); font-size: 11px; margin-bottom: 4px;">Respectfully,</div>
-                    <div style="font-family: 'Dancing Script', cursive, serif; font-size: 1.2rem; color: var(--clr-primary); font-weight: 600;">${d.signature || 'Intern'}</div>
+                    <div style="font-family: 'Dancing Script', cursive, serif; font-size: 1.2rem; color: var(--clr-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; margin-left: auto;">${d.signature || 'Intern'}</div>
                 </div>
             </div>
         `;

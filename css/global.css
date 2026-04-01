@@ -102,6 +102,29 @@ ol {
     box-shadow: var(--glass-shadow);
 }
 
+/* ── 3D Card Utility / Glare Effects ── */
+.card-3d {
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.4s var(--dur-normal) var(--ease-out);
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.1) 0%, transparent 65%);
+    border-radius: inherit;
+    mix-blend-mode: overlay;
+}
+
+.card-3d:hover .glare {
+    opacity: 1;
+}
+
 /* ── Buttons ── */
 .btn {
     display: inline-flex;

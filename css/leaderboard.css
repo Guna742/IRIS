@@ -531,31 +531,41 @@
     animation: lbSlideDown 0.6s var(--ease-out-expo) 0.3s both;
 }
 
-.lb-table-header {
-    display: grid;
-    grid-template-columns: 60px 1fr 120px 120px 100px;
-    padding: var(--sp-4) var(--sp-6);
-    border-bottom: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.02);
+/* Decorative glare for 3D cards — must be absolute to not break grid */
+.glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-out);
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.08) 0%, transparent 60%);
+    border-radius: inherit;
 }
 
-.lb-th {
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-semi);
-    color: var(--clr-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+.card-3d:hover .glare {
+    opacity: 1;
 }
 
 .lb-table-row {
     display: grid;
-    grid-template-columns: 60px 1fr 120px 120px 100px;
+    grid-template-columns: 80px 1fr 140px 180px 140px;
     align-items: center;
     padding: var(--sp-4) var(--sp-6);
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     transition: background 0.2s ease;
     animation: rowSlide 0.4s var(--ease-out-expo) both;
     position: relative;
+    gap: var(--sp-4);
+}
+
+.lb-table-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 140px 180px 140px;
+    padding: var(--sp-4) var(--sp-6);
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+    gap: var(--sp-4);
 }
 
 .lb-table-row::after {
@@ -798,7 +808,8 @@
 
     .lb-table-header,
     .lb-table-row {
-        grid-template-columns: 50px 1fr 100px 80px;
+        grid-template-columns: 60px 1fr 100px 140px;
+        gap: var(--sp-2);
     }
 
     .lb-th.rating-col,

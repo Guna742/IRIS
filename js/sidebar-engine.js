@@ -55,19 +55,31 @@ const SidebarEngine = (() => {
             roleBanner.classList.add(isAdmin ? 'admin' : 'user');
         }
 
-        // ── Build Sidebar Nav ──
         // ── Notification Logic ──
         const projects = typeof Storage !== 'undefined' ? Storage.getProjects() : [];
-        let hasProjectAlert = false;
+        let projectAlertCount = 0;
         
-        if (isAdmin) {
-            // Admin alert if any project is 'Resubmitted'
-            hasProjectAlert = projects.some(p => p.status === 'Resubmitted');
-        } else {
-            // Intern alert if any of THEIR projects has 'Changes Requested' or new comments
-            const myProjs = projects.filter(p => String(p.userId || p.ownerId) === String(session.userId));
-            hasProjectAlert = myProjs.some(p => p.status === 'Changes Requested' || (p.comments?.length && p.comments[p.comments.length - 1].role === 'admin'));
-        }
+        projects.forEach(p => {
+            const lastSeen = parseInt(localStorage.getItem(`iris_seen_${p.id}`) || '0', 10);
+            const activityTime = p.comments?.length 
+                ? p.comments[p.comments.length - 1].timestamp 
+                : (p.updatedAt || 0);
+
+            if (activityTime > lastSeen) {
+                if (isAdmin) {
+                    // Admins see a dot if a project was Resubmitted
+                    if (p.status === 'Resubmitted') projectAlertCount++;
+                } else {
+                    // Interns see a dot if THEIR project has 'Changes Requested' or a new Admin comment
+                    if (String(p.userId || p.ownerId) === String(session.userId)) {
+                        const hasAdminCmt = p.comments?.length && p.comments[p.comments.length - 1].role === 'admin';
+                        if (p.status === 'Changes Requested' || hasAdminCmt) projectAlertCount++;
+                    }
+                }
+            }
+        });
+
+        const hasProjectAlert = projectAlertCount > 0;
 
         const NAV_INTERN = [
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
@@ -75,7 +87,7 @@ const SidebarEngine = (() => {
             { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
             { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
             { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder', hasNotification: hasProjectAlert },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', alertCount: projectAlertCount },
             { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
@@ -83,7 +95,7 @@ const SidebarEngine = (() => {
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
             { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
             { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder', hasNotification: hasProjectAlert },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', alertCount: projectAlertCount },
             { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
         ];
 
@@ -95,11 +107,16 @@ const SidebarEngine = (() => {
             navItems.forEach(item => {
                 const itemBase = item.href.split('?')[0];
                 const isActive = (currentPath === itemBase) || (currentPath === 'index.html' && itemBase === 'dashboard.html');
+                const badgeHTML = item.alertCount ? `
+                    <span class="nav-dot" style="position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:var(--clr-accent, #8b5cf6); border-radius:50%; border:2px solid var(--clr-bg-surface); box-shadow:0 0 10px var(--clr-accent); color:white; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                        ${item.alertCount}
+                    </span>` : '';
+                
                 navHTML += `
                     <a class="nav-item${isActive ? ' active' : ''}" href="${item.href}" aria-current="${isActive ? 'page' : 'false'}">
                         <span class="nav-icon" aria-hidden="true" style="position:relative;">
                             <span class="material-symbols-outlined">${item.icon}</span>
-                            ${item.hasNotification ? '<span class="nav-dot" style="position:absolute; top:0; right:0; width:8px; height:8px; background:var(--clr-accent, #8b5cf6); border-radius:50%; border:2px solid var(--clr-bg-surface); box-shadow:0 0 10px var(--clr-accent);"></span>' : ''}
+                            ${badgeHTML}
                         </span>
                         <span>${item.label}</span>
                     </a>`;
