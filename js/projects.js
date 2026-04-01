@@ -244,8 +244,23 @@
             userName = ownerProfile ? ownerProfile.name : '';
         }
 
-        return `
-      <article class="project-card ${delayClass}" id="${p.id}" aria-label="Project: ${p.title}">
+        // Notification Logic for the Card
+        const lastSeen = parseInt(localStorage.getItem(`iris_seen_${p.id}`) || '0', 10);
+        const lastComment = p.comments?.length ? p.comments[p.comments.length - 1] : null;
+        const activityTime = lastComment ? lastComment.timestamp : (p.updatedAt || 0);
+        
+        let isUnread = false;
+        if (isAdmin) {
+            // Admin: Dot if Resubmitted or newest comment is from Intern
+            isUnread = (p.status === 'Resubmitted') || (lastComment && lastComment.role === 'user' && activityTime > lastSeen);
+        } else if (String(p.userId || p.ownerId) === String(session.userId)) {
+            // Intern: Dot if Changes Requested or newest comment is from Admin
+            isUnread = (p.status === 'Changes Requested') || (lastComment && lastComment.role === 'admin' && activityTime > lastSeen);
+        }
+        
+        const unreadComments = p.comments?.filter(c => c.timestamp > lastSeen && (isAdmin ? c.role === 'user' : c.role === 'admin')).length || 0;
+  return `
+      <article class="project-card ${delayClass} ${isUnread ? 'card-unread' : ''}" id="${p.id}" aria-label="Project: ${p.title}">
         <div class="card-img-wrap">
           ${p.screenshot
                 ? `<img class="card-img" src="${p.screenshot}" alt="${p.title} screenshot" loading="lazy">`
@@ -255,9 +270,9 @@
               </div>`}
           ${p.status ? `<span class="card-status-badge ${p.status.toLowerCase().replace(/\s+/g, '-')}">${p.status}</span>` : ''}
           ${displayDate ? `<span class="card-date" style="font-size: 0.65rem; padding: 4px 10px;">Submitted: ${displayDate}</span>` : ''}
-          <button class="discussion-btn" data-discussion="${p.id}" title="Open Project Feedback & Discussion">
+          <button class="discussion-btn ${isUnread ? 'pulse' : ''}" data-discussion="${p.id}" title="Open Project Feedback & Discussion">
             <span class="material-symbols-outlined">forum</span>
-            ${p.comments?.length ? `<span class="comment-count">${p.comments.length}</span>` : ''}
+            ${unreadComments > 0 ? `<span class="comment-count unread-badge">${unreadComments}</span>` : p.comments?.length ? `<span class="comment-count">${p.comments.length}</span>` : ''}
           </button>
         </div>
         <div class="card-body">
@@ -276,50 +291,50 @@
                 </a>`
                 : ''}
             ${p.liveLink
-                ? `<a class="card-link live" href="${p.liveLink}" target="_blank" rel="noopener" aria-label="${p.liveLinkType === 'Demo' ? 'Demo' : 'Live demo'} for ${p.title}">
+                ? `<a class="card-link live" href="${p.liveLink}" target="_blank" rel="noopener">
                   <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
                   ${p.liveLinkType === 'Demo' ? 'Demo URL' : 'Live Demo'}
                 </a>`
                 : ''}
           </div>
           ${isUser ? `
-          <div class="card-actions">
-            <button class="btn btn-icon btn-sm" data-edit="${p.id}" title="Edit project" aria-label="Edit ${p.title}">
-              <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+          <div class="card-actions" style="display:flex; gap:8px;">
+            <button class="btn btn-icon btn-sm" data-edit="${p.id}" title="Edit project">
+              <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
             </button>
-            <button class="btn btn-icon btn-sm" data-delete="${p.id}" data-title="${p.title}" title="Delete project" aria-label="Delete ${p.title}">
-              <span class="material-symbols-outlined" style="font-size: 18px; color:var(--clr-danger)">delete</span>
+            <button class="btn btn-icon btn-sm" data-delete="${p.id}" data-title="${p.title}" title="Delete project">
+              <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-danger)">delete</span>
             </button>
           </div>` : isAdmin ? `
-          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div class="card-rating-zone" style="flex:1">
-              <span class="rating-label">Quality Rating:</span>
-              <div class="star-rating" data-id="${p.id}" role="group" aria-label="Project rating">
-                  ${[1, 2, 3, 4, 5].map(v => `
-                      <span class="star ${p.rating >= v ? 'active' : ''}" 
-                            data-value="${v}" 
-                            role="button" 
-                            tabindex="0"
-                            aria-label="Rate ${v} stars"
-                            title="Rate ${v} star${v > 1 ? 's' : ''}">${p.rating >= v ? '★' : '☆'}</span>
-                  `).join('')}
-                  <span class="rating-value-hint">${p.rating ? `${p.rating}/5` : 'Not Rated'}</span>
+          <div class="admin-eval-zone" style="display:flex; flex-direction:column; gap:12px; flex:1; max-width:calc(100% + 10px);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <div class="card-rating-zone">
+                <div class="rating-label" style="font-size:9px; font-weight:700; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Rating</div>
+                <div class="star-rating" data-id="${p.id}" style="display:flex; align-items:center; gap:3px;">
+                    ${[1, 2, 3, 4, 5].map(v => `
+                        <span class="star ${p.rating >= v ? 'active' : ''}" 
+                              data-value="${v}" 
+                              style="font-size:18px; cursor:pointer; color:${p.rating >= v ? '#f59e0b' : 'rgba(255,255,255,0.08)'}">${p.rating >= v ? '★' : '★'}</span>
+                    `).join('')}
+                    <span style="font-size:9px; color:var(--clr-accent); font-weight:700; margin-left:2px;">${p.rating || 'N/R'}</span>
+                </div>
+              </div>
+              <div class="admin-actions" style="display:flex; align-items:center; gap:4px; padding-right:2px;">
+                <button class="btn btn-icon btn-sm" data-admin-edit="${p.id}" title="Edit">
+                  <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                </button>
+                <button class="btn btn-icon btn-sm" data-request-redo="${p.id}" title="Redo" style="background:rgba(239,68,68,0.1); color:var(--clr-danger); border:1px solid rgba(239,68,68,0.15)">
+                  <span class="material-symbols-outlined" style="font-size:18px">assignment_return</span>
+                </button>
+                <button class="btn btn-icon btn-sm" data-admin-delete="${p.id}" data-title="${p.title}" title="Delete">
+                  <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-danger)">delete</span>
+                </button>
               </div>
             </div>
-            <div style="display:flex; gap:4px; flex-shrink:0;">
-              <button class="btn btn-icon btn-sm" data-admin-edit="${p.id}" title="Edit / Reassign" aria-label="Edit ${p.title}">
-                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
-              </button>
-              <button class="btn btn-icon btn-sm" data-request-redo="${p.id}" title="Request Redo / Changes" style="background:rgba(239,68,68,.1); color:var(--clr-danger); border:1px solid rgba(239,68,68,.2);">
-                <span class="material-symbols-outlined" style="font-size:18px">assignment_return</span>
-              </button>
-              <button class="btn btn-icon btn-sm" data-admin-delete="${p.id}" data-title="${p.title}" title="Delete project" aria-label="Delete ${p.title}">
-                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-danger)">delete</span>
-              </button>
-            </div>
           </div>` : p.rating ? `
-          <div class="card-rating-display">
-            <div class="stars active">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
+          <div class="card-rating-display" style="display:flex; align-items:center; gap:8px;">
+            <div class="stars active" style="color:#f59e0b; font-size:14px; letter-spacing:2px;">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
+            <div style="font-size:10px; font-weight:700; color:var(--clr-accent)">${p.rating}/5</div>
           </div>
           ` : ''}
           ${isUser && p.status === 'Changes Requested' ? `
@@ -338,9 +353,9 @@
                     ? `<img src="${avatar}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; margin-right:8px; border:1px solid var(--clr-primary-alpha)">`
                     : `<span class="card-owner-icon" style="background:var(--clr-primary-alpha); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:8px;"><span class="material-symbols-outlined" style="font-size: 14px; color:var(--clr-primary)">person</span></span>`;
             })()}
-          <div style="display:flex; flex-direction:column;">
-            <span class="card-owner-name" style="font-size: 0.85rem; font-weight:600; color:var(--clr-text-main)">${userName || 'Unassigned Intern'}</span>
-            <span style="font-size: 0.7rem; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Developer</span>
+          <div style="display:flex; flex-direction:column; line-height:1.2;">
+            <span class="card-owner-name" style="font-size: 0.8rem; font-weight:700; color:var(--clr-text-primary); letter-spacing:0.2px;">${userName || 'Unassigned Intern'}</span>
+            <span style="font-size: 0.65rem; color:var(--clr-accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.8;">Software Developer</span>
           </div>
         </div>
       </article>`;
@@ -385,9 +400,13 @@
         const p = Storage.getProjectById(id);
         if (!p) return;
         p.status = 'Resubmitted';
+        p.updatedAt = Date.now();
         const updated = Storage.saveProject(p);
         if (Storage.syncProject) Storage.syncProject(updated || p);
         showToast('Project resubmitted for review!', 'success');
+        
+        // Refresh EVERYTHING locally to trigger dots
+        window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'resubmit' } }));
         renderProjects();
     }
 
@@ -396,6 +415,12 @@
         console.log(`[Discussion] Opening thread for project: ${id}`);
         const p = Storage.getProjectById(id);
         if (!p) { showToast('Project data not found.', 'error'); return; }
+
+        // ── Mark as Seen ──
+        const activityTime = p.comments?.length ? p.comments[p.comments.length - 1].timestamp : (p.updatedAt || Date.now());
+        localStorage.setItem(`iris_seen_${id}`, activityTime);
+        // Refresh sidebar and local card indicators
+        window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'notifications' } }));
 
         // Attempt to resolve the best name for the current speaker
         let speakerName = 'Unknown User';

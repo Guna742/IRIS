@@ -124,24 +124,49 @@ const SidebarEngine = (() => {
             sidebarNav.innerHTML = navHTML;
         }
 
+        // ── Update Topbar Title with Mobile Support ──
+        const topbarTitle = document.querySelector('.topbar-title');
+        if (topbarTitle) {
+            const activeItem = navItems.find(item => {
+                const itemBase = item.href.split('?')[0];
+                return (currentPath === itemBase) || (currentPath === 'index.html' && itemBase === 'dashboard.html');
+            }) || { label: 'I.R.I.S', icon: 'auto_awesome' };
+
+            topbarTitle.innerHTML = `
+                <span class="desktop-title">${activeItem.label}</span>
+                <span class="mobile-title material-symbols-outlined">${activeItem.icon}</span>
+            `;
+        }
+
         // ── Sidebar Toggling ──
         const openSidebar = () => {
             if (appSidebar) appSidebar.classList.add('open');
-            if (sidebarOverlay) sidebarOverlay.classList.add('visible');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.add('visible');
+                // Force display if inline styles were used previously
+                sidebarOverlay.style.display = 'block';
+            }
             if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
+            // Prevent body scroll when open
+            document.body.style.overflow = 'hidden';
         };
 
         const closeSidebar = () => {
             if (appSidebar) appSidebar.classList.remove('open');
-            if (sidebarOverlay) sidebarOverlay.classList.remove('visible');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.remove('visible');
+                sidebarOverlay.style.display = 'none';
+            }
             if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
         };
 
         if (hamburgerBtn) {
-            hamburgerBtn.addEventListener('click', () => {
+            hamburgerBtn.onclick = (e) => {
+                e.stopPropagation();
                 const isOpen = appSidebar && appSidebar.classList.contains('open');
                 isOpen ? closeSidebar() : openSidebar();
-            });
+            };
         }
 
         if (sidebarOverlay) {
@@ -166,3 +191,9 @@ if (document.readyState === 'loading') {
 } else {
     SidebarEngine.init();
 }
+
+// Global listener for dynamic data updates (e.g. marking as read)
+window.addEventListener('iris-data-sync', (e) => {
+    console.log('[Sidebar] Data sync event received:', e.detail);
+    SidebarEngine.init();
+});
