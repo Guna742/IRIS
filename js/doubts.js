@@ -24,6 +24,8 @@ const IMAGE_UPLOAD_ENABLED = false;
     }
 
     const isAdmin = session.role === 'admin';
+    const profile = Storage.getProfile ? Storage.getProfile(session.userId) : null;
+    const currentName = profile?.name || session.displayName || 'Intern';
 
     // ── DOM refs ──
     const sidebarNav       = document.getElementById('sidebar-nav');
@@ -51,15 +53,9 @@ const IMAGE_UPLOAD_ENABLED = false;
     const mineTabBtn       = document.getElementById('tab-mine');
     const mineCountEl      = document.getElementById('count-mine');
 
-    // ── Role-based UI adjustments ──
-    // Hide "Ask a Doubt" button completely for admins
-    if (isAdmin && askDoubtBtn) {
-        askDoubtBtn.style.display = 'none';
-    }
-
-    // Hide "My Questions" tab for admins (they don't ask questions)
+    // Show "My Questions" tab for admins (renamed to My Posts)
     if (isAdmin && mineTabBtn) {
-        mineTabBtn.style.display = 'none';
+        mineTabBtn.innerHTML = `My Posts <span class="tab-count" id="count-mine">0</span>`;
     }
 
     // Change page subtitle based on role
@@ -240,8 +236,8 @@ const IMAGE_UPLOAD_ENABLED = false;
         });
     });
 
-    // ── Ask Modal (INTERN only) ──
-    if (!isAdmin) {
+    // ── Ask Modal (INTERN & ADMIN) ──
+    if (true) { // Re-enabled for all
         function openModal() {
             askModal.classList.add('open');
             document.body.style.overflow = 'hidden';
@@ -258,6 +254,7 @@ const IMAGE_UPLOAD_ENABLED = false;
         }
 
         askDoubtBtn?.addEventListener('click', openModal);
+        document.getElementById('fab-post-btn')?.addEventListener('click', openModal);
         modalCloseBtn?.addEventListener('click', closeModal);
         modalCancelBtn?.addEventListener('click', closeModal);
         askModal?.addEventListener('click', e => { if (e.target === askModal) closeModal(); });

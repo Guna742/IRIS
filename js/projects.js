@@ -88,26 +88,65 @@
     const countLabel = document.getElementById('project-count-label');
 
     function renderProjects() {
-        const projects = Storage.getProjects();
-        countLabel.textContent = `${projects.length} project${projects.length !== 1 ? 's' : ''} in portfolio`;
+        const urlParams = new URLSearchParams(window.location.search);
+        let filterIntern = urlParams.get('intern');
 
-        if (projects.length === 0) {
-            grid.innerHTML = `
-        <div class="empty-state" style="grid-column:1/-1">
-          <div class="empty-icon" aria-hidden="true"><span class="material-symbols-outlined" style="font-size: 48px;">folder_off</span></div>
-          <div class="empty-title">No projects yet</div>
-          <div class="empty-desc">
-            ${isUser
-                    ? 'Add your first project using the + button below.'
-                    : 'The interns have not added any projects yet.'}
-          </div>
-          ${isUser ? `<button class="btn btn-primary" onclick="document.getElementById('fab-btn').click()">Add First Project</button>` : ''}
-        </div>`;
-            return;
+        // Privacy Gate: Interns can ONLY see their own projects
+        if (isUser) {
+            filterIntern = session.userId;
         }
 
-        grid.innerHTML = projects.map((p, i) => buildCard(p, i)).join('');
+        let projects = Storage.getProjects() || [];
+        
+        if (filterIntern) {
+            // Tier 2: Individual projects for a specific intern
+            projects = projects.filter(p => String(p.userId || p.ownerId) === filterIntern);
+            projects.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); // Ascending as requested
+            
+            const profile = Storage.getProfile(filterIntern);
+            const internName = profile?.name || projects[0]?.userName || 'Intern';
+            
+            if (isUser) {
+                countLabel.innerHTML = `Viewing <strong>Your Portfolio</strong>`;
+            } else {
+                countLabel.innerHTML = `Showing projects for <strong>${internName}</strong> <a href="projects.html" style="margin-left:12px; color:var(--clr-accent); font-size:12px; text-decoration:none;">(Show All Interns)</a>`;
+            }
+            
+            if (projects.length === 0) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-title">You haven't added any projects yet.</div><button class="btn btn-primary" onclick="document.getElementById('fab-btn').click()">Add First Project</button></div>`;
+                return;
+            }
+            
+            grid.innerHTML = projects.map((p, i) => buildCard(p, i)).join('');
+            attachCardListeners();
+        } else if (isAdmin) {
+            // Tier 1: Summary cards per intern (Admin only)
+            countLabel.textContent = `Project portfolios from ${new Set(projects.map(p => p.userId || p.ownerId)).size} interns`;
+            
+            // Group by intern
+            const internGroups = {};
+            projects.forEach(p => {
+                const uid = p.userId || p.ownerId;
+                if (!internGroups[uid]) {
+                    internGroups[uid] = { projects: [], lastSubmit: 0, uid };
+                }
+                internGroups[uid].projects.push(p);
+                if ((p.createdAt || 0) > internGroups[uid].lastSubmit) {
+                    internGroups[uid].lastSubmit = p.createdAt;
+                }
+            });
 
+            const groups = Object.values(internGroups);
+            if (groups.length === 0) {
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-title">No intern portfolios yet.</div></div>`;
+                return;
+            }
+
+            grid.innerHTML = groups.map((g, i) => buildInternGroupCard(g, i)).join('');
+        }
+    }
+
+    function attachCardListeners() {
         // Attach user card actions (Interns manage their own projects)
         if (isUser) {
             grid.querySelectorAll('[data-delete]').forEach(btn => {
@@ -117,7 +156,6 @@
                 btn.addEventListener('click', () => openModal(btn.dataset.edit));
             });
         }
-
         // Attach admin edit/delete actions (admins can manage all)
         if (isAdmin) {
             grid.querySelectorAll('[data-admin-delete]').forEach(btn => {
@@ -126,10 +164,6 @@
             grid.querySelectorAll('[data-admin-edit]').forEach(btn => {
                 btn.addEventListener('click', () => openModal(btn.dataset.adminEdit));
             });
-        }
-
-        // Attach rating handlers for admins
-        if (isAdmin) {
             grid.querySelectorAll('.star-rating .star').forEach(star => {
                 star.addEventListener('click', (e) => {
                     const rating = parseInt(star.dataset.value);
@@ -137,13 +171,69 @@
                     handleRate(projId, rating);
                 });
             });
+            // Request Redo button
+            grid.querySelectorAll('[data-request-redo]').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); requestRedo(btn.dataset.requestRedo); });
+            });
         }
+
+        // Attach global discussion handler
+        grid.querySelectorAll('[data-discussion]').forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); openDiscussion(btn.dataset.discussion); });
+        });
+
+        // Resubmit handler for interns
+        if (isUser) {
+            grid.querySelectorAll('[data-resubmit]').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); handleResubmit(btn.dataset.resubmit); });
+            });
+        }
+    }
+
+    function buildInternGroupCard(g, index) {
+        const profile = Storage.getProfile(g.uid);
+        const name = profile?.name || g.projects[0]?.userName || 'Unknown Intern';
+        const company = profile?.company || 'IRIS Partner';
+        const avatar = profile?.avatar || '';
+        const count = g.projects.length;
+        const lastDate = g.lastSubmit ? new Date(g.lastSubmit).toLocaleDateString('en-US', { 
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+        }) : 'No submissions';
+
+        return `
+        <article class="project-card anim-reveal" style="cursor:pointer" onclick="window.location.href='projects.html?intern=${g.uid}'">
+            <div class="card-img-wrap" style="height:120px; background: linear-gradient(135deg, var(--clr-bg-surface), var(--clr-bg-elevated));">
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+                    ${avatar ? `<img src="${avatar}" style="width:60px; height:60px; border-radius:50%; border:2px solid var(--clr-accent)">` : `<span class="material-symbols-outlined" style="font-size:48px; color:var(--clr-text-muted)">person</span>`}
+                </div>
+                <span class="card-status-badge completed" style="top:10px; right:10px;">${count} Project${count !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="card-body" style="padding:20px; text-align:center;">
+                <h2 class="card-title" style="margin-bottom:4px;">${name}</h2>
+                <div style="color:var(--clr-accent); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">${company}</div>
+                <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-size:10px; color:var(--clr-text-muted); text-transform:uppercase;">Last Activity</span>
+                    <span style="font-size:12px; color:var(--clr-text-main); font-weight:500;">${lastDate}</span>
+                </div>
+            </div>
+            <div class="card-footer" style="justify-content:center; padding:15px; border-top:1px solid var(--glass-border);">
+                <span style="font-size:12px; color:var(--clr-accent); display:flex; align-items:center; gap:6px;">
+                    View Portfolio <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
+                </span>
+            </div>
+        </article>`;
     }
 
     function buildCard(p, index) {
         const delayClass = `anim-d${Math.min(index + 1, 8)}`;
         const displayDate = p.createdAt
-            ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            ? new Date(p.createdAt).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })
             : '';
 
         // Resolve owner name: stored on project, or look up from profiles
@@ -163,8 +253,12 @@
                 <span class="ph-icon" aria-hidden="true"><span class="material-symbols-outlined" style="font-size: 48px;">folder</span></span>
                 <span class="ph-title">${p.techStack?.[0] || 'Project'}</span>
               </div>`}
-          ${p.status ? `<span class="card-status-badge ${p.status.toLowerCase()}">${p.status}</span>` : ''}
-          ${displayDate ? `<span class="card-date">${displayDate}</span>` : ''}
+          ${p.status ? `<span class="card-status-badge ${p.status.toLowerCase().replace(/\s+/g, '-')}">${p.status}</span>` : ''}
+          ${displayDate ? `<span class="card-date" style="font-size: 0.65rem; padding: 4px 10px;">Submitted: ${displayDate}</span>` : ''}
+          <button class="discussion-btn" data-discussion="${p.id}" title="Project Discussion">
+            <span class="material-symbols-outlined">forum</span>
+            ${p.comments?.length ? `<span class="comment-count">${p.comments.length}</span>` : ''}
+          </button>
         </div>
         <div class="card-body">
           <h2 class="card-title">${p.title}</h2>
@@ -216,6 +310,9 @@
               <button class="btn btn-icon btn-sm" data-admin-edit="${p.id}" title="Edit / Reassign" aria-label="Edit ${p.title}">
                 <span class="material-symbols-outlined" style="font-size:18px">edit</span>
               </button>
+              <button class="btn btn-icon btn-sm" data-request-redo="${p.id}" title="Request Redo / Changes" style="background:rgba(239,68,68,.1); color:var(--clr-danger); border:1px solid rgba(239,68,68,.2);">
+                <span class="material-symbols-outlined" style="font-size:18px">assignment_return</span>
+              </button>
               <button class="btn btn-icon btn-sm" data-admin-delete="${p.id}" data-title="${p.title}" title="Delete project" aria-label="Delete ${p.title}">
                 <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-danger)">delete</span>
               </button>
@@ -225,11 +322,26 @@
             <div class="stars active">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
           </div>
           ` : ''}
+          ${isUser && p.status === 'Changes Requested' ? `
+          <button class="btn btn-primary btn-sm btn-resubmit" data-resubmit="${p.id}" style="width:100%; margin-top:12px; gap:8px;">
+            <span class="material-symbols-outlined" style="font-size:18px">publish</span>
+            Resubmit Project
+          </button>
+          ` : ''}
         </div>
         <!-- Student owner name -->
-        <div class="card-owner" aria-label="Project by ${userName || 'Unknown'}">
-          <span class="card-owner-icon" aria-hidden="true"><span class="material-symbols-outlined" style="font-size: 14px;">person</span></span>
-          <span class="card-owner-name">${userName || 'Unassigned'}</span>
+        <div class="card-owner" style="background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.05); padding: 12px 15px;" aria-label="Project by ${userName || 'Unknown'}">
+          ${(() => {
+                const ownerProfile = Storage.getProfile(p.userId || p.ownerId);
+                const avatar = ownerProfile?.avatar || '';
+                return avatar 
+                    ? `<img src="${avatar}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; margin-right:8px; border:1px solid var(--clr-primary-alpha)">`
+                    : `<span class="card-owner-icon" style="background:var(--clr-primary-alpha); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:8px;"><span class="material-symbols-outlined" style="font-size: 14px; color:var(--clr-primary)">person</span></span>`;
+            })()}
+          <div style="display:flex; flex-direction:column;">
+            <span class="card-owner-name" style="font-size: 0.85rem; font-weight:600; color:var(--clr-text-main)">${userName || 'Unassigned Intern'}</span>
+            <span style="font-size: 0.7rem; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:0.5px;">Developer</span>
+          </div>
         </div>
       </article>`;
     }
@@ -255,6 +367,89 @@
         if (Storage.deleteProjectFromFirebase) Storage.deleteProjectFromFirebase(id);
         showToast(`"${title}" deleted.`, 'info');
         renderProjects();
+    }
+
+    // ── Redo & Resubmit ──
+    async function requestRedo(id) {
+        if (!(await IrisModal.confirm('Request changes for this project? The intern will be notified to redo the work.', 'Request Changes'))) return;
+        const p = Storage.getProjectById(id);
+        if (!p) return;
+        p.status = 'Changes Requested';
+        const updated = Storage.saveProject(p);
+        if (Storage.syncProject) Storage.syncProject(updated || p);
+        showToast('Changes requested. Project marked for Redo.', 'info');
+        renderProjects();
+    }
+
+    async function handleResubmit(id) {
+        const p = Storage.getProjectById(id);
+        if (!p) return;
+        p.status = 'Resubmitted';
+        const updated = Storage.saveProject(p);
+        if (Storage.syncProject) Storage.syncProject(updated || p);
+        showToast('Project resubmitted for review!', 'success');
+        renderProjects();
+    }
+
+    // ── Discussion System ──
+    async function openDiscussion(id) {
+        const p = Storage.getProjectById(id);
+        if (!p) return;
+
+        const profile = Storage.getProfile(session.userId) || {};
+        const userName = profile.name || session.displayName || 'User';
+
+        const modalHtml = `
+            <div class="discussion-modal">
+                <div class="comment-list" id="comment-list-${id}" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    ${(p.comments || []).length > 0 
+                        ? p.comments.map(c => `
+                            <div class="comment-item ${c.userId === session.userId ? 'own' : ''}" style="max-width: 85%; align-self: ${c.userId === session.userId ? 'flex-end' : 'flex-start'}">
+                                <div style="display:flex; justify-content:space-between; font-size: 10px; color: var(--clr-text-muted); margin-bottom: 4px;">
+                                    <strong>${c.name}</strong>
+                                    <span>${new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                </div>
+                                <div style="background: ${c.userId === session.userId ? 'var(--clr-primary-alpha)' : 'rgba(255,255,255,0.05)'}; padding: 10px 15px; border-radius: 12px; font-size: 13px; color: var(--clr-text-main); border: 1px solid ${c.userId === session.userId ? 'var(--clr-primary-alpha)' : 'rgba(255,255,255,0.05)'}">
+                                    ${c.text}
+                                </div>
+                            </div>
+                        `).join('')
+                        : '<div style="text-align:center; color:var(--clr-text-muted); padding: 40px 0;">No comments yet. Start the discussion!</div>'
+                    }
+                </div>
+                <div class="comment-input-area" style="display:flex; gap: 10px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                    <textarea id="comment-text-${id}" class="field-input" placeholder="Type your comment..." rows="2" style="flex:1; resize:none;"></textarea>
+                    <button class="btn btn-primary" id="send-comment-${id}" style="padding: 0 20px;">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const modal = await IrisModal.custom(modalHtml, `Discussion: ${p.title}`, [{ label: 'Close', type: 'secondary' }]);
+        
+        const sendBtn = document.getElementById(`send-comment-${id}`);
+        const input = document.getElementById(`comment-text-${id}`);
+        
+        sendBtn?.addEventListener('click', async () => {
+            const text = input.value.trim();
+            if (!text) return;
+            
+            p.comments = p.comments || [];
+            p.comments.push({
+                userId: session.userId,
+                name: userName,
+                text,
+                timestamp: Date.now()
+            });
+
+            const updated = Storage.saveProject(p);
+            if (Storage.syncProject) await Storage.syncProject(updated || p);
+            
+            // Re-open discussion to refresh
+            IrisModal.close();
+            openDiscussion(id);
+        });
     }
 
     // ── Modal state ──
