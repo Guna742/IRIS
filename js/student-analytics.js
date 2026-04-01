@@ -17,7 +17,7 @@
 
     const isAdmin = session.role === 'admin';
 
-    SidebarEngine.init();
+    SidebarEngine.init(session);
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
     // ── Get target intern ──
@@ -47,6 +47,7 @@
     const myProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(targetUid));
 
     // Sidebar and role badges handled by SidebarEngine.init()
+    const topbarTitle = document.getElementById('topbar-title');
     if (topbarTitle) {
         topbarTitle.textContent = isAdmin ? `${profile.name || 'Intern'}'s Analytics` : 'My Analytics';
     }
@@ -747,11 +748,6 @@
         }
     });
 
-    function refreshCharts() {
-        refreshChart1();
-        refreshChart2();
-    }
-
     // ────────────────────────────────────────────────────────
     // CHART: SVG LINE CHART
     // ────────────────────────────────────────────────────────
@@ -910,7 +906,7 @@
 
         let steps = 6;
 
-        if (currentFilter2 === 'today') {
+        if (curTimeFilter === 'today') {
             const hours = [9, 11, 13, 15, 17, 18];
             steps = hours.length;
             for (let h of hours) {
@@ -918,7 +914,7 @@
                 labels.push((h === 18 ? '6 PM' : (h < 10 ? '0' + h : h) + ':00'));
                 values.push(generateMockTrend(type, t.getTime(), myProjects, mySkills));
             }
-        } else if (currentFilter2 === 'week') {
+        } else if (curTimeFilter === 'week') {
             // Include last 7 days but skip Sundays
             for (let i = 7; i >= 0; i--) {
                 const t = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -990,7 +986,7 @@
             const targetDate = new Date(timestamp);
             const todayStr = targetDate.toDateString();
 
-            if (currentFilter2 === 'today') {
+            if (curTimeFilter === 'today') {
                 // TODAY: Cumulative building to 100% (approx 16.6% per report for 6 windows)
                 const windows = [9, 11, 13, 15, 17, 18];
                 const hour = targetDate.getHours();
@@ -1001,7 +997,7 @@
                 }).length;
                 return Math.min(100, Math.round(count * (100 / windows.length)));
             }
-            if (currentFilter2 === 'week') {
+            if (curTimeFilter === 'week') {
                 // WEEK: Daily Score (reports in that specific 24h block / 6)
                 const count = reports.filter(r => new Date(r.createdAt).toDateString() === todayStr).length;
                 return Math.round((Math.min(count, 6) / 6) * 100);
