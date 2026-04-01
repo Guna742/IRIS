@@ -177,11 +177,29 @@ const Storage = (() => {
 
     function saveHourlyReport(report) {
         const all = getHourlyReports();
-        report.id = 'rep_' + Date.now();
-        report.createdAt = Date.now();
+        if (!report.id) {
+            report.id = 'rep_' + Date.now();
+            report.createdAt = Date.now();
+        }
         all.push(report);
         localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
         return report;
+    }
+
+    function getHourlyReportById(id) {
+        const all = getHourlyReports();
+        return all.find(r => r.id === id) || null;
+    }
+
+    function updateHourlyReport(id, data) {
+        const all = getHourlyReports();
+        const idx = all.findIndex(r => r.id === id);
+        if (idx > -1) {
+            all[idx] = { ...all[idx], ...data, updatedAt: Date.now() };
+            localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+            return all[idx];
+        }
+        return null;
     }
 
     // ── Missed/Edit Report Requests ──
@@ -688,6 +706,8 @@ const Storage = (() => {
         getInternRank,
         getHourlyReports,
         saveHourlyReport,
+        getHourlyReportById,
+        updateHourlyReport,
         // Missed Reports
         getMissedReportRequests,
         saveMissedReportRequest,
