@@ -82,21 +82,21 @@ const SidebarEngine = (() => {
         const hasProjectAlert = projectAlertCount > 0;
 
         const NAV_INTERN = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'student-profile.html', icon: 'person' },
-            { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
-            { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics' },
-            { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder', alertCount: projectAlertCount },
-            { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
+            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', tooltip: 'Your control center 🚀' },
+            { label: 'My Profile', href: 'student-profile.html', icon: 'person', tooltip: 'Your identity 👤' },
+            { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard', tooltip: 'Glory board 🏆' },
+            { label: 'Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', tooltip: 'Performance tracking 📈' },
+            { label: 'Submit Report', href: 'report-submission.html', icon: 'description', tooltip: 'Drop your progress 📝' },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', tooltip: 'The vault 📂', alertCount: projectAlertCount },
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬' }, 
         ];
 
         const NAV_ADMIN = [
-            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view' },
-            { label: 'My Profile', href: 'admin-profile.html', icon: 'person' },
-            { label: 'Interns', href: 'students.html', icon: 'group' },
-            { label: 'Projects', href: 'projects.html', icon: 'folder', alertCount: projectAlertCount },
-            { label: 'The Wall', href: 'doubts.html', icon: 'chat' }, 
+            { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', tooltip: 'Main control center 🚀' },
+            { label: 'My Profile', href: 'admin-profile.html', icon: 'person', tooltip: 'Admin sanctuary 🏰' },
+            { label: 'Interns', href: 'students.html', icon: 'group', tooltip: 'Success registry 📂' },
+            { label: 'Projects', href: 'projects.html', icon: 'folder', tooltip: 'The vault 📂', alertCount: projectAlertCount },
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬' }, 
         ];
 
         const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
@@ -113,7 +113,7 @@ const SidebarEngine = (() => {
                     </span>` : '';
                 
                 navHTML += `
-                    <a class="nav-item${isActive ? ' active' : ''}" href="${item.href}" aria-current="${isActive ? 'page' : 'false'}">
+                    <a class="nav-item${isActive ? ' active' : ''}" href="${item.href}" aria-current="${isActive ? 'page' : 'false'}" title="${item.tooltip || item.label}">
                         <span class="nav-icon" aria-hidden="true" style="position:relative;">
                             <span class="material-symbols-outlined">${item.icon}</span>
                             ${badgeHTML}

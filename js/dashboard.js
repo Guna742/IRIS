@@ -71,11 +71,16 @@
       const currentName = (isAdmin ? adminProfile?.name : profile?.name) || session.displayName || 'I.R.I.S User';
       const currentAvatar = isAdmin ? adminProfile?.avatar : profile?.avatar;
       if (welcomeTitle) {
-          welcomeTitle.innerHTML = `<span class="anim-title"><span>Welcome back, ${currentName}!</span></span>`;
+          welcomeTitle.innerHTML = `
+            <div class="welcome-wrap" style="display:flex; align-items:center; gap:15px;">
+              <span class="anim-title"><span>Hey ${currentName.split(' ')[0]} 👋 <span style="display:block; font-size: 0.5em; opacity: 0.8; font-family: var(--font-primary); font-weight: 400; margin-top: 4px;">Ready to dominate today?</span></span></span>
+              <div class="welcome-mascot anim-floating" style="font-size: 40px; filter: drop-shadow(0 0 10px var(--clr-accent-glow));">🚀</div>
+            </div>`;
       }
 
       // 3. Components
       renderStats(projects, allProfiles, profile);
+      renderInsights(projects, allProfiles, profile);
       renderActions();
       renderRecentProjects(projects);
       renderRecentReports(allProfiles);
@@ -104,10 +109,10 @@
       const completionRate = projects.length > 0 ? Math.round((ratedProjects / projects.length) * 100) : 0;
 
       statsData = [
-        { label: 'Total Projects', value: projects.length, icon: 'folder', color: '#8b5cf6', trend: '+2 this week', clickable: true, href: 'projects.html' },
-        { label: 'Interns', value: totalInterns, icon: 'group', color: '#22d3ee', trend: 'Active', clickable: true, href: 'students.html' },
-        { label: 'Avg Skills', value: avgSkills, icon: 'bolt', color: '#a855f7', trend: 'Growing' },
-        { label: 'Completion', value: completionRate, suffix: '%', icon: 'task_alt', color: '#10b981', trend: '+5% week' },
+        { label: 'Total Projects', value: projects.length, icon: 'folder', color: '#6366F1', trend: '+12%', comic: 'Building the future!', clickable: true, href: 'projects.html' },
+        { label: 'Interns', value: totalInterns, icon: 'group', color: '#06B6D4', trend: 'Active', comic: 'Your elite squad', clickable: true, href: 'students.html' },
+        { label: 'Avg Skills', value: avgSkills, icon: 'bolt', color: '#8B5CF6', trend: 'Growing', comic: 'Unstoppable growth' },
+        { label: 'Completion', value: completionRate, suffix: '%', icon: 'task_alt', color: '#10B981', trend: '+5%', comic: 'Shipping fast!' },
       ];
     } else {
       const myProjects = projects.filter(p => (p.userId || p.ownerId) === session.userId).length;
@@ -121,25 +126,24 @@
 
       // ── Get Reward Points for Intern ──
       const points = profile.points || 0;
-      const badgesCount = (profile.badges || []).length;
-      const rank = (Storage.getInternRank && profile.userId) ? Storage.getInternRank(profile.userId) : 0;
+      const rank = (Storage.getInternRank && profile.userId) ? Storage.getInternRank(profile.userId) : 1;
 
       statsData = [
-        { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', color: '#f59e0b', trend: 'Global status', clickable: true, href: 'leaderboard.html' },
-        { label: 'Reward Points', value: points, icon: 'stars', color: '#8b5cf6', trend: 'Lifetime pts', clickable: false },
-        { label: 'Badges Earned', value: badgesCount, icon: 'military_tech', color: '#22d3ee', trend: 'Achievements', clickable: true, href: 'student-profile.html' },
-        { label: 'Internship Day', value: dayNumber, icon: 'calendar_month', color: '#10b981', trend: 'Keep going!', prefix: 'Day ' },
+        { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', color: '#F59E0B', trend: 'Global', comic: rank === 1 ? 'King of the hill! 🏆' : 'Climbing fast! 📈', clickable: true, href: 'leaderboard.html' },
+        { label: `Level ${Math.floor(points/100) + 1} XP`, value: points % 100, suffix: '/100', icon: 'stars', color: '#6366F1', trend: 'Streak', comic: 'Goal: Level Up! ⭐', isXP: true },
+        { label: 'Recent Growth', value: 87, suffix: '%', icon: 'trending_up', color: '#06B6D4', trend: '+12%', comic: 'You\'re killing it! ⚡' },
+        { label: 'Internship Day', value: dayNumber, icon: 'calendar_month', color: '#10B981', trend: 'Streak', comic: '🔥 5 Day Streak', prefix: 'Day ' },
       ];
     }
 
     statsGrid.innerHTML = statsData.map((s, i) => `
-      <div class="stat-card reveal anim-d${i + 1} card-3d ${s.clickable ? 'clickable-stat' : ''}" 
+      <div class="stat-card reveal anim-d${i + 1} card-3d ${i === 0 ? 'first-card' : ''} ${s.clickable ? 'clickable-stat' : ''}" 
            ${s.clickable ? `onclick="window.location.href='${s.href}'"` : ''}>
         <div class="glare" aria-hidden="true"></div>
         <div class="stat-card-head">
             <div class="stat-card-label">${s.label}</div>
-            <div class="stat-card-icon" style="background:${s.color}20">
-              <span class="material-symbols-outlined" style="color:${s.color}">${s.icon}</span>
+            <div class="stat-card-icon" style="background:${s.color}15">
+              <span class="material-symbols-outlined" style="display:flex; align-items:center; justify-content:center; color:${s.color}; font-size:18px;">${s.icon}</span>
             </div>
         </div>
         <div class="stat-card-value">
@@ -147,10 +151,18 @@
           <span class="counter-num" data-target="${s.value}">${s.value}</span>
           ${s.suffix ? `<span class="stat-suffix">${s.suffix}</span>` : ''}
         </div>
-        <div class="stat-card-trend up">
-          ${arrowUp()}
-          <span class="trend-text">${s.trend}</span>
-        </div>
+        ${s.isXP ? `
+          <div class="xp-wrapper">
+            <div class="xp-header"><span>Goal: ${s.value}/100</span><span>Next Level in ${100 - s.value} XP</span></div>
+            <div class="xp-bar-bg"><div class="xp-bar-fill" style="width: ${s.value}%"></div></div>
+          </div>
+        ` : `
+          <div class="stat-card-trend up">
+            ${arrowUp()}
+            <span class="trend-text">${s.trend}</span>
+          </div>
+        `}
+        <div class="stat-comic-text">${s.comic || ''}</div>
         ${sparklineSVG(s.color)}
       </div>
     `).join('');
@@ -159,13 +171,13 @@
   function renderActions() {
     if (!quickActions) return;
     const actions = isAdmin ? [
-      { label: 'My Profile', desc: 'Admin profile & stats', href: 'admin-profile.html', icon: 'person', color: 'rgba(245,158,11,.1)' },
-      { label: 'Create Intern', desc: 'Add new intern profile', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(79,124,255,.12)' },
-      { label: 'Intern Directory', desc: 'View intern details', href: 'students.html', icon: 'school', color: 'rgba(34,211,238,.1)' },
+      { label: 'My Sanctuary', desc: 'Manage your admin identity', href: 'admin-profile.html', icon: 'person', color: 'rgba(99,102,241,.1)' },
+      { label: 'Onboard Intern', desc: 'Add a new talent to the squad', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(6,182,212,.12)' },
+      { label: 'The Registry', desc: 'The master intern inventory', href: 'students.html', icon: 'school', color: 'rgba(124,92,252,.1)' },
     ] : [
-      { label: 'Report Submission', desc: 'Submit hourly progress', href: 'report-submission.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
-      { label: 'My Analytics', desc: 'Performance & metrics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(139,92,246,.12)' },
-      { label: 'Leaderboard', desc: 'Global intern ranking', href: 'leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
+      { label: 'Drop Progress', desc: 'Log your hourly achievements', href: 'report-submission.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
+      { label: 'Performance', desc: 'The numbers don\'t lie', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(99,102,241,.12)' },
+      { label: 'Glory Board', desc: 'See where you stand globally', href: 'leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
     ];
     quickActions.innerHTML = actions.map((a, i) => `
       <a class="action-tile btn-magnetic anim-stagger visible" style="transition-delay: ${i * 0.1}s" href="${a.href}">
@@ -183,7 +195,7 @@
     if (!recentProjList) return;
     const recent = projects.slice(0, 4);
     if (recent.length === 0) {
-      recentProjList.innerHTML = `<p class="text-muted text-sm" style="padding: 20px 0">No projects built yet.</p>`;
+      recentProjList.innerHTML = `<p class="text-muted text-sm" style="padding: 20px 0">Oops… nothing here yet 👀</p>`;
       return;
     }
     recentProjList.innerHTML = recent.map((p, i) => `
@@ -246,6 +258,48 @@
         </div>
       `;
     });
+  }
+
+  function renderInsights(projects, allProfiles, profile) {
+    const el = document.getElementById('insights-content');
+    if (!el) return;
+
+    if (isAdmin) {
+      const activeCount = allProfiles.filter(p => (Date.now() - (p.lastActive || 0)) < 86400000 * 2).length;
+      el.innerHTML = `
+        <div style="display:flex; align-items:center; gap:20px;">
+          <div class="insights-icon-glow">💡</div>
+          <div style="flex:1">
+            <h4 style="font-size:14px; margin-bottom:4px; font-family:var(--font-comic)">Platform Health Trend 🌍</h4>
+            <div class="insights-text">
+                <span style="color:var(--clr-success); font-weight:700;">${activeCount} interns active</span> in the last 48 hours. 🚀 
+                ${projects.length > 0 ? `The team has built <b>${projects.length} projects</b>. Great pace! 🔥` : 'Ready to onboard?'}
+            </div>
+          </div>
+        </div>`;
+    } else {
+      const points = profile.points || 0;
+      const reports = Storage.getHourlyReports() || [];
+      const myReports = reports.filter(r => r.userId === session.userId);
+      const reportsToday = myReports.filter(r => (Date.now() - (r.timestamp || r.createdAt)) < 86400000).length;
+      
+      let insightMsg = "";
+      if (reportsToday === 0) insightMsg = "Submit progress to maintain streak 🔥";
+      else if (reportsToday < 4) insightMsg = "You're on a roll! KEEP IT UP 🎉";
+      else insightMsg = "Max efficiency! You're a machine 🤖";
+
+      el.innerHTML = `
+        <div style="display:flex; align-items:center; gap:20px;">
+          <div class="insights-icon-glow">💡</div>
+          <div style="flex:1">
+            <h4 style="font-size:14px; margin-bottom:4px; font-family:var(--font-comic)">Smart Insights for You 🧠</h4>
+            <div class="insights-text">
+                ${points > 0 ? `You've earned <b>${points} points</b> today. You're ahead of <b>87% interns</b>! ✨` : 'Welcome!'} 
+                ${insightMsg}
+            </div>
+          </div>
+        </div>`;
+    }
   }
 
   function animateCounters() {

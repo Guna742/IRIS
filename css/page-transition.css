@@ -3,16 +3,37 @@
    Ultra Low Blur (5px) & High-Speed Typing.
    ============================================= */
 
-/* ── Prevent FOUC ── */
+/* ── Cinematic Entrance ── */
 body {
+    margin: 0;
+    background: #000;
+    overflow-x: hidden;
+    
+    /* Start State */
     opacity: 0;
-    transition: opacity 0.4s ease;
-    will-change: opacity;
+    filter: blur(40px);
+    transform: scale(1.1);
+    will-change: opacity, filter, transform;
 }
 
 body.ready {
     opacity: 1 !important;
+    animation: cinematicBlurIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes cinematicBlurIn {
+    from {
+        filter: blur(40px);
+        opacity: 0;
+        transform: scale(1.1);
+    }
+    to {
+        filter: blur(0px);
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 
 /* ── Overlay ── */
 #page-loader {

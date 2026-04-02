@@ -8,28 +8,25 @@
   --clr-bg-surface: #111827;
   --clr-bg-elevated: #1a2235;
 
-  --clr-accent: #8b5cf6;
-  /* Vibrant Purple */
-  --clr-accent-glow: rgba(139, 92, 246, 0.35);
-  --clr-accent-hover: #a78bfa;
-  --clr-purple-extra: #d8b4fe;
-  /* Soft Extra Purple */
+  /* ── Background Layers ── */
+  --bg-main: #0B0F1A;
+  --bg-section: #141B2D;
+  --bg-card: rgba(255, 255, 255, 0.04);
 
-  --clr-indigo: #7c5cfc;
-  /* Neon Indigo */
-  --clr-indigo-glow: rgba(124, 92, 252, .3);
-
-  --clr-cyan: #22d3ee;
-  /* Soft Cyan */
-  --clr-cyan-glow: rgba(34, 211, 238, .25);
-
-  --clr-violet: #a855f7;
-  /* Violet Glow */
-  --clr-violet-glow: rgba(168, 85, 247, .25);
-
-  --clr-success: #10b981;
-  --clr-warning: #f59e0b;
-  --clr-danger: #ef4444;
+  /* ── Accent System (Controlled) ── */
+  --clr-primary: #6366F1; /* Indigo */
+  --clr-success: #10B981; /* Emerald */
+  --clr-info: #06B6D4;    /* Cyan */
+  --clr-highlight: #8B5CF6; /* Purple */
+  --clr-warning: #F59E0B; /* Amber */
+  --clr-danger: #EF4444;  /* Red */
+  
+  /* Retaining legacy aliases for compatibility where used */
+  --clr-accent: var(--clr-primary);
+  --clr-accent-glow: rgba(99, 102, 241, 0.35);
+  --clr-indigo: var(--clr-primary);
+  --clr-cyan: var(--clr-info);
+  --clr-violet: var(--clr-highlight);
 
   /* ── Text ── */
   --clr-text-primary: #f0f4ff;
@@ -44,7 +41,8 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, .45);
 
   /* ── Typography ── */
-  --font-primary: 'Open Sans', system-ui, sans-serif;
+  --font-primary: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-comic: 'Fredoka', 'Nunito', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --fs-xs: .75rem;

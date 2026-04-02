@@ -230,6 +230,25 @@
   animation: pulse-border 1.5s ease infinite;
 }
 
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.anim-bounce {
+  animation: icon-bounce 1s ease-in-out infinite;
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.anim-badge-pop {
+  animation: badge-pop 0.4s var(--ease-spring) both;
+}
+
 /* ── 9. PAGE TRANSITION SYSTEM ── */
 
 .page-transition-overlay {
