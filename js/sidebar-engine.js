@@ -37,7 +37,20 @@ const SidebarEngine = (() => {
             }
         }
         if (userNameSb) userNameSb.textContent = currentName;
-        if (userRoleSb) userRoleSb.textContent = isAdmin ? (adminProfile?.role || 'Administrator') : 'Intern';
+        
+        const points = (isAdmin ? 0 : userProfile?.points) || 0;
+        const levelTitle = isAdmin ? 'Administrator' : (points < 200 ? 'Intern' : points < 1000 ? 'Pro' : points < 3000 ? 'Lead' : 'Elite');
+        
+        if (userRoleSb) {
+            userRoleSb.innerHTML = `
+                <div class="loop-container" style="display:flex; align-items:center; gap:6px;">
+                    <div class="loop-text" style="display:flex; align-items:center; gap:6px;">
+                        <span style="color:var(--clr-primary); font-weight:700;">${levelTitle}</span>
+                        <span style="opacity:0.6; font-size:10px;">🤖 Intelligence Active</span>
+                    </div>
+                </div>
+            `;
+        }
         
         // ── Global Role Badges ──
         const roleBadges = [document.getElementById('topbar-role-badge'), document.getElementById('role-badge-main')];
@@ -79,7 +92,25 @@ const SidebarEngine = (() => {
             }
         });
 
-        const hasProjectAlert = projectAlertCount > 0;
+        // ── The Wall Alert Logic ──
+        let wallAlertCount = 0;
+        if (typeof Storage !== 'undefined' && Storage.getDoubts) {
+            const doubts = Storage.getDoubts() || [];
+            if (isAdmin) {
+                // Admins see a dot if there are any 'Open' questions
+                wallAlertCount = doubts.filter(d => d.status === 'Open').length;
+            } else {
+                // Interns see a dot if their own question has a new reply or was resolved
+                const myDoubts = doubts.filter(d => String(d.userId) === String(session.userId));
+                wallAlertCount = myDoubts.filter(d => {
+                    const lastSeen = parseInt(localStorage.getItem(`iris_wall_seen_${d.id}`) || '0', 10);
+                    const activityTime = d.comments?.length 
+                        ? d.comments[d.comments.length - 1].timestamp 
+                        : (d.updatedAt || d.createdAt || 0);
+                    return activityTime > lastSeen;
+                }).length;
+            }
+        }
 
         const NAV_INTERN = [
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', tooltip: 'Your control center 🚀' },
@@ -88,7 +119,7 @@ const SidebarEngine = (() => {
             { label: 'Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', tooltip: 'Performance tracking 📈' },
             { label: 'Submit Report', href: 'report-submission.html', icon: 'description', tooltip: 'Drop your progress 📝' },
             { label: 'Projects', href: 'projects.html', icon: 'folder', tooltip: 'The vault 📂', alertCount: projectAlertCount },
-            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬' }, 
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬', alertCount: wallAlertCount }, 
         ];
 
         const NAV_ADMIN = [
@@ -96,7 +127,7 @@ const SidebarEngine = (() => {
             { label: 'My Profile', href: 'admin-profile.html', icon: 'person', tooltip: 'Admin sanctuary 🏰' },
             { label: 'Interns', href: 'students.html', icon: 'group', tooltip: 'Success registry 📂' },
             { label: 'Projects', href: 'projects.html', icon: 'folder', tooltip: 'The vault 📂', alertCount: projectAlertCount },
-            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬' }, 
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub 💬', alertCount: wallAlertCount }, 
         ];
 
         const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;

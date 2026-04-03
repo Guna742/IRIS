@@ -20,6 +20,10 @@
     SidebarEngine.init(session);
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
+    if (Storage?.markMissionVisited) {
+        Storage.markMissionVisited('performance', session.userId);
+    }
+
     // ── Get target intern ──
     const params = new URLSearchParams(location.search);
     let targetUid = params.get('student');
@@ -1178,6 +1182,9 @@
     // ────────────────────────────────────────────────────────
     function animateCounters() {
         document.querySelectorAll('.counter-num').forEach(el => {
+            if (el.dataset.animated) return;
+            el.dataset.animated = 'true';
+
             const target = parseInt(el.dataset.target, 10);
             const suffix = el.dataset.suffix || '';
             const prefix = el.dataset.prefix || '';
@@ -1388,10 +1395,18 @@
     function initReveal() {
         const obs = new IntersectionObserver((entries) => {
             entries.forEach(e => {
-                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+                if (e.isIntersecting) { 
+                    e.target.classList.add('visible'); 
+                    obs.unobserve(e.target); 
+                }
             });
         }, { threshold: 0.06 });
-        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            if (el.dataset.revealingInit) return;
+            el.dataset.revealingInit = 'true';
+            obs.observe(el);
+        });
     }
 
     // ────────────────────────────────────────────────────────

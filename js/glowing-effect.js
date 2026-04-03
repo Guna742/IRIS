@@ -6,10 +6,10 @@ class GlowingEffect {
     constructor(element, options = {}) {
         this.container = element;
         this.options = {
-            blur: options.blur || 0,
-            inactiveZone: options.inactiveZone || 0.7,
-            proximity: options.proximity || 64, // Good default for cards
-            spread: options.spread || 40,
+            blur: options.blur || 12,
+            inactiveZone: options.inactiveZone || 0.6,
+            proximity: options.proximity || 100, 
+            spread: options.spread || 50,
             variant: options.variant || "default",
             glow: options.glow !== undefined ? options.glow : true,
             borderWidth: options.borderWidth || 2,
@@ -40,7 +40,7 @@ class GlowingEffect {
 
         const gradient = this.options.variant === "white"
             ? `repeating-conic-gradient(from 236.84deg at 50% 50%, var(--black), var(--black) calc(25% / var(--repeating-conic-gradient-times)))`
-            : `radial-gradient(circle, #dd7bbb 10%, #dd7bbb00 20%), radial-gradient(circle at 40% 40%, #d79f1e 5%, #d79f1e00 15%), radial-gradient(circle at 60% 60%, #5a922c 10%, #5a922c00 20%), radial-gradient(circle at 40% 60%, #4c7894 10%, #4c789400 20%), repeating-conic-gradient(from 236.84deg at 50% 50%, #dd7bbb 0%, #d79f1e calc(25% / var(--repeating-conic-gradient-times)), #5a922c calc(50% / var(--repeating-conic-gradient-times)), #4c7894 calc(75% / var(--repeating-conic-gradient-times)), #dd7bbb calc(100% / var(--repeating-conic-gradient-times)))`;
+            : `radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 100%)`;
 
         this.container.style.setProperty("--gradient", gradient);
 
@@ -119,6 +119,14 @@ class GlowingEffect {
                 // Smooth interpolation step
                 this.currentAngle += diff * 0.1;
                 this.container.style.setProperty("--start", String(this.currentAngle));
+                
+                // Also set normalized mouse positions for radial effects
+                const rect = this.container.getBoundingClientRect();
+                const nx = (this.lastPosition.x - rect.left) / rect.width;
+                const ny = (this.lastPosition.y - rect.top) / rect.height;
+                this.container.style.setProperty("--mouse-x", (nx * 100).toFixed(2) + "%");
+                this.container.style.setProperty("--mouse-y", (ny * 100).toFixed(2) + "%");
+
                 this.isAnimating = requestAnimationFrame(step);
             }
         };
@@ -131,19 +139,24 @@ class GlowingEffect {
 
 // Global auto-init function for applying to the dashboard
 function initGlowingEffects() {
-    const cards = document.querySelectorAll('.dash-card, .stat-card, .card, .history-item');
+    const cards = document.querySelectorAll('.dash-card, .stat-card, .card, .history-item, .proj-item');
     cards.forEach(card => {
         // Skip if already initialized
         if (card.classList.contains('glowing-effect-container')) return;
 
         new GlowingEffect(card, {
-            blur: 0,
-            spread: 40,
-            proximity: 64,
+            blur: 15,
+            spread: 60,
+            proximity: 100,
             borderWidth: 2,
             variant: "default"
         });
+        card.dataset.animated = 'true';
     });
 }
 
-document.addEventListener('DOMContentLoaded', initGlowingEffects);
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.__IRIS_GLOW_EFFECT_INITIALIZED__) return;
+    window.__IRIS_GLOW_EFFECT_INITIALIZED__ = true;
+    initGlowingEffects();
+});

@@ -276,9 +276,19 @@
 
     function initReveal() {
         const obs = new IntersectionObserver((entries) => {
-            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+            entries.forEach(e => { 
+                if (e.isIntersecting) { 
+                    e.target.classList.add('visible'); 
+                    obs.unobserve(e.target); 
+                } 
+            });
         }, { threshold: 0.1 });
-        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            if (el.dataset.revealingInit) return;
+            el.dataset.revealingInit = 'true';
+            obs.observe(el);
+        });
     }
 
     function setupEventListeners(p, session) {

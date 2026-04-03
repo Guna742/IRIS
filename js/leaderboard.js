@@ -227,6 +227,11 @@
 
     if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
     
+    // ── Mission Tracking ──
+    if (Storage?.markMissionVisited) {
+        Storage.markMissionVisited('leaderboard', session.userId);
+    }
+    
     // Aesthetic Polish
     const colors = ['#8b5cf6', '#7c5cfc', '#22d3ee', '#a855f7', '#FFD700'];
     for (let i = 0; i < 15; i++) {

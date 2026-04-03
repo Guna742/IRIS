@@ -30,6 +30,8 @@ const PageTransition = (() => {
     let loader = null;
     let pageName = null;
     let isNavigating = false;
+    let arrivalDone = false; // ✅ module-level flag for absolute safety
+    let arrivalHandled = false; // ✅ flag for buildOverlay local scope
     let typeInterval = null;
 
     // ── Build Overlay ──
@@ -38,22 +40,32 @@ const PageTransition = (() => {
         if (existing) {
             loader = existing;
             pageName = document.getElementById('pageName');
-            return;
+            return; // ✅ DO NOT rebuild or re-init if already here
         }
 
         loader = document.createElement('div');
         loader.id = 'page-loader';
+        loader.className = 'page-transition-overlay'; 
         loader.innerHTML = `<div class="ipl-page-name" id="pageName"></div>`;
+
+        const isLogin = window.location.pathname.endsWith('login.html');
+        if (isLogin) {
+            sessionStorage.removeItem('transition');
+            sessionStorage.removeItem('transitionPlayed');
+        }
 
         const transitionLabel = sessionStorage.getItem('transition');
         const alreadyPlayed = sessionStorage.getItem('transitionPlayed');
 
-        if (transitionLabel && alreadyPlayed === 'false') {
+        if (transitionLabel && alreadyPlayed === 'false' && !isLogin) {
             loader.classList.add('active'); 
             document.documentElement.style.overflow = 'hidden';
         }
 
         const inject = () => {
+            if (arrivalHandled) return; // ✅ Block race between observer + body check
+            arrivalHandled = true;
+
             if (document.body) {
                 document.body.prepend(loader);
                 pageName = document.getElementById('pageName');
@@ -75,20 +87,28 @@ const PageTransition = (() => {
 
     // ── Typewriter Helper ──
     function typeText(element, text, callback) {
-        clearInterval(typeInterval);
-        element.textContent = '';
-        let i = 0;
+        // ✅ Cancel any previous timeouts stored globally
+        if (window.__typeTextTimeout__) {
+            clearTimeout(window.__typeTextTimeout__);
+            window.__typeTextTimeout__ = null;
+        }
+
+        element.textContent = ''; // Clear for safety
         element.style.opacity = '1';
-        
-        typeInterval = setInterval(() => {
+
+        let i = 0;
+        function type() {
             if (i < text.length) {
                 element.textContent += text.charAt(i);
                 i++;
+                window.__typeTextTimeout__ = setTimeout(type, TYPING_SPEED);
             } else {
-                clearInterval(typeInterval);
+                window.__typeTextTimeout__ = null;
                 if (callback) callback();
             }
-        }, TYPING_SPEED); 
+        }
+
+        type();
     }
 
     // ── Departure logic (Page A) ──
@@ -107,6 +127,12 @@ const PageTransition = (() => {
         }
 
         if (pageName) {
+            // ✅ Force clear state before typing
+            pageName.textContent = '';
+            if (window.__typeTextTimeout__) {
+                clearTimeout(window.__typeTextTimeout__);
+                window.__typeTextTimeout__ = null;
+            }
             typeText(pageName, label);
         }
 
@@ -115,30 +141,48 @@ const PageTransition = (() => {
 
     // ── Arrival logic (Page B) ──
     function handleArrival() {
+        if (arrivalDone || window.__pageTransitionDone) return; // ✅ module + window guards for absolute safety
+        arrivalDone = true;
+        window.__pageTransitionDone = true;
+
         const transitionLabel = sessionStorage.getItem('transition');
         const alreadyPlayed = sessionStorage.getItem('transitionPlayed');
+        const isLogin = window.location.pathname.endsWith('login.html');
 
-        if (!transitionLabel || alreadyPlayed === 'true') {
+        // ✅ Mark played & clear immediately to prevent any re-entry
+        sessionStorage.setItem('transitionPlayed', 'true');
+        sessionStorage.removeItem('transition');
+
+        // ✅ No transition to show — reveal instantly
+        if (!transitionLabel || alreadyPlayed === 'true' || isLogin) {
             revealPage();
+            performFadeOut();
             return;
         }
 
+        // ✅ Type the label exactly once
         if (pageName) {
             typeText(pageName, transitionLabel);
         }
 
-        sessionStorage.setItem('transitionPlayed', 'true');
-        sessionStorage.removeItem('transition');
-
+        // ✅ Single finalize guard
+        let finalized = false;
         const finalize = () => {
+            if (finalized) return; // ✅ blocks any double call
+            finalized = true;
             revealPage();
             setTimeout(performFadeOut, ARRIVAL_HOLD);
         };
 
-        if (document.readyState === 'complete') finalize();
-        else window.addEventListener('load', finalize);
-        
-        setTimeout(() => { if (!document.body.classList.contains('ready')) finalize(); }, 4000);
+        if (document.readyState === 'complete') {
+            finalize();
+        } else {
+            // ✅ Use { once: true } so it can never fire twice
+            window.addEventListener('load', finalize, { once: true });
+        }
+
+        // ✅ Failsafe — also blocked by finalized flag
+        setTimeout(finalize, 1500);
     }
 
     function revealPage() {
@@ -154,12 +198,18 @@ const PageTransition = (() => {
         pageName.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
 
         setTimeout(() => {
-            loader.classList.add('ipl-hiding');
+            if (loader) {
+                loader.classList.add('ipl-hiding');
+                loader.classList.remove('active');
+            }
         }, 150);
 
+        // ✅ Final explicit removal to ensure no blocking
         setTimeout(() => {
-            loader.style.display = 'none';
-        }, 3000);
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }, 800); 
     }
 
     function getLabelFor(href) {

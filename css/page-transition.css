@@ -9,23 +9,23 @@ body {
     background: #000;
     overflow-x: hidden;
     
-    /* Start State */
-    opacity: 0;
-    filter: blur(40px);
-    transform: scale(1.1);
+    /* Start State: High Visibility Failsafe */
+    opacity: 1;
+    filter: blur(10px); /* ✅ Significantly reduced for clarity */
+    transform: scale(1.02); /* ✅ More subtle scaling */
     will-change: opacity, filter, transform;
 }
 
 body.ready {
     opacity: 1 !important;
-    animation: cinematicBlurIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: cinematicBlurIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes cinematicBlurIn {
     from {
-        filter: blur(40px);
+        filter: blur(10px);
         opacity: 0;
-        transform: scale(1.1);
+        transform: scale(1.02);
     }
     to {
         filter: blur(0px);
@@ -36,7 +36,7 @@ body.ready {
 
 
 /* ── Overlay ── */
-#page-loader {
+#page-loader, .page-transition-overlay {
     position: fixed;
     inset: 0;
     background: #060912;
@@ -47,22 +47,22 @@ body.ready {
     z-index: 9999999;
     
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none; /* 🔥 Prevent blocking clicks after fade */
     
-    /* Reduced Blur to 5px as requested for clarity */
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    /* Reduced for massive clarity during typing */
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     
     transform: translateZ(0);
     will-change: opacity, backdrop-filter;
     transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.5s ease;
 }
 
-#page-loader.active {
+#page-loader.active, .page-transition-overlay.active {
     opacity: 1 !important;
     pointer-events: all;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 }
 
 #page-loader.ipl-hiding {
@@ -74,10 +74,10 @@ body.ready {
     transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.6s ease-out;
 }
 
-/* ── Typwriter Text ── */
+/* ── Typewriter Text ── */
 .ipl-page-name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 3.5rem;
+    font-size: clamp(1.5rem, 8vw, 3.5rem); /* ✅ Responsive Scaling */
     font-weight: 800;
     color: #ffffff;
     letter-spacing: 0.16em;
@@ -87,10 +87,19 @@ body.ready {
     
     position: relative;
     opacity: 0;
-    white-space: nowrap;
+    width: 90%; /* ✅ Prevent cutting off at the edges */
+    margin: 0 auto;
+    display: block;
     
     will-change: opacity, transform;
     transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@media (max-width: 768px) {
+    .ipl-page-name {
+        letter-spacing: 0.12em; /* ✅ Tighter for mobile */
+        line-height: 1.4;
+    }
 }
 
 /* Cleanup */

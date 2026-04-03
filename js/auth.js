@@ -183,6 +183,9 @@ const Auth = (() => {
     if (!isLoginPage && !session) {
       // Not on login page & not logged in -> redirect to login
       window.location.replace('login.html');
+    } else if (isLoginPage && session) {
+      // Already logged in -> skip login page and go to dashboard
+      window.location.replace('dashboard.html');
     }
   })();
 

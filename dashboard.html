@@ -83,15 +83,30 @@
         <!-- ── Main Content ── -->
         <main class="app-content" id="app-content" aria-label="Dashboard content">
             <div class="container" data-reveal data-stagger>
-                <!-- Role banner -->
-                <div class="role-banner anim-reveal" id="role-banner">
-                    <span class="role-banner-icon material-symbols-outlined" aria-hidden="true"
-                        style="font-size: 32px; color: var(--clr-accent);">waving_hand</span>
-                    <div class="role-banner-text">
-                        <div class="role-banner-title" id="welcome-title">Welcome back!</div>
-                        <div class="role-banner-sub" id="welcome-sub">Your workspace is ready.</div>
+                <!-- Dashboard Hero -->
+                <div class="dash-hero reveal anim-fadeIn">
+                    <div id="welcome-title" class="dash-hero-content">
+                        <!-- Injected by JS -->
                     </div>
-                    <span class="badge" id="role-badge-main">Loading...</span>
+                    <div class="dash-hero-visual anim-floating">
+                        <div class="hero-orb"></div>
+                        <div class="hero-mascot">🤖</div>
+                    </div>
+                </div>
+
+                <!-- Global XP Progress Bar -->
+                <div class="global-xp-container-wrap anim-fadeInUp anim-d1" id="global-xp-bar" style="display:none; margin-bottom: var(--sp-6);">
+                    <div class="global-xp-header">
+                        <span id="rank-lvl-current" class="xp-lvl">Level 1</span>
+                        <div class="xp-info">
+                            <span id="rank-percent-badge" class="badge badge-glow">Top 13% today 🚀</span>
+                            <span id="next-lvl-xp" class="xp-needed">45 / 500 XP</span>
+                        </div>
+                        <span id="rank-lvl-next" class="xp-lvl">Level 2</span>
+                    </div>
+                    <div class="global-xp-track">
+                        <div class="global-xp-fill" id="global-xp-fill" style="width: 15%"></div>
+                    </div>
                 </div>
 
                 <!-- Stat cards -->
@@ -106,38 +121,72 @@
                     </div>
                 </div>
 
+                <!-- Step by Step Checklist (Intern Only) -->
+                <div class="dash-card anim-fadeInUp anim-d2" id="checklist-card" style="display:none; margin-bottom: var(--sp-6);">
+                    <div class="dash-card-header">
+                        <h2 class="dash-card-title">Today's Mission 🎯</h2>
+                    </div>
+                    <div class="dash-card-body" id="checklist-content">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
                 <!-- Main grid -->
                 <div class="dash-grid">
-                    <!-- Quick actions -->
-                    <div class="dash-card anim-fadeInUp anim-d2">
-                        <div class="dash-card-header">
-                            <h2 class="dash-card-title">Quick Actions</h2>
+                    <div class="dash-grid-left">
+                        <!-- Your Journey -->
+                        <div class="dash-card anim-fadeInUp anim-d3">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Your Journey & Growth 🏹</h2>
+                            </div>
+                            <div class="dash-card-body" id="journey-content">
+                                <!-- Injected by JS -->
+                            </div>
                         </div>
-                        <div class="dash-card-body">
-                            <div class="quick-actions" id="quick-actions">
+
+                        <!-- Recent projects -->
+                        <div class="dash-card anim-fadeInUp anim-d4">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Recent Projects</h2>
+                                <a href="projects.html" class="btn btn-secondary btn-sm">Explore all</a>
+                            </div>
+                            <div class="dash-card-body" id="recent-projects-list">
                                 <!-- Injected by JS -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recent projects -->
-                    <div class="dash-card anim-fadeInUp anim-d3">
-                        <div class="dash-card-header">
-                            <h2 class="dash-card-title">Recent Projects</h2>
-                            <a href="projects.html" class="btn btn-secondary btn-sm">View all</a>
+                    <div class="dash-grid-right" style="display:flex; flex-direction:column; gap:var(--sp-6);">
+                        <!-- Intern Identity -->
+                        <div class="dash-card anim-fadeInUp anim-d5">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Intern Identity 🧑‍💻</h2>
+                            </div>
+                            <div class="dash-card-body" id="skills-content">
+                                <!-- Injected by JS -->
+                            </div>
                         </div>
-                        <div class="dash-card-body" id="recent-projects-list">
-                            <!-- Injected by JS -->
-                        </div>
-                    </div>
 
-                    <!-- Recent reports (Admin only) -->
-                    <div class="dash-card anim-fadeInUp anim-d4" id="reports-card" style="display: none;">
-                        <div class="dash-card-header">
-                            <h2 class="dash-card-title">Recent Activity Reports</h2>
+                        <!-- Quick actions -->
+                        <div class="dash-card anim-fadeInUp anim-d6">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Quick Actions</h2>
+                            </div>
+                            <div class="dash-card-body">
+                                <div class="quick-actions" id="quick-actions">
+                                    <!-- Injected by JS -->
+                                </div>
+                            </div>
                         </div>
-                        <div class="dash-card-body" id="recent-reports-list">
-                            <!-- Injected by JS -->
+                        
+                        <!-- Recent Activity Reports (Admin only) -->
+                        <div class="dash-card anim-fadeInUp anim-d7" id="reports-card" style="display: none;">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Recent Activity Reports</h2>
+                            </div>
+                            <div class="dash-card-body" id="recent-reports-list">
+                                <!-- Injected by JS -->
+                            </div>
                         </div>
                     </div>
                 </div>

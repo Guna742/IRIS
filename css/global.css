@@ -26,9 +26,37 @@ body {
     font-size: var(--fs-base);
     line-height: var(--lh-normal);
     color: var(--clr-text-primary);
-    background: radial-gradient(circle at top right, #1A1F3A 0%, var(--bg-main) 70%);
+    background: radial-gradient(circle at top right, #1A2235 0%, var(--bg-main) 100%);
+    background-size: cover;
     background-attachment: fixed;
     overflow-x: hidden;
+}
+
+/* ── MagicUI Inspired Ripple ── */
+.iris-ripple-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ripple-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    transform: scale(0.3);
+    animation: ripple-pulse 8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes ripple-pulse {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { opacity: 0.5; }
+    100% { transform: scale(2.5); opacity: 0; }
 }
 
 
@@ -453,35 +481,26 @@ textarea.field-input {
 /* ── Sidebar Internals ── */
 .sidebar-brand {
     padding: 0 var(--sp-4);
-    height: 56px;
+    height: 70px;
     border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-5);
 }
 
 .sidebar-logo {
-    width: 44px;
-    height: 44px;
-    background: transparent;
-    color: #ffffff;
-    border: 2px solid var(--clr-accent);
-    border-radius: 50%;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-    isolation: isolate;
 }
 
 .sidebar-logo img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 50%;
-    padding: 2px;
     display: block;
 }
 
@@ -652,13 +671,32 @@ textarea.field-input {
 .user-name {
     font-size: var(--fs-sm);
     font-weight: var(--fw-semi);
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+/* 🌀 Loop Text Animation */
+.loop-container {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    width: 100%;
+}
+
+.loop-container:hover .loop-text {
+    animation: loopText 5s linear infinite;
+    padding-left: 20px;
+}
+
+@keyframes loopText {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
 }
 
 .user-role {
     font-size: var(--fs-xs);
     color: var(--clr-text-muted);
+    white-space: nowrap;
 }
 
 /* ── Topbar elements ── */

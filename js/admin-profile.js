@@ -48,7 +48,7 @@
     const email = currentAdminData.email;
 
     function updateProfileUI() {
-        setEl('admin-display-name', `<span class="anim-title"><span>${currentAdminData.name}</span></span>`);
+        setEl('admin-display-name', `<span class="anim-title">${currentAdminData.name}</span>`);
         setEl('admin-email', currentAdminData.email);
         setEl('info-email', currentAdminData.email);
         setEl('user-name-sidebar', currentAdminData.name);
@@ -276,7 +276,9 @@
 
     function animateCounter(id, target, delay = 0) {
         const el = document.getElementById(id);
-        if (!el) return;
+        if (!el || el.dataset.animated === 'true') return;
+        el.dataset.animated = 'true';
+
         setTimeout(() => {
             let current = 0;
             const step = Math.ceil(target / 30);
@@ -292,10 +294,18 @@
         const els = document.querySelectorAll('.reveal');
         const obs = new IntersectionObserver((entries) => {
             entries.forEach(e => {
-                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+                if (e.isIntersecting) { 
+                    e.target.classList.add('visible'); 
+                    obs.unobserve(e.target); 
+                }
             });
         }, { threshold: 0.08 });
-        els.forEach(el => obs.observe(el));
+        
+        els.forEach(el => {
+            if (el.dataset.revealingInit) return;
+            el.dataset.revealingInit = 'true';
+            obs.observe(el);
+        });
     }
 
     function showToast(message, type = 'info') {

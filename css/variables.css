@@ -13,6 +13,18 @@
   --bg-section: #141B2D;
   --bg-card: rgba(255, 255, 255, 0.04);
 
+  /* ── Brand Identity & Levels ── */
+  --iris-signature-gradient: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #EC4899 100%);
+  --iris-glow-primary: rgba(99, 102, 241, 0.4);
+  --iris-glow-success: rgba(16, 185, 129, 0.3);
+  --iris-glow-cyan: rgba(6, 182, 212, 0.3);
+  --iris-glow-amber: rgba(245, 158, 11, 0.3);
+  
+  --clr-level-intern: #94A3B8;
+  --clr-level-pro: #6366F1;
+  --clr-level-lead: #F59E0B;
+  --clr-level-elite: #EC4899;
+
   /* ── Accent System (Controlled) ── */
   --clr-primary: #6366F1; /* Indigo */
   --clr-success: #10B981; /* Emerald */
@@ -84,6 +96,8 @@
   --radius-md: .75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
   --radius-full: 9999px;
 
   /* ── Shadows ── */

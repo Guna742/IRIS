@@ -15,15 +15,17 @@
     padding: 0;
 }
 
-body {
-    font-family: var(--font-primary);
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important; 
+    overflow-y: auto !important;
+    scroll-behavior: smooth;
     background: var(--clr-bg-deep);
     color: var(--clr-text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
-    display: flex;
-    justify-content: center;
-    animation: fadeIn 0.5s ease both;
+    font-family: var(--font-primary);
 }
 
 /* ══════════════════════════════
@@ -142,48 +144,48 @@ body {
     animation: auroraShift 12s ease infinite;
 }
 
-/* ══════════════════════════════
-   SPLIT LAYOUT
-══════════════════════════════ */
-.login-shell {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
+.main-container {
     width: 100%;
-    max-width: 1440px;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    position: relative;
+    padding: 0; /* ✅ Removed extra padding to fix "long gap" and 100vh overflow */
 }
+
+.content-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    pointer-events: all;
+}
+
 
 /* ══════════════════════════════
    LEFT HERO PANEL
 ══════════════════════════════ */
-.hero-panel {
+.left {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    padding: 3rem 4rem;
-    position: relative;
-    overflow: hidden;
+    align-items: flex-start;
+    flex: 1.1; /* Take priority in space */
+    max-width: 540px;
+    min-width: 440px; /* Base desktop min-width */
 }
 
-/* Glowing separator line */
-.hero-panel::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 10%;
-    bottom: 10%;
-    width: 1px;
-    background: linear-gradient(to bottom,
-            transparent,
-            rgba(139, 92, 246, .5) 20%,
-            rgba(168, 85, 247, .6) 50%,
-            rgba(139, 92, 246, .5) 80%,
-            transparent);
-    box-shadow: 0 0 12px rgba(139, 92, 246, .4);
-    animation: glowPulse 3s ease-in-out infinite;
+/* Glowing separator (Subtle) */
+.left::after {
+    display: none; /* Retired in flex layout for cleaner gap */
 }
 
 .hero-content {
@@ -231,7 +233,7 @@ body {
 
 .brand-name {
     font-size: 28px;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.05em;
     color: var(--clr-text-primary, #fff);
     line-height: 1;
@@ -257,7 +259,7 @@ body {
 /* ── Hero Headline ── */
 .hero-headline {
     font-size: clamp(2.4rem, 4.2vw, 3.5rem);
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.04em;
     margin-bottom: 1.5rem;
@@ -350,17 +352,19 @@ body {
 }
 
 /* ══════════════════════════════
-   RIGHT AUTH PANEL
+   RIGHT LOGIN CARD
 ══════════════════════════════ */
-.auth-panel {
+.login-card {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem 3rem;
+    flex: 1; 
+    perspective: 1000px;
+    min-width: 380px; /* ✅ Flexible min-width for desktop flow */
 }
 
 /* The glass card — main piece */
-.auth-card {
+.auth-inner {
     background: rgba(255, 255, 255, .04);
     backdrop-filter: blur(32px) saturate(180%);
     -webkit-backdrop-filter: blur(32px) saturate(180%);
@@ -368,13 +372,12 @@ body {
     border-radius: 24px;
     padding: 2.75rem 2.25rem;
     width: 100%;
-    max-width: 440px;
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, .06),
         0 32px 80px rgba(0, 0, 0, .6),
         0 0 80px rgba(139, 92, 246, .08),
         inset 0 1px 0 rgba(255, 255, 255, .12);
-    animation: heroEntrance 0.9s cubic-bezier(.2, .8, .2, 1) 0.2s both;
+    animation: reveal-premium 0.9s cubic-bezier(.16, 1, 0.3, 1) 0.2s both;
     position: relative;
     overflow: hidden;
     transition:
@@ -382,6 +385,8 @@ body {
         border-color 0.4s ease,
         transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
 }
+
+.auth-card { display: contents; } /* Cleanup alias */
 
 /* Card shimmer top border glow */
 .auth-card::before {
@@ -789,45 +794,124 @@ body {
 }
 
 /* ══════════════════════════════
-   RESPONSIVE
+   EPIC RESPONSIVE SYSTEM
 ══════════════════════════════ */
+
 @media (max-width: 960px) {
-    .login-shell {
-        grid-template-columns: 1fr;
-        overflow: auto;
+    html, body {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        height: auto;
     }
 
-    .hero-panel {
-        display: none;
-    }
-
-    body {
-        overflow: auto;
-    }
-
-    .auth-panel {
+    .main-container {
+        position: relative;
+        inset: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center; /* ✅ Center everything for a premium look */
+        padding: 2rem 1.5rem;    /* ✅ Reduced top padding */
+        height: auto;
+        width: 100%;
         min-height: 100vh;
-        padding: 1.5rem 1rem;
-        background: none;
     }
 
-    .orb-1 {
-        width: 350px;
-        height: 350px;
+    .content-wrapper {
+        flex-direction: column !important;
+        gap: 1.5rem;             /* ✅ Tighter gap between hero and login */
+        padding: 0;
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto;
+        width: 100%;
     }
 
-    .orb-2 {
-        width: 250px;
-        height: 250px;
+    /* ✅ Reduce hero section size on mobile */
+    .left {
+        align-items: center !important;
+        text-align: center;
+        min-width: unset !important;
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+        padding-bottom: 0;
     }
+
+    .hero-content {
+        max-width: 100%;
+    }
+
+    .hero-headline {
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 2.2rem; /* ✅ Smoother font for mobile */
+    }
+
+    .hero-desc {
+        display: none; /* ✅ Hide to save vertical space on mobile */
+    }
+
+    .feature-list {
+        display: none; /* ✅ Hide pills on mobile — too much vertical space */
+    }
+
+    .login-card {
+        width: 100%;
+        min-width: unset !important;
+        max-width: 480px;
+        margin: 0 auto;
+        flex: none;
+        padding-bottom: 0;       /* ✅ Removed extra bottom padding */
+    }
+
+    .orb-1 { width: 300px; height: 300px; }
+    .orb-2 { width: 200px; height: 200px; }
 }
 
 @media (max-width: 480px) {
-    .auth-card {
-        padding: 2rem 1.25rem;
+    .main-container {
+        padding: 1.5rem 1rem;    /* ✅ Even tighter on small phones */
+    }
+
+    .brand-mark {
+        flex-direction: row;     /* ✅ keep horizontal to save vertical space */
+        gap: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .brand-logo {
+        width: 42px;
+        height: 42px;
+    }
+
+    .brand-info h1 {
+        font-size: 1.25rem;
+    }
+
+    .hero-headline {
+        font-size: 1.8rem;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+
+    .auth-inner {
+        padding: 1.75rem 1.25rem;
+        border-radius: 20px;
     }
 
     .auth-title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+        margin-bottom: 1.25rem;
     }
-}
+
+    .role-toggle {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .btn-login {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+}
