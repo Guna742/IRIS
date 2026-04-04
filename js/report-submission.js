@@ -109,6 +109,19 @@
             windowTitle.textContent = `Active: ${activeWindow.label}`;
             windowTimer.textContent = `Please fill out your full progress report. Window closes at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
             setFormDisabled(false);
+            
+            // ── Logout Time Requirement Logic ──
+            // If it's Morning Session (Window 1), logoutTime is OPTIONAL
+            // If it's Afternoon Session (Window 2), logoutTime is REQUIRED
+            if (fields.logoutTime) {
+                if (activeWindow.id === 1) {
+                    fields.logoutTime.required = false;
+                    fields.logoutTime.placeholder = "(Optional for morning)";
+                } else {
+                    fields.logoutTime.required = true;
+                    fields.logoutTime.placeholder = "";
+                }
+            }
         }
 
         // Feature: Lunch/Afternoon edit capability
