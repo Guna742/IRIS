@@ -17,12 +17,10 @@
 
 html, body {
     width: 100%;
-    min-height: 100vh;
+    height: 100%;
     margin: 0;
     padding: 0;
-    overflow-x: hidden !important; 
-    overflow-y: auto !important;
-    scroll-behavior: smooth;
+    overflow: hidden !important;
     background: var(--clr-bg-deep);
     color: var(--clr-text-primary);
     font-family: var(--font-primary);
@@ -145,14 +143,18 @@ html, body {
 }
 
 .main-container {
-    width: 100%;
-    min-height: 100vh;
+    position: fixed;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
-    position: relative;
-    padding: 0; /* ✅ Removed extra padding to fix "long gap" and 100vh overflow */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    /* Isolation prevents parent transform (page-transition scale) from
+       shifting the flex centering context */
+    isolation: isolate;
 }
 
 .content-wrapper {
@@ -798,32 +800,22 @@ html, body {
 ══════════════════════════════ */
 
 @media (max-width: 960px) {
-    html, body {
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        height: auto;
-    }
+    /* html/body stay overflow:hidden — main-container handles internal scroll */
 
     .main-container {
-        position: relative;
-        inset: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center; /* ✅ Center everything for a premium look */
-        padding: 2rem 1.5rem;    /* ✅ Reduced top padding */
-        height: auto;
-        width: 100%;
-        min-height: 100vh;
+        /* Keep fixed centering — add padding so content isn't flush with edges */
+        padding: 2rem 1.5rem;
+        align-items: flex-start;   /* Allow scrolling from top when content is tall */
+        justify-content: center;
     }
 
     .content-wrapper {
         flex-direction: column !important;
-        gap: 1.5rem;             /* ✅ Tighter gap between hero and login */
+        gap: 1.5rem;
         padding: 0;
         text-align: center;
         max-width: 600px;
-        margin: 0 auto;
+        margin: auto;              /* auto top/bottom re-centers when shorter than viewport */
         width: 100%;
     }
 
@@ -845,15 +837,15 @@ html, body {
     .hero-headline {
         margin-left: auto;
         margin-right: auto;
-        font-size: 2.2rem; /* ✅ Smoother font for mobile */
+        font-size: 2.2rem;
     }
 
     .hero-desc {
-        display: none; /* ✅ Hide to save vertical space on mobile */
+        display: none;
     }
 
     .feature-list {
-        display: none; /* ✅ Hide pills on mobile — too much vertical space */
+        display: none;
     }
 
     .login-card {
@@ -862,7 +854,7 @@ html, body {
         max-width: 480px;
         margin: 0 auto;
         flex: none;
-        padding-bottom: 0;       /* ✅ Removed extra bottom padding */
+        padding-bottom: 0;
     }
 
     .orb-1 { width: 300px; height: 300px; }

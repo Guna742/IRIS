@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
  * Injects concentric pulsing rings for a premium MagicUI-style depth
  */
 function initRippleBackground() {
+    // Login page has its own ambient bg-wrap/orb system — skip ripple injection there
+    if (window.location.pathname.endsWith('login.html')) return;
     if (document.querySelector('.iris-ripple-container')) return;
     
     const container = document.createElement('div');
