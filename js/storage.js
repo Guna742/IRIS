@@ -111,34 +111,46 @@ const Storage = (() => {
 
     async function deleteProfile(userId) {
         const profiles = getProfiles();
+        const allProjects = getProjects();
         if (!profiles[userId]) return false;
 
-        // Mark as pending-delete IMMEDIATELY so onSnapshot ignores this UID
+        console.log('[Storage] Starting deletion process for:', userId);
+
         _pendingDeleteIds.add(userId);
 
-        // 1. Remove from localStorage right away — UI should reflect this instantly
+        const userProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(userId));
+        console.log(`[Storage] Deleting ${userProjects.length} projects from Firestore for user...`);
+
+        try {
+            for (const p of userProjects) {
+                if (p.id) {
+                    try {
+                        await deleteProjectFromFirebase(p.id);
+                    } catch (e) {
+                        console.warn('[Storage] Project delete fail:', p.id, e.message);
+                    }
+                }
+            }
+
+            console.log('[Storage] Deleting user doc from Firestore...');
+            await fbDb.collection('users').doc(userId).delete();
+            console.log('[Storage] DELETION SUCCESS: User removed from Firestore.');
+        } catch (e) {
+            console.error('[Storage] DELETION FAILED — Firestore error:', e.code, e.message);
+            _pendingDeleteIds.delete(userId);
+            alert(`DATABASE ERROR: ${e.message}\nCode: ${e.code}`);
+            if (typeof showToast === 'function') showToast(`Delete failed: ${e.message}`, 'error');
+            return false;
+        }
+
+        // Only strip local cache after cloud delete succeeds (avoids “removed in UI, back after refresh”)
         delete profiles[userId];
         localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 
-        // 2. Remove their projects from localStorage
-        const projects = getProjects().filter(p => String(p.userId || p.ownerId) !== String(userId));
-        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+        const remainingProjects = allProjects.filter(p => String(p.userId || p.ownerId) !== String(userId));
+        localStorage.setItem(PROJECTS_KEY, JSON.stringify(remainingProjects));
 
-        // 3. Delete from Firestore (async — onSnapshot blocklist keeps UI clean even if slow)
-        const userProjects = projects.filter(p => String(p.userId || p.ownerId) === String(userId));
-        for (const p of userProjects) {
-            if (p.id) await deleteProjectFromFirebase(p.id);
-        }
-        try {
-            await fbDb.collection('users').doc(userId).delete();
-            console.log('[Storage] User deleted from Firestore:', userId);
-        } catch (e) {
-            console.warn('[Storage] Failed to delete user from Firestore (will retry on next sync):', e.message);
-        } finally {
-            // Clear from blocklist after 10 s regardless — gives Firestore time to propagate
-            setTimeout(() => _pendingDeleteIds.delete(userId), 10000);
-        }
-
+        setTimeout(() => _pendingDeleteIds.delete(userId), 3000);
         return true;
     }
 
@@ -559,9 +571,16 @@ const Storage = (() => {
                 console.log('[Storage] Step 4 OK — Intern user doc created.');
             } catch (fsErr) {
                 console.error('[Storage] Step 4 FAILED — Firestore write error:', fsErr.code, fsErr.message);
-                // Auth user was created but Firestore write failed — still return success
-                // so the UI can redirect; the local profile will still work.
-                console.warn('[Storage] Continuing with local-only save due to Firestore write failure.');
+                const hint = fsErr.code === 'permission-denied'
+                    ? ' Deploy updated firestore.rules if needed, and ensure this admin has admins/{yourUid} or users/{yourUid} with role admin.'
+                    : '';
+                return {
+                    success: false,
+                    error: `Could not save intern profile to the database (${fsErr.code || 'error'}).${hint ? ' ' + hint : ''} The sign-in account may have been created in Authentication; remove it there if you retry.`,
+                    code: fsErr.code,
+                    authUserCreated: true,
+                    userId
+                };
             }
 
             // 5. Write credential record to admins/{adminId}/interns/{internId}

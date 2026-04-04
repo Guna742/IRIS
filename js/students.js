@@ -526,13 +526,17 @@
     const confirmMsg = `CRITICAL: Are you sure you want to DELETE ${profile.name || 'this intern'}? This action cannot be undone and will remove all their projects.`;
     if (!(await IrisModal.confirm(confirmMsg, 'Confirm Deletion', true))) return;
 
-    if (await Storage.deleteProfile(uid)) {
+    const deleted = await Storage.deleteProfile(uid);
+    if (deleted) {
       renderAllCards();
       // Update count
       const profiles = Storage.getProfiles();
       const count = Object.keys(profiles).length;
       studentsCountEl.textContent = `${count} intern${count !== 1 ? 's' : ''}`;
       await IrisModal.alert("Intern profile deleted successfully.");
+    } else {
+      renderAllCards();
+      await IrisModal.alert("Could not delete this intern from the database. Check the error message and your connection, then try again.");
     }
   };
 

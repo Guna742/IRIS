@@ -256,6 +256,12 @@
             setTimeout(() => {
                 window.location.href = 'students.html';
             }, 1500);
+
+            saveStatus.classList.add('saved');
+            saveStatusIcon.textContent = 'check_circle';
+            saveStatusIcon.classList.add('material-symbols-outlined');
+            saveStatusText.textContent = 'Account created';
+            return;
         } else {
             // Update existing in Firestore
             try {
@@ -267,7 +273,7 @@
             }
         }
 
-        // Always save locally
+        // Save locally (skip for new-intern branch — createInternAccount already persisted the real UID + profile)
         Storage.saveProfile(currentStudentId, p);
         allProfiles = Storage.getProfiles();
         profile = allProfiles[currentStudentId];

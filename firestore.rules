@@ -7,10 +7,13 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Must check exists() before get() on users/{uid}; get() on a missing doc breaks rule evaluation.
     function isAdmin() {
-      return isSignedIn() && 
-             (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
     
     function isOwner(userId) {
@@ -21,24 +24,25 @@ service cloud.firestore {
     // Standard intern profiles and admin descriptors
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) || isAdmin();
+      // Added 'delete' to allow admins to remove profiles
+      allow write, delete: if isOwner(userId) || isAdmin();
       
       // Hourly reports (4-hour updates)
       match /reports/{reportId} {
         allow read: if isSignedIn();
-        allow write: if isOwner(userId) || isAdmin();
+        allow write, delete: if isOwner(userId) || isAdmin();
       }
       
       // Missed report requests
       match /missed_requests/{requestId} {
         allow read: if isSignedIn();
-        allow write: if isOwner(userId) || isAdmin();
+        allow write, delete: if isOwner(userId) || isAdmin();
       }
       
       // Analytics summaries
       match /analytics/{docId} {
         allow read: if isSignedIn();
-        allow write: if isOwner(userId) || isAdmin();
+        allow write, delete: if isOwner(userId) || isAdmin();
       }
     }
 
