@@ -287,10 +287,15 @@
             </div>
             <div class="iris-modal-body">
                 <p style="margin-bottom: 12px;">Create a login password for the new intern account.</p>
-                <div class="field-group">
-                    <label class="field-label" for="modal-password">Login Password</label>
+                <div class="field-group" style="margin-bottom: 12px;">
+                    <label class="field-label" for="modal-password">Create Password</label>
                     <input type="password" id="modal-password" class="field-input" placeholder="Min 6 characters">
                 </div>
+                <div class="field-group">
+                    <label class="field-label" for="modal-confirm-password">Confirm Password</label>
+                    <input type="password" id="modal-confirm-password" class="field-input" placeholder="Re-enter password">
+                </div>
+                <p id="modal-password-error" style="color:var(--clr-danger,#f87171);font-size:0.8rem;margin-top:8px;display:none;"></p>
             </div>
             <div class="iris-modal-actions">
                 <button class="iris-modal-btn iris-modal-btn-cancel" id="modal-cancel-btn">Cancel</button>

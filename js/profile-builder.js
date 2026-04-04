@@ -250,7 +250,12 @@
             currentStudentId = result.userId;
             allProfiles = Storage.getProfiles();
             profile = allProfiles[currentStudentId];
-            showToast(`Account created for ${p.name}!`, 'success');
+            showToast(`Account created for ${p.name}! Redirecting to Interns List...`, 'success');
+
+            // Redirect to the interns list page after a short delay
+            setTimeout(() => {
+                window.location.href = 'students.html';
+            }, 1500);
         } else {
             // Update existing in Firestore
             try {
@@ -289,6 +294,13 @@
             credModal.style.display = 'flex';
             setTimeout(() => credModal.classList.add('show'), 10);
             modalPass.value = '';
+
+            // Also clear confirm field and error message
+            const modalConfirmPass = document.getElementById('modal-confirm-password');
+            const modalPassError = document.getElementById('modal-password-error');
+            if (modalConfirmPass) modalConfirmPass.value = '';
+            if (modalPassError) { modalPassError.style.display = 'none'; modalPassError.textContent = ''; }
+
             modalPass.focus();
 
             const close = (val) => {
@@ -302,10 +314,30 @@
             modalCancel.onclick = () => close(null);
             modalConfirm.onclick = () => {
                 const pass = modalPass.value.trim();
+                const confirmPass = modalConfirmPass ? modalConfirmPass.value.trim() : pass;
+
+                // Validate length
                 if (!pass || pass.length < 6) {
-                    alert('Password must be at least 6 characters.');
+                    if (modalPassError) {
+                        modalPassError.textContent = 'Password must be at least 6 characters.';
+                        modalPassError.style.display = 'block';
+                    }
+                    modalPass.focus();
                     return;
                 }
+
+                // Validate match
+                if (pass !== confirmPass) {
+                    if (modalPassError) {
+                        modalPassError.textContent = 'Passwords do not match. Please try again.';
+                        modalPassError.style.display = 'block';
+                    }
+                    if (modalConfirmPass) modalConfirmPass.focus();
+                    return;
+                }
+
+                // Clear error and close
+                if (modalPassError) { modalPassError.style.display = 'none'; modalPassError.textContent = ''; }
                 close(pass);
             };
         });
