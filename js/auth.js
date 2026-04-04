@@ -62,6 +62,25 @@ const Auth = (() => {
               if (typeof Storage !== 'undefined' && Storage.saveAdminProfile) {
                 Storage.saveAdminProfile(firebaseUser.uid, adminData);
               }
+
+              // ── CRITICAL FIX ──
+              // Ensure users/{uid} has role:'admin' so Firestore security rules
+              // (isAdmin() checks users/{uid}.role == 'admin') work correctly.
+              // Without this, all admin Firestore writes return permission-denied.
+              if (!data || data.role !== 'admin') {
+                try {
+                  await fbDb.collection('users').doc(firebaseUser.uid).set({
+                    role: 'admin',
+                    name: adminData.name || displayName,
+                    email: firebaseUser.email,
+                    userId: firebaseUser.uid,
+                    updatedAt: Date.now()
+                  }, { merge: true });
+                  console.log('[Auth] Admin role synced to users/ collection for Firestore rules.');
+                } catch (syncErr) {
+                  console.warn('[Auth] Could not sync admin role to users/ collection:', syncErr.message);
+                }
+              }
             }
           } catch (_) { /* admin doc may not exist yet */ }
         }

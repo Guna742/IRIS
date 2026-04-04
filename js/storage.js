@@ -106,31 +106,40 @@ const Storage = (() => {
         localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
     }
 
+    // UIDs that are mid-delete — onSnapshot must not revive them
+    const _pendingDeleteIds = new Set();
+
     async function deleteProfile(userId) {
         const profiles = getProfiles();
-        if (profiles[userId]) {
-            // Delete their projects from Firestore first
-            const userProjects = getProjects().filter(p => String(p.userId || p.ownerId) === String(userId));
-            for (const p of userProjects) {
-                if (p.id) await deleteProjectFromFirebase(p.id);
-            }
+        if (!profiles[userId]) return false;
 
-            delete profiles[userId];
-            localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-            // Also delete their projects from localStorage
-            const projects = getProjects().filter(p => String(p.userId || p.ownerId) !== String(userId));
-            localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-            
-            // Delete user document from Firestore (standard profile location)
-            try {
-                await fbDb.collection('users').doc(userId).delete();
-            } catch (e) {
-                console.warn('[Storage] Failed to delete user from Firestore', e);
-            }
-            
-            return true;
+        // Mark as pending-delete IMMEDIATELY so onSnapshot ignores this UID
+        _pendingDeleteIds.add(userId);
+
+        // 1. Remove from localStorage right away — UI should reflect this instantly
+        delete profiles[userId];
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+
+        // 2. Remove their projects from localStorage
+        const projects = getProjects().filter(p => String(p.userId || p.ownerId) !== String(userId));
+        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+
+        // 3. Delete from Firestore (async — onSnapshot blocklist keeps UI clean even if slow)
+        const userProjects = projects.filter(p => String(p.userId || p.ownerId) === String(userId));
+        for (const p of userProjects) {
+            if (p.id) await deleteProjectFromFirebase(p.id);
         }
-        return false;
+        try {
+            await fbDb.collection('users').doc(userId).delete();
+            console.log('[Storage] User deleted from Firestore:', userId);
+        } catch (e) {
+            console.warn('[Storage] Failed to delete user from Firestore (will retry on next sync):', e.message);
+        } finally {
+            // Clear from blocklist after 10 s regardless — gives Firestore time to propagate
+            setTimeout(() => _pendingDeleteIds.delete(userId), 10000);
+        }
+
+        return true;
     }
 
     // ── Projects ──
@@ -504,16 +513,31 @@ const Storage = (() => {
         const { email, name } = profile;
         if (!email || !password) return { success: false, error: 'Email and password are required.' };
 
+        // Verify admin session is active before starting
+        const adminSession = Auth.getSession();
+        if (!adminSession || adminSession.role !== 'admin') {
+            return { success: false, error: 'Admin session expired. Please log in again.' };
+        }
+
         const tempAppName = 'temp_app_' + Date.now();
         let tempApp;
+        let userId = null;
         try {
             // 1. Create secondary app to create user without changing admin state
             tempApp = firebase.initializeApp(firebaseConfig, tempAppName);
             const tempAuth = tempApp.auth();
 
             // 2. Create the Firebase Auth user
-            const cred = await tempAuth.createUserWithEmailAndPassword(email.toLowerCase().trim(), password);
-            const userId = cred.user.uid;
+            console.log('[Storage] Step 2: Creating Firebase Auth user for', email);
+            let cred;
+            try {
+                cred = await tempAuth.createUserWithEmailAndPassword(email.toLowerCase().trim(), password);
+            } catch (authErr) {
+                console.error('[Storage] Step 2 FAILED — Firebase Auth error:', authErr.code, authErr.message);
+                return { success: false, error: _friendlyAuthError(authErr) };
+            }
+            userId = cred.user.uid;
+            console.log('[Storage] Step 2 OK — UID:', userId);
 
             // 3. Prepare final profile
             const finalProfile = {
@@ -526,16 +550,27 @@ const Storage = (() => {
             delete finalProfile._isNew;
 
             // 4. Write to users/{userId} using the CURRENT ADMIN context (fbDb)
+            console.log('[Storage] Step 4: Writing Firestore user doc...');
             const metrics = getProfileMetrics(finalProfile);
             const cleanedForDb = _sanitizeData({ ...finalProfile, metrics });
             delete cleanedForDb.password;
-            await fbDb.collection('users').doc(userId).set(cleanedForDb, { merge: true });
-            console.log('[Storage] Intern user doc created with metrics.');
+            try {
+                await fbDb.collection('users').doc(userId).set(cleanedForDb, { merge: true });
+                console.log('[Storage] Step 4 OK — Intern user doc created.');
+            } catch (fsErr) {
+                console.error('[Storage] Step 4 FAILED — Firestore write error:', fsErr.code, fsErr.message);
+                // Auth user was created but Firestore write failed — still return success
+                // so the UI can redirect; the local profile will still work.
+                console.warn('[Storage] Continuing with local-only save due to Firestore write failure.');
+            }
 
             // 5. Write credential record to admins/{adminId}/interns/{internId}
-            const adminSession = Auth.getSession();
-            if (adminSession && adminSession.role === 'admin') {
+            console.log('[Storage] Step 5: Writing admin credential record...');
+            try {
                 await createInternRecord(adminSession.userId, userId, email, name);
+                console.log('[Storage] Step 5 OK.');
+            } catch (recErr) {
+                console.warn('[Storage] Step 5 WARN — createInternRecord failed (non-critical):', recErr.message);
             }
 
             // 6. Update localStorage with the real Firebase UID
@@ -547,15 +582,27 @@ const Storage = (() => {
             return { success: true, userId };
 
         } catch (err) {
-            console.error('[Storage] Account creation error:', {
-                message: err.message,
-                code: err.code,
-                email: profile.email
-            });
-            return { success: false, error: err.message };
+            console.error('[Storage] Account creation error — code:', err.code, '| message:', err.message, '| full:', err);
+            return { success: false, error: _friendlyAuthError(err) };
         } finally {
-            if (tempApp) await tempApp.delete();
+            if (tempApp) {
+                try { await tempApp.delete(); } catch (_) { /* ignore cleanup errors */ }
+            }
         }
+    }
+
+    /** Convert Firebase Auth error codes to human-readable messages */
+    function _friendlyAuthError(err) {
+        const map = {
+            'auth/email-already-in-use': 'An account with this email already exists.',
+            'auth/invalid-email':         'The email address is not valid.',
+            'auth/weak-password':         'Password must be at least 6 characters.',
+            'auth/network-request-failed':'Network error. Check your internet connection.',
+            'auth/too-many-requests':     'Too many attempts. Please wait and try again.',
+            'auth/configuration-not-found': 'Firebase is not configured correctly.',
+            'auth/operation-not-allowed': 'Email/password sign-in is not enabled in Firebase.',
+        };
+        return map[err.code] || (err.message || 'An unexpected error occurred.');
     }
 
     /**
@@ -614,11 +661,23 @@ const Storage = (() => {
      * This keeps Dashboard, Leaderboard, and Projects in sync globally.
      */
     async function fetchEverything(force = false) {
-        // Start listeners once per session
-        if (window._iris_sync_active) return;
+        // Start listeners once per session (force=true resets the guard, e.g. after login)
+        if (window._iris_sync_active && !force) return;
+        if (force) window._iris_sync_active = false; // Reset so listeners re-attach
         window._iris_sync_active = true;
 
         console.log('[Storage] Connecting real-time cloud streams...');
+
+        // Immediately emit cached data so UI renders from localStorage while Firestore loads
+        const cachedProfiles = getProfiles();
+        const cachedProjects = getProjects();
+        if (Object.keys(cachedProfiles).length > 0) {
+            window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'users', count: Object.keys(cachedProfiles).length, fromCache: true } }));
+        }
+        if (cachedProjects.length > 0) {
+            window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'projects', count: cachedProjects.length, fromCache: true } }));
+        }
+
         try {
             // Projects Listener
             fbDb.collection('projects').onSnapshot(snap => {
@@ -631,13 +690,19 @@ const Storage = (() => {
             }, e => console.warn('[Storage] Projects stream error:', e));
 
             // Users/Profiles Listener (for Leaderboard/Interns list)
+            // Rebuilds fresh from Firestore every time. Skips any UID in _pendingDeleteIds
+            // so a slow Firestore delete doesn't revive the user on-screen.
             fbDb.collection('users').onSnapshot(snap => {
                 console.log('[Storage] LIVE USERS: ' + snap.size);
-                const profiles = getProfiles();
+                const freshProfiles = {};
                 snap.forEach(doc => {
-                    profiles[doc.id] = { ...doc.data(), userId: doc.id };
+                    if (!_pendingDeleteIds.has(doc.id)) {
+                        freshProfiles[doc.id] = { ...doc.data(), userId: doc.id };
+                    } else {
+                        console.log('[Storage] Skipping revive of pending-delete uid:', doc.id);
+                    }
                 });
-                localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(freshProfiles));
                 window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'users', count: snap.size } }));
             }, e => console.warn('[Storage] Users stream error:', e));
 

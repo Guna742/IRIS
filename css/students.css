@@ -754,6 +754,12 @@
     font-size: var(--fs-sm);
 }
 
+/* ── Loading skeleton shimmer ── */
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 0.9; }
+}
+
 /* ═══════════════════════════════════════
    MOBILE RESPONSIVE — students.html only
    Desktop styles above are NOT touched.

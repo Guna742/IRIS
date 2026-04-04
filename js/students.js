@@ -89,23 +89,64 @@
   // Bind search on load
   bindSearch();
 
-
-  // ── Load data ──
-  const profiles = Storage.getProfiles();
-  const allProjects = Storage.getProjects();
-  const profileList = Object.values(profiles);
-
-  studentsCountEl.textContent = `${profileList.length} intern${profileList.length !== 1 ? 's' : ''}`;
-
   // ── Helpers ──
   function getProjectsForStudent(profile) {
     if (!profile || !profile.userId) return [];
-    return allProjects.filter(p => String(p.userId || p.ownerId) === String(profile.userId));
+    // Always read fresh from Storage so live Firestore data is used
+    return Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(profile.userId));
+  }
+
+  // ── Loading skeleton shown before Firestore responds ──
+  function showLoadingSkeleton() {
+    studentsContainer.innerHTML = `
+      <div class="students-loading" style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+        ${Array(3).fill(0).map(() => `
+          <div class="student-card" style="opacity:0.5;pointer-events:none;">
+            <div class="student-summary" style="gap:16px">
+              <div class="student-avatar" style="background:var(--clr-surface-2,rgba(255,255,255,0.06));animation:pulse 1.4s ease-in-out infinite;">&nbsp;</div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                <div style="height:14px;width:160px;border-radius:6px;background:var(--clr-surface-2,rgba(255,255,255,0.06));animation:pulse 1.4s ease-in-out infinite;"></div>
+                <div style="height:11px;width:110px;border-radius:6px;background:var(--clr-surface-2,rgba(255,255,255,0.06));animation:pulse 1.4s ease-in-out infinite;"></div>
+              </div>
+            </div>
+          </div>`).join('')}
+        <p style="text-align:center;color:var(--clr-text-muted,#6b7280);font-size:0.82rem;margin-top:8px">
+          <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">sync</span>
+          Connecting to database...
+        </p>
+      </div>`;
+    studentsCountEl.textContent = 'Loading...';
+  }
+
+  // Show skeleton while Firestore loads
+  showLoadingSkeleton();
+
+  // ── Live Firestore sync → re-render ──
+  // The iris-data-sync event is dispatched by storage.js onSnapshot listeners
+  window.addEventListener('iris-data-sync', (e) => {
+    if (e.detail && (e.detail.type === 'users' || e.detail.type === 'projects')) {
+      const freshProfiles = Object.values(Storage.getProfiles());
+      studentsCountEl.textContent = `${freshProfiles.length} intern${freshProfiles.length !== 1 ? 's' : ''}`;
+      renderAllCards();
+      bindSearch(); // Re-bind search after re-render
+      console.log('[Students] Re-rendered from live Firestore update:', e.detail.type);
+    }
+  });
+
+  // ── Immediate render from localStorage cache (fallback if already synced) ──
+  const cachedProfiles = Object.values(Storage.getProfiles());
+  if (cachedProfiles.length > 0) {
+    studentsCountEl.textContent = `${cachedProfiles.length} intern${cachedProfiles.length !== 1 ? 's' : ''}`;
+    renderAllCards();
   }
 
   // ── Render cards ──
   function renderAllCards() {
     const profileList = Object.values(Storage.getProfiles());
+
+    // Always keep the count badge in sync
+    studentsCountEl.textContent = `${profileList.length} user${profileList.length !== 1 ? 's' : ''}`;
+
     if (profileList.length === 0) {
       studentsContainer.innerHTML = `
         <div class="students-empty">
