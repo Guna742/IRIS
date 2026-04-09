@@ -27,6 +27,8 @@
     // ── Get target intern ──
     const params = new URLSearchParams(location.search);
     let targetUid = params.get('student');
+    let curTimeFilter = 'today';
+    let curReportFilter = 'today';
 
     // If intern, they can ONLY see their own data
     if (!isAdmin) {
@@ -58,8 +60,9 @@
     // ── Compute analytics values ──
     const skillCount = (profile.skills || []).length;
     const projectCount = myProjects.length;
+    const reports = Storage.getHourlyReports(targetUid);
     const completionPct = computeCompletion(profile);
-    const overallScore = computeScore(profile, myProjects);
+    const overallScore = computeScore(profile, myProjects, reports);
     const intern = profile.internship || {};
     const isActive = intern.endDate ? new Date(intern.endDate) >= new Date() : !!intern.company;
 
@@ -67,7 +70,7 @@
     try {
         if (loadingEl) loadingEl.remove();
         outputEl.hidden = false;
-        outputEl.innerHTML = buildDashHTML(profile, myProjects || []);
+        outputEl.innerHTML = buildDashHTML(profile, myProjects || [], reports || []);
 
             // Post-render: animate stats + charts
             const runRefresh = () => {
@@ -96,7 +99,7 @@
     // ────────────────────────────────────────────────────────
     // HTML BUILDER
     // ────────────────────────────────────────────────────────
-    function buildDashHTML(p, projects) {
+    function buildDashHTML(p, projects, reports) {
         const intern = p.internship || {};
         const links = p.socialLinks || {};
 
@@ -113,8 +116,8 @@
         <div class="role-banner ${isAdmin ? 'admin' : 'user'} reveal anim-d1" style="margin-bottom:var(--sp-8)">
             <span class="role-banner-icon" aria-hidden="true">${p.avatar ? `<img src="${p.avatar}" alt="${p.name}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">` : '<span class="material-symbols-outlined">analytics</span>'}</span>
             <div class="role-banner-text">
-                <div class="role-banner-title">${p.name || 'Intern'}</div>
-                <div class="role-banner-sub">${internObj2.role || 'Intern'} ${internObj2.company ? '· ' + internObj2.company : ''} · ${periodStr}</div>
+                <div class="role-banner-title">${p.name || 'Technical Intern'}</div>
+                <div class="role-banner-sub">${internObj2.role || 'Technical Intern'} ${internObj2.company ? '· ' + internObj2.company : ''} · ${periodStr}</div>
             </div>
             <span class="badge ${isAdmin ? 'badge-admin' : 'badge-user'}">${isAdmin ? 'Admin View' : 'My Stats'}</span>
         </div>
@@ -195,10 +198,17 @@
                 <div class="stat-card-value counter-num" data-target="${overallScore}" data-suffix="%">0%</div>
                 <div class="stat-card-trend ${overallScore >= 70 ? 'up' : overallScore >= 50 ? 'neutral' : 'down'}">
                     ${overallScore >= 70 ? arrowUp() : overallScore >= 50 ? '—' : arrowDown()}
-                    <span>${overallScore >= 70 ? '+' : ''}${overallScore - 50}%</span>
+                    <span>${overallScore >= 70 ? '+' : ''}${Math.max(0, overallScore - 50)}%</span>
                     <span class="trend-label">vs base target</span>
                 </div>
-                ${sparklineSVG()}
+                ${(() => {
+                    const history = [];
+                    const now = Date.now();
+                    for(let i=4; i>=0; i--) {
+                        history.push(calculateActualTrend('growth', now - (i * 24*60*60*1000), projects, p.skills || []));
+                    }
+                    return sparklineSVG(history, '#8b5cf6');
+                })()}
             </div>
 
             <div class="stat-card reveal anim-d2">
@@ -213,7 +223,10 @@
                     ${skillCount > 0 ? arrowUp() : '—'}
                     <span>${skillCount} skill${skillCount !== 1 ? 's' : ''} recorded</span>
                 </div>
-                ${sparklineSVG('#22d3ee')}
+                ${(() => {
+                    const skArr = (p.skills || []).map(s => s.level || 50);
+                    return sparklineSVG(skArr.length > 2 ? skArr : [20, 50, 45, 80], '#22d3ee');
+                })()}
             </div>
 
             <div class="stat-card reveal anim-d3">
@@ -228,7 +241,7 @@
                     ${projectCount > 0 ? arrowUp() : '—'}
                     <span>${projectCount > 0 ? 'Active submissions' : 'No projects yet'}</span>
                 </div>
-                ${sparklineSVG('#10b981')}
+                ${sparklineSVG([0, 1, 2, projectCount], '#10b981')}
             </div>
 
             <div class="stat-card reveal anim-d4">
@@ -243,7 +256,7 @@
                     ${completionPct >= 60 ? arrowUp() : arrowDown()}
                     <span>${completionPct}% complete</span>
                 </div>
-                ${sparklineSVG('#f59e0b')}
+                ${sparklineSVG([10, 30, 60, completionPct], '#f59e0b')}
             </div>
 
             <div class="stat-card reveal anim-d5">
@@ -254,19 +267,27 @@
                     </div>
                 </div>
                 <div class="stat-card-value counter-num" data-target="${(() => {
-                    const reports = Storage.getHourlyReports(p.userId);
-                    const now = new Date();
-                    // Basic heuristic: 2 reports per weekday since start date
-                    const start = new Date(p.internship?.startDate || Date.now() - 7*24*60*60*1000);
-                    const daysDiff = Math.max(1, Math.ceil((now - start) / (1000 * 60 * 60 * 24)));
+                    const repCount = (reports || []).length;
+                    let startTs = p.internship?.startDate ? new Date(p.internship.startDate).getTime() : 0;
+                    if (!startTs || isNaN(startTs)) startTs = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                    const daysDiff = Math.max(1, Math.ceil((Date.now() - startTs) / (1000 * 60 * 60 * 24)));
                     const expected = daysDiff * 2;
-                    return Math.min(100, Math.round((reports.length / expected) * 100));
+                    const res = Math.min(100, Math.round((repCount / expected) * 100));
+                    return isNaN(res) ? 0 : res;
                 })()}" data-suffix="%">0%</div>
                 <div class="stat-card-trend neutral">
                     <span>Consistency Score</span>
                 </div>
-                ${sparklineSVG('#10b981')}
+                ${(() => {
+                    const history = [];
+                    for(let i=4; i>=0; i--) {
+                        // Pass empty arrays for projects/skills since progress doesn't need them
+                        history.push(calculateActualTrend('progress', Date.now() - (i * 24*60*60*1000), [], []));
+                    }
+                    return sparklineSVG(history, '#10b981');
+                })()}
             </div>
+
 
         </div>
 
@@ -400,8 +421,7 @@
                         </td>
                         <td data-label="Role">
                             <div class="table-user">
-                                <div class="table-user-avatar" style="background:var(--clr-violet-alpha)">${initials}</div>
-                                <span>Intern</span>
+                                <span>Technical Intern</span>
                             </div>
                         </td>
                         <td>${proj.liveLink ? `<a href="${proj.liveLink}" target="_blank" rel="noopener" class="more-btn">Live ↗</a>` : `<button class="more-btn detail-trigger" data-id="${proj.id}">Details ▾</button>`}</td>
@@ -833,9 +853,8 @@
     }
 
 
-    // Global state for filters
-    let curTimeFilter = 'today';
-    let curReportFilter = 'today';
+
+    // ── Chart 1: Analytic Overview filter ──
 
     // ── Chart 1: Analytic Overview filter ──
     window.updateTimeFilter = function (filter, el) {
@@ -884,29 +903,24 @@
             hCheckpoints.forEach(h => {
                 labels.push(`${h}:00`);
                 const timestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, 0, 0).getTime();
-                
-                // Calculate performance score at this specific point in time
                 const score = calculateActualTrend('growth', timestamp, myProjects, profile.skills || []);
                 data.push(score);
             });
         } else if (curTimeFilter === 'week') {
+            const myProjects = Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(targetUid));
             for (let i = 6; i >= 0; i--) {
                 const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 labels.push(d.toLocaleDateString([], { weekday: 'short' }));
-                const dailyReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === d.toDateString());
-                // Activity score: (Number of unique hours with reports / 6) * 100
-                const uniqueHours = new Set(dailyReports.map(r => new Date(r.createdAt || r.timestamp).getHours()));
-                data.push(Math.min(100, (uniqueHours.size / 6) * 100));
+                const score = calculateActualTrend('growth', d.getTime(), myProjects, profile.skills || []);
+                data.push(score);
             }
         } else {
+            const myProjects = Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(targetUid));
             for (let i = 25; i >= 0; i -= 5) {
                 const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 labels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
-                const monthlyReports = reports.filter(r => {
-                    const rd = new Date(r.createdAt || r.timestamp);
-                    return rd <= d && rd >= new Date(d.getTime() - 5*24*60*60*1000);
-                });
-                data.push(Math.min(100, (monthlyReports.length / 10) * 100));
+                const score = calculateActualTrend('growth', d.getTime(), myProjects, profile.skills || []);
+                data.push(score);
             }
         }
 
@@ -1218,14 +1232,37 @@
         return Math.round((fields.filter(Boolean).length / fields.length) * 100);
     }
 
-    function computeScore(p, projects) {
-        if (!projects || projects.length === 0) return 0;
-        const ratedProjects = projects.filter(proj => proj.rating);
-        if (ratedProjects.length === 0) return 0;
+    function computeScore(p, projects, reports) {
+        if (!p) return 0;
+        projects = projects || [];
+        reports = reports || [];
 
-        const totalRating = ratedProjects.reduce((sum, pr) => sum + pr.rating, 0);
-        const avgRating = totalRating / ratedProjects.length; // 0-5
-        return Math.round((avgRating / 5) * 100);
+        // Base Rating Score (40%)
+        let rScore = 0;
+        const ratedProjects = projects.filter(proj => proj.rating);
+        if (ratedProjects.length > 0) {
+            const totalRating = ratedProjects.reduce((sum, pr) => sum + pr.rating, 0);
+            rScore = (totalRating / ratedProjects.length / 5) * 100;
+        }
+
+        // Skill Score (30%)
+        const skillsArr = p.skills || [];
+        const sScore = skillsArr.length > 0 
+            ? skillsArr.reduce((sum, sk) => sum + (sk.level || 0), 0) / skillsArr.length 
+            : 0;
+
+        // Reporting Score (30%)
+        const now = new Date();
+        // Safety: default to 7 days if start date missing
+        let startTs = p.internship?.startDate ? new Date(p.internship.startDate).getTime() : 0;
+        if (!startTs || isNaN(startTs)) startTs = now.getTime() - (7 * 24 * 60 * 60 * 1000);
+        
+        const daysDiff = Math.max(1, Math.ceil((now.getTime() - startTs) / (1000 * 60 * 60 * 24)));
+        const expected = daysDiff * 2;
+        const repScore = expected > 0 ? Math.min(100, (reports.length / expected) * 100) : 0;
+
+        const total = (rScore * 0.4) + (sScore * 0.3) + (repScore * 0.3);
+        return isNaN(total) ? 0 : Math.round(total);
     }
 
     function getFilteredTrendData(type, myProjects) {
@@ -1282,33 +1319,27 @@
 
     function calculateActualTrend(type, timestamp, projects, skills) {
         if (type === 'projects') {
-            // Only count projects created before this point in time
             const relevant = projects.filter(p => (p.createdAt || 0) <= timestamp);
             if (relevant.length === 0) return 0;
             const valid = relevant.filter(p => p.rating && p.rating > 0);
-            if (valid.length === 0) return 20; // Default baseline if projects exist but no rating
+            if (valid.length === 0) return 20; 
             const avg = valid.reduce((s, p) => s + p.rating, 0) / valid.length;
             return Math.round((avg / 5) * 100);
         }
 
         if (type === 'skills') {
-            if (!skills || skills.length === 0) return 0;
+            if (!skills || skills.length === 0) return 30; // Min baseline
             const avg = skills.reduce((sum, sk) => sum + (sk.level || 0), 0) / skills.length;
-
-            // Skill levels are usually static (current state). 
-            // We simulate a growth curve leading to the current average 
-            // for the trend chart, otherwise it's just a flat line.
-            const now = Date.now();
-            const startOfProgram = now - (90 * 24 * 60 * 60 * 1000); // Assume 90 days ago
-            const progress = (timestamp - startOfProgram) / (now - startOfProgram);
-            const clamped = Math.max(0.2, Math.min(1.0, progress));
-            return Math.round(avg * clamped);
+            return Math.round(avg);
         }
 
         if (type === 'growth') {
             const pScore = calculateActualTrend('projects', timestamp, projects, skills);
             const sScore = calculateActualTrend('skills', timestamp, projects, skills);
-            return Math.round((pScore + sScore) / 2);
+            const rScore = calculateActualTrend('progress', timestamp, projects, skills);
+            
+            // Formula requested: Rating + Reports + Skills (equally weighted)
+            return Math.round((pScore + sScore + rScore) / 3);
         }
 
         if (type === 'progress') {
@@ -1322,21 +1353,28 @@
                 const hour = targetDate.getHours();
                 const pastWindows = windows.filter(w => w <= hour);
                 const count = reports.filter(r => {
-                    const d = new Date(r.createdAt);
+                    const dt = r.createdAt || r.timestamp || 0;
+                    if (!dt) return false;
+                    const d = new Date(dt);
                     return d.toDateString() === todayStr && pastWindows.includes(r.window);
                 }).length;
                 return Math.min(100, Math.round(count * (100 / windows.length)));
             }
             if (curTimeFilter === 'week') {
                 // WEEK: Daily Score (reports in that specific 24h block / 6)
-                const count = reports.filter(r => new Date(r.createdAt).toDateString() === todayStr).length;
+                const count = reports.filter(r => {
+                    const ts = r.createdAt || r.timestamp || 0;
+                    return ts && new Date(ts).toDateString() === todayStr;
+                }).length;
                 return Math.round((Math.min(count, 6) / 6) * 100);
             }
             // MONTH: Weekly Score rollup (reports in that 7-day period / 36)
-            // This analyzes "each and every report" for the week's days (6 working days * 6 reports = 36)
             const weekEnd = timestamp;
             const weekStart = timestamp - (7 * 24 * 60 * 60 * 1000);
-            const count = reports.filter(r => r.createdAt > weekStart && r.createdAt <= weekEnd).length;
+            const count = reports.filter(r => {
+                const ts = r.createdAt || r.timestamp || 0;
+                return ts && ts > weekStart && ts <= weekEnd;
+            }).length;
             return Math.round((Math.min(count, 36) / 36) * 100);
         }
 
@@ -1372,12 +1410,13 @@
         return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`;
     }
 
-    function sparklineSVG(color = '#8b5cf6') {
-        const h = [30, 55, 42, 70, 65, 80, 72, 90];
-        const max = Math.max(...h); const min = Math.min(...h);
-        const pts = h.map((v, i) => `${(i / (h.length - 1)) * 100},${100 - ((v - min) / (max - min)) * 100}`).join(' ');
+    function sparklineSVG(data = [30, 50, 40, 70, 60], color = '#8b5cf6') {
+        const h = (!data || data.length === 0) ? [0,0,0,0] : (data.length === 1 ? [data[0], data[0]] : data);
+        const max = 100;
+        const min = 0;
+        const pts = h.map((v, i) => `${(i / (h.length - 1)) * 100},${100 - (Math.min(100, Math.max(0, v)))}`).join(' ');
         return `<svg class="stat-sparkline" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`;
     }
 
@@ -1432,7 +1471,7 @@
             }
         }
         if (nameEl) nameEl.textContent = currentName;
-        if (roleEl) roleEl.textContent = isAdmin ? (p?.role || 'Administrator') : 'Intern';
+        if (roleEl) roleEl.textContent = isAdmin ? (p?.role || 'Administrator') : 'Technical Intern';
 
         const nav = document.getElementById('sidebar-nav');
         const items = [

@@ -198,13 +198,13 @@
           <!-- Name + role -->
           <div class="student-identity">
             <div class="student-name">
-              ${profile.name || 'Unnamed Intern'}
+              ${profile.name || 'Unnamed Technical Intern'}
               ${Storage.getInternRank ? (() => {
         const rank = Storage.getInternRank(profile.userId);
         return rank ? `<span class="intern-rank-badge">#${rank}</span>` : '';
       })() : ''}
             </div>
-            <div class="student-role-tag">${profile.internship?.role || 'Intern'} ${profile.internship?.company ? '@ ' + profile.internship.company : ''}</div>
+            <div class="student-role-tag">${profile.internship?.role || 'Technical Intern'} ${profile.internship?.company ? '@ ' + profile.internship.company : ''}</div>
           </div>
 
           ${isSuspended ? `<div class="suspended-badge">Suspended</div>` : ''}

@@ -92,7 +92,7 @@ const Storage = (() => {
                 bio: 'Welcome to I.R.I.S! Please update your bio and skills to complete your profile.',
                 skills: [],
                 location: '',
-                internship: { role: 'Intern', company: '' },
+                internship: { role: 'Technical Intern', company: '' },
                 socialLinks: { github: '', linkedin: '' },
                 _isSkeleton: true // Internal flag to prompt saving
             };

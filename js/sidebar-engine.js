@@ -39,7 +39,7 @@ const SidebarEngine = (() => {
         if (userNameSb) userNameSb.textContent = currentName;
         
         const points = (isAdmin ? 0 : userProfile?.points) || 0;
-        const assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Intern');
+        const assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Technical Intern');
         const levelTitle = assignedRole;
         
         if (userRoleSb) {

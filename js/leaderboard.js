@@ -152,7 +152,7 @@
                         <div class="lb-row-avatar">${intern.avatar ? `<img src="${intern.avatar}">` : intern.name[0]}</div>
                         <div>
                           <div class="lb-row-intern-name">${intern.name}</div>
-                          <div class="lb-row-intern-role">${intern.internship?.role || 'Intern'}</div>
+                          <div class="lb-row-intern-role">${intern.internship?.role || 'Technical Intern'}</div>
                         </div>
                     </div>
                     <div class="lb-row-score" style="text-align:left; color: var(--clr-accent); font-weight:800;">${getVal(intern)}</div>

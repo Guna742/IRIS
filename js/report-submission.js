@@ -70,7 +70,7 @@
         // Pre-fill signature if profile exists
         const profile = Storage.getProfile(userId);
         if (profile && fields.signature) {
-            fields.signature.value = `Regards, ${profile.name || session.displayName} | Intern @ ${profile.internship?.company || 'I.R.I.S'}`;
+            fields.signature.value = `Regards, ${profile.name || session.displayName} | Technical Intern @ ${profile.internship?.company || 'I.R.I.S'}`;
         }
         
         setTimeout(() => refreshAnalyticsChart(), 500);
@@ -78,7 +78,7 @@
 
     // ── Core Logic ──
     function updateUI() {
-        if (editMode) return; // Don't disrupt editing
+        if (editMode) return; 
 
         const now = new Date();
         const hr = now.getHours();
@@ -92,41 +92,45 @@
         const isLate = hr >= 18;
         renderHistory(todayReports);
 
-        // UI state based on time
+        // Always ensure form is interactive for preparation
+        setFormDisabled(false);
+
         if (isLate) {
-            windowTitle.textContent = "Reporting Window Closed (6 PM)";
-            windowTimer.textContent = "Reporting hours have ended. Use history below to view today's logs.";
-            setFormDisabled(true);
+            windowTitle.textContent = "Reporting Hours Closed (6 PM)";
+            windowTimer.textContent = "You can still prepare your report, but submissions are currently locked until tomorrow.";
+            submitBtn.disabled = true;
+            submitBtnText.textContent = "Window Closed";
         } else if (!activeWindow) {
-            windowTitle.textContent = hr === 13 ? "Lunch Break (1PM - 2PM)" : "Outside Reporting Hours";
-            windowTimer.textContent = hr === 13 ? "Window 2 starts at 2:00 PM." : "Next window starts at 9:00 AM.";
-            setFormDisabled(true);
+            const isLunch = hr === 13;
+            windowTitle.textContent = isLunch ? "Lunch Break (1PM - 2PM)" : "Outside Reporting Hours";
+            windowTimer.textContent = isLunch ? "Window 2 starts at 2:00 PM. You can prepare your notes now!" : "Next window starts at 9:00 AM. Feel free to draft your updates.";
+            submitBtn.disabled = true;
+            submitBtnText.textContent = "Window Inactive";
         } else if (submittedCurrent) {
+            // If they already submitted but aren't in explicit 'Edit Mode', 
+            // we'll auto-populate the form so they see their work and can update it easily.
+            loadReportToForm(submittedCurrent);
             windowTitle.textContent = `Submitted: ${activeWindow.label}`;
-            windowTimer.textContent = "Update received. You can still edit your submissions in history today.";
-            setFormDisabled(true);
+            windowTimer.textContent = "Update received. You can modify your report below and click 'Update' to save changes.";
+            submitBtn.disabled = false;
+            submitBtnText.textContent = "Update Submission";
+            
+            // Set internal state so handleFormSubmit knows it's an update
+            editMode = false; // We don't need 'global' edit mode for auto-updates
+            editingReportId = submittedCurrent.id; 
         } else {
             windowTitle.textContent = `Active: ${activeWindow.label}`;
             windowTimer.textContent = `Please fill out your full progress report. Window closes at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
-            setFormDisabled(false);
-            
-            // ── Logout Time Requirement Logic ──
-            // If it's Morning Session (Window 1), logoutTime is OPTIONAL
-            // If it's Afternoon Session (Window 2), logoutTime is REQUIRED
+            submitBtn.disabled = false;
+            submitBtnText.textContent = "Submit Full Report";
+            editingReportId = null;
+
+            // Optional logout requirement logic
             if (fields.logoutTime) {
-                if (activeWindow.id === 1) {
-                    fields.logoutTime.required = false;
-                    fields.logoutTime.placeholder = "(Optional for morning)";
-                } else {
-                    fields.logoutTime.required = true;
-                    fields.logoutTime.placeholder = "";
-                }
+                fields.logoutTime.required = (activeWindow.id === 2);
+                fields.logoutTime.placeholder = (activeWindow.id === 1) ? "(Optional for morning)" : "";
             }
         }
-
-        // Feature: Lunch/Afternoon edit capability
-        // If we are in Afternoon (Window 2), allow editing Morning (Window 1)
-        // This is handled by renderHistory's edit button being enabled for today's reports.
 
         downloadBtn.style.display = todayReports.length >= 1 ? 'flex' : 'none';
         refreshAnalyticsChart();
@@ -181,10 +185,10 @@
             timestamp: now.getTime()
         };
 
-        if (editMode && editingReportId) {
+        if ((editMode || editingReportId) && editingReportId) {
             Storage.updateHourlyReport(editingReportId, report);
             await IrisModal.alert("Report updated successfully!");
-            cancelEdit();
+            if (editMode) cancelEdit();
         } else {
             Storage.saveHourlyReport(report);
             if (Storage.saveActivityReportToFirebase) {
@@ -253,20 +257,9 @@
         await IrisModal.confirm(html, { title: 'Technical Progress Details', confirmText: 'Close', hideCancel: true });
     };
 
-    window.prepareEdit = (id) => {
-        const r = Storage.getHourlyReportById(id);
-        if (!r) return;
-        
-        if (!r.data) {
-            IrisModal.alert("Old format reports cannot be edited using the new template.");
-            return;
-        }
-
-        editMode = true;
-        editingReportId = id;
-        
-        // Populate fields
-        const d = r.data;
+    function loadReportToForm(report) {
+        if (!report || !report.data) return;
+        const d = report.data;
         fields.loginTime.value = d.loginTime || '';
         fields.logoutTime.value = d.logoutTime || '';
         fields.tasksAssigned.value = d.tasksAssigned || '';
@@ -281,6 +274,21 @@
         fields.challenges.value = d.challenges || '';
         fields.nextSteps.value = d.nextSteps || '';
         fields.signature.value = d.signature || '';
+    }
+
+    window.prepareEdit = (id) => {
+        const r = Storage.getHourlyReportById(id);
+        if (!r) return;
+        
+        if (!r.data) {
+            IrisModal.alert("Old format reports cannot be edited using the new template.");
+            return;
+        }
+
+        editMode = true;
+        editingReportId = id;
+        
+        loadReportToForm(r);
 
         // UI Changes
         setFormDisabled(false);
@@ -372,20 +380,63 @@
         doc.save(`IRIS_FullReport_${now.toISOString().split('T')[0]}.pdf`);
     }
 
-    // ── Analytics Chart Component (Simplified for brevity) ──
+    // ── Analytics Chart Component (Performance Overview) ──
+    let chartFilter = 'today';
+
+    window.updateChartFilter = function (filter, el) {
+        chartFilter = filter;
+        
+        // Update active class on buttons
+        const parent = el.closest('.chart-controls');
+        if (parent) {
+            parent.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+        
+        refreshAnalyticsChart();
+    };
+
     function refreshAnalyticsChart() {
         const container = document.getElementById('report-analytics-chart');
         if (!container) return;
+        
         const reports = Storage.getHourlyReports(userId);
-        const todayCount = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === new Date().toDateString()).length;
-        const perc = (todayCount / 2) * 100;
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        
+        let perc = 0;
+        let label = "Daily Target Completed";
+        
+        if (chartFilter === 'today') {
+            const todayCount = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === new Date().toDateString()).length;
+            perc = Math.min(100, Math.round((todayCount / 2) * 100));
+            label = "Daily Target Completed";
+        } else if (chartFilter === 'week') {
+            // Check last 7 days (6 reports per day expected if using 2 slots, maybe? Wait, WINDOWS has only 2 slots)
+            // Actually WINDOWS in this file has 2 slots. So 2 reports per day.
+            const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            const weekReports = reports.filter(r => {
+                const rt = r.createdAt || r.timestamp;
+                return rt >= sevenDaysAgo.getTime();
+            });
+            perc = Math.min(100, Math.round((weekReports.length / 14) * 100)); // 7 days * 2 reports
+            label = "Weekly Consistency Score";
+        } else if (chartFilter === 'month') {
+            const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+            const monthReports = reports.filter(r => {
+                const rt = r.createdAt || r.timestamp;
+                return rt >= thirtyDaysAgo.getTime();
+            });
+            perc = Math.min(100, Math.round((monthReports.length / 60) * 100)); // 30 days * 2 reports
+            label = "Monthly Consistency Score";
+        }
         
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%">
-                <div style="font-size:3rem; font-weight:800; color:var(--clr-primary)">${perc}%</div>
-                <div style="color:var(--clr-text-muted)">Daily Target Completed</div>
-                <div style="width:200px; height:8px; background:rgba(255,255,255,0.05); border-radius:4px; margin-top:15px; overflow:hidden">
-                    <div style="width:${perc}%; height:100%; background:var(--clr-primary); box-shadow:0 0 10px var(--clr-primary)"></div>
+                <div style="font-size:3.5rem; font-weight:800; color:var(--clr-primary); text-shadow: 0 0 20px rgba(139, 92, 246, 0.3)">${perc}%</div>
+                <div style="color:var(--clr-text-muted); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; margin-top: 5px;">${label}</div>
+                <div style="width:240px; height:6px; background:rgba(255,255,255,0.05); border-radius:10px; margin-top:20px; overflow:hidden">
+                    <div style="width:${perc}%; height:100%; background:var(--clr-primary); box-shadow:0 0 15px var(--clr-primary); transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"></div>
                 </div>
             </div>
         `;
