@@ -13,6 +13,14 @@
         Storage.fetchEverything();
     }
 
+    // Real-time Cloud Sync Listener
+    window.addEventListener('iris-data-sync', (e) => {
+        if (e.detail.type === 'users') {
+            const updatedP = Storage.getProfile(session.userId);
+            if (updatedP) refresh(updatedP, session);
+        }
+    });
+
     let currentProjectIdx = 0;
 
     // Topbar badge
@@ -174,8 +182,9 @@
                         </div>
                         <div class="student-section-body">
                             <div class="inline-form" id="inline-skill-form" hidden style="margin-bottom:var(--sp-4)">
-                                <div class="inline-form-row">
-                                    <input type="text" id="new-skill-input" class="field-input" placeholder="e.g. React, Python" style="flex:1">
+                                <div class="inline-form-row" style="gap: 8px;">
+                                    <input type="text" id="new-skill-input" class="field-input" placeholder="Skill (e.g. React)" style="flex:2">
+                                    <input type="number" id="new-skill-level" class="field-input" placeholder="%" style="flex:1" min="1" max="100">
                                     <button class="btn btn-primary btn-sm" id="save-skill-btn">Add</button>
                                 </div>
                             </div>
@@ -298,15 +307,17 @@
         });
         
         // Simple saves
-        document.getElementById('name-save-btn')?.addEventListener('click', () => {
+        document.getElementById('name-save-btn')?.addEventListener('click', async () => {
             p.name = document.getElementById('name-edit-field').value.trim();
             Storage.saveProfile(session.userId, p);
+            if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
             showToast('Updated!', 'success');
             refresh(p, session);
         });
-        document.getElementById('bio-save-btn')?.addEventListener('click', () => {
+        document.getElementById('bio-save-btn')?.addEventListener('click', async () => {
              p.bio = document.getElementById('bio-edit-field').value.trim();
              Storage.saveProfile(session.userId, p);
+             if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
              showToast('Bio updated!', 'success');
              refresh(p, session);
         });
@@ -316,23 +327,32 @@
             const form = document.getElementById('inline-skill-form');
             if(form) form.hidden = false;
         });
-        document.getElementById('save-skill-btn')?.addEventListener('click', () => {
+        document.getElementById('save-skill-btn')?.addEventListener('click', async () => {
             const input = document.getElementById('new-skill-input');
+            const levelInput = document.getElementById('new-skill-level');
             const val = input ? input.value.trim() : '';
+            const level = levelInput ? parseInt(levelInput.value) || 0 : 0;
+            
             if (val) {
+                if (!level || level < 1 || level > 100) {
+                    showToast('Please enter a skill level between 1-100%', 'error');
+                    return;
+                }
                 if (!p.skills) p.skills = [];
-                p.skills.push({ name: val, level: 80 });
+                p.skills.push({ name: val, level: level });
                 Storage.saveProfile(session.userId, p);
+                if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
                 refresh(p, session);
             }
         });
 
         // Remove skill
         document.querySelectorAll('.skill-remove-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const name = btn.dataset.skill;
                 p.skills = (p.skills || []).filter(s => (typeof s === 'object' ? s.name : s) !== name);
                 Storage.saveProfile(session.userId, p);
+                if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
                 refresh(p, session);
             });
         });

@@ -233,19 +233,27 @@
       recentProjList.innerHTML = `<p class="text-muted text-sm" style="padding: 20px 0">Oops… nothing here yet 👀</p>`;
       return;
     }
-    recentProjList.innerHTML = recent.map((p, i) => `
-      <div class="proj-item anim-stagger visible card-3d" style="transition-delay: ${i * 0.15}s">
-        <div class="glare" aria-hidden="true"></div>
-        <div class="proj-thumb" style="background:${p.screenshot ? 'none' : '#8b5cf6'}">
-          ${p.screenshot ? `<img src="${p.screenshot}" alt="${p.title}">` : `<span>${p.title[0]}</span>`}
+    recentProjList.innerHTML = recent.map((p, i) => {
+      const projectUrl = `projects.html${isAdmin ? '?intern=' + (p.userId || p.ownerId) : ''}#${p.id}`;
+      return `
+        <div class="proj-item anim-stagger visible card-3d" style="transition-delay: ${i * 0.15}s" onclick="window.location.href='${projectUrl}'">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="proj-thumb" style="background:${p.screenshot ? 'none' : '#8b5cf6'}">
+            ${p.screenshot ? `<img src="${p.screenshot}" alt="${p.title}">` : `<span>${p.title[0]}</span>`}
+          </div>
+          <div class="proj-info" style="cursor:pointer">
+            <div class="proj-name">${p.title}</div>
+            <div class="proj-tech">${(p.techStack || []).slice(0, 2).join(' · ')}</div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            ${p.liveLink ? `<a class="proj-link btn-magnetic" href="${p.liveLink}" target="_blank" onclick="event.stopPropagation()" title="Live Demo">↗</a>` : ''}
+            <button class="proj-link btn-magnetic" style="background: rgba(139,92,246,0.1); color: var(--clr-accent);" title="View Details">
+              <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+            </button>
+          </div>
         </div>
-        <div class="proj-info">
-          <div class="proj-name">${p.title}</div>
-          <div class="proj-tech">${(p.techStack || []).slice(0, 2).join(' · ')}</div>
-        </div>
-        <a class="proj-link btn-magnetic" href="${p.liveLink || '#'}" target="_blank">↗</a>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function renderRecentReports(allProfiles) {
