@@ -39,7 +39,8 @@ const SidebarEngine = (() => {
         if (userNameSb) userNameSb.textContent = currentName;
         
         const points = (isAdmin ? 0 : userProfile?.points) || 0;
-        const levelTitle = isAdmin ? 'Administrator' : (points < 200 ? 'Intern' : points < 1000 ? 'Pro' : points < 3000 ? 'Lead' : 'Elite');
+        const assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Intern');
+        const levelTitle = assignedRole;
         
         if (userRoleSb) {
             userRoleSb.innerHTML = `
@@ -56,7 +57,7 @@ const SidebarEngine = (() => {
         const roleBadges = [document.getElementById('topbar-role-badge'), document.getElementById('role-badge-main')];
         roleBadges.forEach(badge => {
             if (badge) {
-                badge.textContent = isAdmin ? 'Admin' : 'Intern';
+                badge.textContent = isAdmin ? 'Admin' : assignedRole;
                 badge.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
             }
         });

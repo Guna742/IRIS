@@ -378,8 +378,8 @@
             const status = statusPool[i % statusPool.length];
             const initials = (profile.name || 'I')[0].toUpperCase();
             return `
-                    <tr>
-                        <td>
+                    <tr class="reveal">
+                        <td data-label="Project">
                             <div class="proj-info">
                                 <div class="proj-name">${proj.title}</div>
                                 <div class="proj-stack">
@@ -387,14 +387,18 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Performance">
                             <div class="progress-mini">
                                 <div class="progress-mini-bar" style="width:${proj.rating ? (proj.rating / 5) * 100 : 0}%; background:var(--clr-violet)"></div>
                             </div>
                         </td>
-                        <td><div class="history-date">${proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : 'N/A'}</div></td>
-                        <td><span class="badge badge-${status}">${status.toUpperCase()}</span></td>
-                        <td>
+                        <td data-label="Submitted">
+                             <div class="history-date">${proj.createdAt ? new Date(proj.createdAt).toLocaleDateString() : 'N/A'}</div>
+                        </td>
+                        <td data-label="Status">
+                            <span class="badge badge-${status}">${status.toUpperCase()}</span>
+                        </td>
+                        <td data-label="Role">
                             <div class="table-user">
                                 <div class="table-user-avatar" style="background:var(--clr-violet-alpha)">${initials}</div>
                                 <span>Intern</span>
@@ -459,10 +463,10 @@
 
                 return `
                             <tr>
-                                <td>${dateStr}</td>
-                                <td>${r.window === 1 ? 'Morning (W1)' : 'Afternoon (W2)'}</td>
-                                <td>${timeStr}</td>
-                                <td>
+                                <td data-label="Date">${dateStr}</td>
+                                <td data-label="Window">${r.window === 1 ? 'Morning (W1)' : 'Afternoon (W2)'}</td>
+                                <td data-label="Time">${timeStr}</td>
+                                <td data-label="Status">
                                     <span class="badge ${isLate ? 'badge-warning' : 'badge-success'}" style="font-size: 10px; padding: 2px 8px;">
                                         ${isLate ? 'LATE SUBMISSION' : 'ON TIME'}
                                     </span>
@@ -876,14 +880,14 @@
         
         if (curTimeFilter === 'today') {
             const hCheckpoints = [9, 11, 13, 14, 16, 18];
+            const myProjects = Storage.getProjects().filter(p => String(p.userId || p.ownerId) === String(targetUid));
             hCheckpoints.forEach(h => {
                 labels.push(`${h}:00`);
-                // Find if any report was submitted within that hour
-                const r = reports.find(rep => {
-                    const d = new Date(rep.createdAt || rep.timestamp);
-                    return d.toDateString() === now.toDateString() && d.getHours() === h;
-                });
-                data.push(r ? 100 : 0);
+                const timestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, 0, 0).getTime();
+                
+                // Calculate performance score at this specific point in time
+                const score = calculateActualTrend('growth', timestamp, myProjects, profile.skills || []);
+                data.push(score);
             });
         } else if (curTimeFilter === 'week') {
             for (let i = 6; i >= 0; i--) {

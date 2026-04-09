@@ -984,6 +984,7 @@ body::after {
         padding-right: 20px;
         font-size: 9px;
     }
+}
 
     /* ══════════════════════════════════════
    PROJECT DETAIL MODAL
@@ -1093,9 +1094,107 @@ body::after {
             /* Hide preview column on tablets */
         }
     }
-}
 
 @media (max-width: 768px) {
+    /* Layout Adjustments */
+    .role-banner {
+        padding: var(--sp-4) var(--sp-5);
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-card-value {
+        font-size: 1.8rem;
+    }
+
+    /* Chart Fixes */
+    .charts-row {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    .chart-widget {
+        padding: 20px;
+    }
+    
+    .chart-sub-head {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    
+    .line-chart-wrap {
+        height: 180px;
+    }
+
+    /* History Table -> Card Layout */
+    .history-table thead {
+        display: none; /* Hide header on mobile */
+    }
+    
+    .history-table, .history-table tbody, .history-table tr, .history-table td {
+        display: block;
+        width: 100%;
+    }
+    
+    .history-table tr {
+        margin-bottom: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--clr-border);
+        padding: 8px;
+    }
+    
+    .history-table td {
+        border: none;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+    }
+    
+    .history-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        color: var(--clr-text-muted);
+        float: left;
+        margin-right: 12px;
+    }
+
+    .history-table td:first-child::before { content: 'Project'; }
+    .history-table td:nth-child(2)::before { content: 'Performance'; }
+    .history-table td:nth-child(3)::before { content: 'Submitted'; }
+    .history-table td:nth-child(4)::before { content: 'Status'; }
+    .history-table td:nth-child(5)::before { content: 'Role'; }
+
+    .proj-info {
+        text-align: right;
+        align-items: flex-end;
+    }
+
+    /* Header Spacing */
+    .history-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    /* Reports Window Alignment */
+    .reports-overview div[style*="display: flex; gap: 15px;"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
     .detail-meta-grid {
         grid-template-columns: 1fr;
         gap: 20px;

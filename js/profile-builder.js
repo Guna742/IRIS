@@ -77,21 +77,28 @@
         });
     }
 
-    if (addStudentBtn) {
         addStudentBtn.addEventListener('click', async () => {
-            const name = await IrisModal.prompt('Enter new student name:');
+            const name = await IrisModal.prompt('Enter new intern name:', 'Prathosh S');
             if (!name) return;
             const email = await IrisModal.prompt('Enter intern email address:');
             if (!email) return;
+            const company = await IrisModal.prompt('Enter intern company name:', 'FortuMars');
+            if (!company) return;
+            const role = await IrisModal.prompt('Enter intern role title:', 'Software Developer');
+            if (!role) return;
 
             const id = 'u_' + Date.now();
             const newProfile = {
                 userId: id,
                 name: name,
                 email: email.trim().toLowerCase(),
-                tagline: '',
+                tagline: `${role} at ${company}`,
                 skills: [],
-                internship: {},
+                internship: {
+                    company: company,
+                    role: role,
+                    startDate: new Date().toISOString().split('T')[0]
+                },
                 socialLinks: {},
                 _isNew: true // Flag to trigger credential capture on Save
             };
@@ -107,7 +114,6 @@
             populateForm(profile);
             showToast(`Created draft for ${name}`, 'success');
         });
-    }
 
     // ── Add Admin ──
     if (addAdminBtn) {

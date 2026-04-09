@@ -361,15 +361,16 @@ const Storage = (() => {
     }
 
     /** Compute all metrics for a profile */
-    function getProfileMetrics(profile) {
-        if (!profile) return { completion: 0, score: 0, rating: 0 };
+    function getProfileMetrics(profile, forceRecalculate = false) {
+        if (!profile) return { completion: 0, score: 0, rating: 0, points: 0 };
         
-        // Prefer stored metrics from database
-        if (profile.metrics) {
+        // Prefer stored metrics if NOT forcing recalculation
+        if (profile.metrics && !forceRecalculate) {
             return {
                 completion: profile.metrics.completion || 0,
                 score: profile.metrics.score || 0,
-                rating: profile.metrics.rating || 0
+                rating: profile.metrics.rating || 0,
+                points: profile.metrics.points || profile.points || 0
             };
         }
         
@@ -453,8 +454,8 @@ const Storage = (() => {
     async function syncInternProfile(internId, data) {
         if (!internId || !data) return;
         try {
-            // Compute metrics for database storage
-            const metrics = getProfileMetrics(data);
+            // Compute metrics for database storage (FORCE RECALCULATION)
+            const metrics = getProfileMetrics(data, true);
             
             const clean = _sanitizeData({ ...data });
             delete clean.password;

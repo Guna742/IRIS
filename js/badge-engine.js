@@ -22,7 +22,7 @@ const BadgeEngine = (() => {
             order: 1,
             id: 'newbie',
             label: 'Newbie',
-            emoji: '🌱',
+            icon: 'school',
             desc: 'Welcome to IRIS! (Assigned on signup)',
             check: () => true 
         },
@@ -30,7 +30,7 @@ const BadgeEngine = (() => {
             order: 2,
             id: 'learner',
             label: 'Learner',
-            emoji: '📚',
+            icon: 'auto_stories',
             desc: 'Asked 20 questions',
             check: (stats) => (stats.questionsAsked || 0) >= 20
         },
@@ -38,7 +38,7 @@ const BadgeEngine = (() => {
             order: 3,
             id: 'contributor',
             label: 'Contributor',
-            emoji: '✍️',
+            icon: 'history_edu',
             desc: 'Posted 15 answers',
             check: (stats) => (stats.answersPosted || 0) >= 15
         },
@@ -46,7 +46,7 @@ const BadgeEngine = (() => {
             order: 4,
             id: 'helper',
             label: 'Helper',
-            emoji: '🤝',
+            icon: 'volunteer_activism',
             desc: 'Received 30 upvotes on answers',
             check: (stats) => (stats.answerUpvotesReceived || 0) >= 30
         },
@@ -54,7 +54,7 @@ const BadgeEngine = (() => {
             order: 5,
             id: 'active-intern',
             label: 'Active Intern',
-            emoji: '⚡',
+            icon: 'verified',
             desc: 'Reached 100 total points',
             check: (stats) => (stats.points || 0) >= 100
         }
@@ -174,8 +174,8 @@ const BadgeEngine = (() => {
         return badgeIds.map(id => {
             const def = BADGES.find(b => b.id === id);
             if (!def) return '';
-            return `<span class="earned-badge ${id}" title="${def.desc}">
-                        <span>${def.emoji}</span>
+            return `<span class="earned-badge ${id}" title="${def.desc}" style="display:inline-flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:14px;">${def.icon}</span>
                         <span>${def.label}</span>
                     </span>`;
         }).join('');

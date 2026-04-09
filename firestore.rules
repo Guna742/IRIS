@@ -62,14 +62,13 @@ service cloud.firestore {
       // Allow updates for voting (anyone) and status changes (author/admin)
       allow update: if isSignedIn(); 
       allow delete: if isAdmin();
-      
-      // Sub-collection for detailed answers
-      match /answers/{answerId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn();
-        allow update: if isSignedIn();
-        allow delete: if isAdmin();
-      }
+    }
+
+    match /answers/{answerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     // ── Admin-Only Space ──

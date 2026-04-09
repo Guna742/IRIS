@@ -194,11 +194,10 @@
         const profile = Storage.getProfile(g.uid);
         const name = profile?.name || g.projects[0]?.userName || 'Unknown Intern';
         const company = profile?.company || 'IRIS Partner';
-        const avatar = profile?.avatar || '';
-        const count = g.projects.length;
-        const lastDate = g.lastSubmit ? new Date(g.lastSubmit).toLocaleDateString('en-US', { 
-            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-        }) : 'No submissions';
+                const ratedProjs = g.projects.filter(p => p.rating);
+        const avgRating = ratedProjs.length > 0 
+            ? (ratedProjs.reduce((s, p) => s + p.rating, 0) / ratedProjs.length).toFixed(1)
+            : '0.0';
 
         return `
         <article class="project-card anim-reveal" style="cursor:pointer" onclick="window.location.href='projects.html?intern=${g.uid}'">
@@ -206,7 +205,10 @@
                 <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
                     ${avatar ? `<img src="${avatar}" style="width:60px; height:60px; border-radius:50%; border:2px solid var(--clr-accent)">` : `<span class="material-symbols-outlined" style="font-size:48px; color:var(--clr-text-muted)">person</span>`}
                 </div>
-                <span class="card-status-badge completed" style="top:10px; right:10px;">${count} Project${count !== 1 ? 's' : ''}</span>
+                <div style="position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                    <span class="card-status-badge completed">${count} Project${count !== 1 ? 's' : ''}</span>
+                    ${avgRating > 0 ? `<span class="card-status-badge" style="background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.2);"><span class="material-symbols-outlined" style="font-size:10px; margin-right:2px;">star</span>${avgRating}</span>` : ''}
+                </div>
             </div>
             <div class="card-body" style="padding:20px; text-align:center;">
                 <h2 class="card-title" style="margin-bottom:4px;">${name}</h2>
@@ -744,7 +746,9 @@
             }
         }
 
+        const existingProj = editingId ? Storage.getProjectById(editingId) : {};
         const project = {
+            ...existingProj,
             id: editingId || null,
             title,
             description: desc,
@@ -753,10 +757,11 @@
             githubLink: projGithub.value.trim() || '',
             liveLink: projLive.value.trim() || '',
             liveLinkType: document.getElementById('proj-link-type') ? document.getElementById('proj-link-type').value : 'Live',
-            screenshot: screenshotB64 || '',
+            screenshot: screenshotB64 || (existingProj.screenshot || ''),
             userId: userId || null,
             userName: userName || null,
-            createdAt: editingId ? Storage.getProjectById(editingId)?.createdAt : Date.now()
+            createdAt: editingId ? existingProj.createdAt : Date.now(),
+            updatedAt: Date.now()
         };
 
         const saved = Storage.saveProject(project);

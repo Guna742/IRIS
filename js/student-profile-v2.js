@@ -125,10 +125,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="student-tagline">${p.tagline || 'Intern at I.R.I.S'}</div>
+                        <div class="student-tagline">${p.tagline || (intern.role ? `${intern.role} at ${intern.company || 'I.R.I.S'}` : 'Intern at I.R.I.S')}</div>
                         <div class="student-meta-row">
                              ${p.location ? `<span class="student-meta-item"><span class="material-symbols-outlined" style="font-size: 14px;">location_on</span>${p.location}</span>` : ''}
                             ${intern.company ? `<span class="student-meta-item"><span class="material-symbols-outlined" style="font-size: 14px;">domain</span>${intern.company}</span>` : ''}
+                            ${intern.role ? `<span class="student-meta-item" style="text-transform:uppercase; font-weight:700; color:var(--clr-accent)"><span class="material-symbols-outlined" style="font-size: 14px;">badge</span>${intern.role}</span>` : ''}
                         </div>
                     </div>
                     <div class="student-hero-actions">
