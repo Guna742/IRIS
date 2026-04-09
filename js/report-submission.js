@@ -191,9 +191,6 @@
             if (editMode) cancelEdit();
         } else {
             Storage.saveHourlyReport(report);
-            if (Storage.saveActivityReportToFirebase) {
-                Storage.saveActivityReportToFirebase(userId, report);
-            }
             reportForm.reset();
             await IrisModal.alert("Daily progress report submitted successfully!");
         }

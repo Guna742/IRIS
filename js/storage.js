@@ -8,8 +8,9 @@
 const Storage = (() => {
     const PROFILES_KEY = 'interntrack_profiles';
     const PROJECTS_KEY = 'interntrack_projects';
-    const REPORTS_KEY = 'interntrack_hourly_reports';
-    const SYNC_KEY    = 'interntrack_last_sync';
+    const REPORTS_KEY   = 'interntrack_hourly_reports';
+    const DOUBTS_KEY    = 'interntrack_doubts';
+    const SYNC_KEY      = 'interntrack_last_sync';
     const FETCH_COOLDOWN = 1000 * 30; // 30 seconds cache (snappy sync)
 
 
@@ -204,7 +205,19 @@ const Storage = (() => {
         }
         all.push(report);
         localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+        
+        // Sync to Firebase
+        if (report.userId && fbDb) {
+            saveActivityReportToFirebase(report.userId, report);
+        }
         return report;
+    }
+    // ── Doubts / The Wall ──
+    function getDoubts() {
+        try {
+            const raw = localStorage.getItem(DOUBTS_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
     }
 
     function getHourlyReportById(id) {
@@ -216,8 +229,14 @@ const Storage = (() => {
         const all = getHourlyReports();
         const idx = all.findIndex(r => r.id === id);
         if (idx > -1) {
-            all[idx] = { ...all[idx], ...data, updatedAt: Date.now() };
+            const updated = { ...all[idx], ...data, updatedAt: Date.now() };
+            all[idx] = updated;
             localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+            
+            // Sync to Firebase if available
+            if (updated.userId && fbDb) {
+                saveActivityReportToFirebase(updated.userId, updated);
+            }
             return all[idx];
         }
         return null;
@@ -423,24 +442,49 @@ const Storage = (() => {
         return index > -1 ? index + 1 : null;
     }
 
-    // ── Firebase Integration (Full Architecture) ──
-
     /**
-     * Helper to strip undefined/null values for Firestore compatibility.
+     * Helper to process Firestore data:
+     * 1. Converts Firestore Timestamp objects to JS numbers (ms).
+     * 2. Sanitizes undefined/null values for Firestore compatibility.
      */
-    function _sanitizeData(data) {
-        const clean = {};
+    function _processFirestoreData(data) {
+        if (!data || typeof data !== 'object') return data;
+        
+        // Handle Firestore Timestamp specifically
+        if (typeof data.toDate === 'function') {
+            return data.toDate().getTime();
+        }
+        
+        // Handle FieldValue - don't process it, just return as-is for Firestore to handle
+        if (typeof firebase !== 'undefined' && data instanceof firebase.firestore.FieldValue) {
+            return data;
+        }
+
+        const clean = Array.isArray(data) ? [] : {};
         Object.keys(data).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) {
-                if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
-                    clean[key] = _sanitizeData(data[key]);
+            const val = data[key];
+            if (val === undefined || val === null) return;
+
+            if (val && typeof val === 'object') {
+                if (typeof val.toDate === 'function') {
+                    clean[key] = val.toDate().getTime();
+                } else if (typeof firebase !== 'undefined' && val instanceof firebase.firestore.FieldValue) {
+                    clean[key] = val;
                 } else {
-                    clean[key] = data[key];
+                    clean[key] = _processFirestoreData(val);
                 }
+            } else {
+                clean[key] = val;
             }
         });
         return clean;
     }
+
+    // Legacy backup for write operations
+    function _sanitizeData(data) {
+        return _processFirestoreData(data);
+    }
+
 
     // ── ADMIN: Sync admin profile to admins/{adminId} ──
     async function syncAdminProfile(adminId, data) {
@@ -545,11 +589,19 @@ const Storage = (() => {
         if (!internId || !report) return;
         try {
             const reportId = report.id || ('rep_fb_' + Date.now());
+            // Use existing createdAt if available (as a number), otherwise server timestamp
+            const finalReport = {
+                ...report,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (!finalReport.createdAt) {
+                finalReport.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            }
+
             await fbDb.collection('users').doc(internId)
-                .collection('reports').doc(reportId).set({
-                    ...report,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                .collection('reports').doc(reportId).set(_sanitizeData(finalReport));
+
             console.log(`[Storage] Report saved to Firestore: ${reportId}`);
         } catch (err) {
             console.error('[Storage] saveActivityReportToFirebase error:', err);
@@ -746,8 +798,9 @@ const Storage = (() => {
             fbDb.collection('projects').onSnapshot(snap => {
                 console.log('[Storage] LIVE PROJECTS: ' + snap.size);
                 const projects = [];
-                snap.forEach(doc => projects.push({ ...doc.data(), id: doc.id }));
+                snap.forEach(doc => projects.push({ ..._processFirestoreData(doc.data()), id: doc.id }));
                 localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+
                 // Dispatch event for UI re-renderers
                 window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'projects', count: snap.size } }));
             }, e => console.warn('[Storage] Projects stream error:', e));
@@ -755,24 +808,72 @@ const Storage = (() => {
             // Users/Profiles Listener (for Leaderboard/Interns list)
             // Rebuilds fresh from Firestore every time. Skips any UID in _pendingDeleteIds
             // so a slow Firestore delete doesn't revive the user on-screen.
+            // Users/Profiles Listener
             fbDb.collection('users').onSnapshot(snap => {
                 console.log('[Storage] LIVE USERS: ' + snap.size);
                 const freshProfiles = {};
                 snap.forEach(doc => {
                     if (!_pendingDeleteIds.has(doc.id)) {
-                        freshProfiles[doc.id] = { ...doc.data(), userId: doc.id };
-                    } else {
-                        console.log('[Storage] Skipping revive of pending-delete uid:', doc.id);
+                        freshProfiles[doc.id] = { ..._processFirestoreData(doc.data()), userId: doc.id };
                     }
                 });
                 localStorage.setItem(PROFILES_KEY, JSON.stringify(freshProfiles));
+
                 window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'users', count: snap.size } }));
             }, e => console.warn('[Storage] Users stream error:', e));
+
+            // Questions/Doubts Listener
+            fbDb.collection('questions').onSnapshot(snap => {
+                console.log('[Storage] LIVE DOUBTS: ' + snap.size);
+                const doubts = [];
+                snap.forEach(doc => doubts.push({ ..._processFirestoreData(doc.data()), id: doc.id }));
+                localStorage.setItem(DOUBTS_KEY, JSON.stringify(doubts));
+
+                window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'doubts', count: snap.size } }));
+            }, e => console.warn('[Storage] Questions stream error:', e));
+
+            // Reports Listener (User-specific)
+            const session = Auth.getSession();
+            if (session && session.userId) {
+                fetchUserReports(session.userId);
+            }
+
 
         } catch (err) {
             console.error('[Storage] sync-init high-level error:', err);
         }
     }
+
+    /**
+     * Start a real-time listener for a specific user's reports.
+     * Essential for Admins viewing Intern Analytics.
+     */
+    function fetchUserReports(userId) {
+        if (!fbDb || !userId) return;
+        
+        // Guard against multiple listeners for same user in one session
+        window._iris_report_listeners = window._iris_report_listeners || {};
+        if (window._iris_report_listeners[userId]) return;
+        
+        console.log('[Storage] Connecting reports stream for user:', userId);
+        
+        const unsub = fbDb.collection('users').doc(userId).collection('reports').onSnapshot(snap => {
+            console.log(`[Storage] LIVE REPORTS fetched for ${userId}:`, snap.size);
+            const cloudReports = [];
+            snap.forEach(doc => cloudReports.push({ ..._processFirestoreData(doc.data()), id: doc.id }));
+            
+            // Merge cloud reports into local storage (keeping local-only ones if any)
+            const localReports = getHourlyReports();
+            const otherUsersReports = localReports.filter(r => String(r.userId) !== String(userId));
+            const finalReports = [...otherUsersReports, ...cloudReports];
+            localStorage.setItem(REPORTS_KEY, JSON.stringify(finalReports));
+            
+            window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'reports', count: snap.size, userId } }));
+        }, e => console.warn(`[Storage] Reports stream error for ${userId}:`, e));
+        
+        window._iris_report_listeners[userId] = unsub;
+    }
+
 
     async function syncAllUsers() {
         const snap = await fbDb.collection('users').get();
@@ -907,6 +1008,7 @@ const Storage = (() => {
         saveHourlyReport,
         getHourlyReportById,
         updateHourlyReport,
+        getDoubts,
         calculateReportScore,
         getInternStreak,
         markMissionVisited,
@@ -928,7 +1030,9 @@ const Storage = (() => {
         createAdminAccount,
         testFirestore,
         fetchEverything,
+        fetchUserReports,
         syncAllUsers,
+
         syncAllProjects,
         watchProjects
     };

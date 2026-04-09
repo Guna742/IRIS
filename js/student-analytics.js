@@ -49,6 +49,12 @@
         return;
     }
 
+    // Force fetch of target user reports (especially for Admins viewing interns)
+    if (typeof Storage !== 'undefined' && Storage.fetchUserReports) {
+        Storage.fetchUserReports(targetUid);
+    }
+
+
     const allProjects = Storage.getProjects();
     const myProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(targetUid));
 
@@ -78,16 +84,19 @@
                 try {
                     refreshCharts();
                 } catch (e) { console.warn('Charts failed', e); }
-                try { renderBarChart(profile.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
+                try { renderBarChart(profile?.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
+                
+                // Critical: Always reveal content and setup handlers after a refresh
+                try { initReveal(); } catch (e) {}
+                try { setupDetailHandlers(); } catch (e) {}
             };
+
 
             // Phase 1: Immediate-ish
             setTimeout(() => {
                 runRefresh();
-                // Critical: Always reveal content
-                initReveal();
-                setupDetailHandlers();
             }, 300);
+
 
             // Phase 2: Secondary pulse to catch async data updates
             setTimeout(runRefresh, 2000);
@@ -421,6 +430,7 @@
                         </td>
                         <td data-label="Role">
                             <div class="table-user">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--clr-primary); margin-right: 8px;">badge</span>
                                 <span>Technical Intern</span>
                             </div>
                         </td>
@@ -784,14 +794,20 @@
             tooltip.style.top = (py - 40) + 'px';
             tooltip.innerHTML = `
                 <div style="font-weight:700;color:#fff">${labels[closestIdx]}</div>
-                <div style="color:var(--clr-purple-light)">Score: ${points[closestIdx]}%</div>
+                <div style="color:var(--clr-purple)">Growth: ${points[closestIdx]}%</div>
                 <div style="color:var(--clr-cyan);font-size:10px">Target: ${targetPoints[closestIdx].toFixed(0)}%</div>
             `;
 
-            // Highlight dot
-            document.querySelectorAll('.chart-dot').forEach((dot, idx) => {
-                dot.setAttribute('r', idx === closestIdx ? '6' : '3.5');
-                dot.style.opacity = idx === closestIdx ? '1' : '0.6';
+            // Visual feedback on dots
+            document.querySelectorAll('.chart-dot').forEach(dot => {
+                const idx = parseInt(dot.dataset.idx, 10);
+                if (idx === closestIdx) {
+                    dot.setAttribute('r', '6');
+                    dot.style.opacity = '1';
+                } else {
+                    dot.setAttribute('r', '4');
+                    dot.style.opacity = '0.6';
+                }
             });
         });
 
@@ -799,7 +815,7 @@
             guide.style.display = 'none';
             tooltip.style.display = 'none';
             document.querySelectorAll('.chart-dot').forEach(dot => {
-                dot.setAttribute('r', '3.5');
+                dot.setAttribute('r', '4');
                 dot.style.opacity = '1';
             });
         });
@@ -1128,8 +1144,9 @@
         // Y grid lines
         const gridLines = [0, 50, 100].map(v => {
             const y = yScale(v).toFixed(1);
-            return `<line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-                    <text x="${pad.left - 8}" y="${y}" fill="#5a5a6a" font-size="9" text-anchor="end" dominant-baseline="middle">${v}</text>`;
+            return `
+            <line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <text x="${pad.left - 8}" y="${y}" fill="#5a5a6a" font-size="9" text-anchor="end" dominant-baseline="middle">${v}</text>`;
         }).join('');
 
         wrap.innerHTML = `
@@ -1318,11 +1335,13 @@
     }
 
     function calculateActualTrend(type, timestamp, projects, skills) {
+        const reports = Storage.getHourlyReports(targetUid);
+        
         if (type === 'projects') {
             const relevant = projects.filter(p => (p.createdAt || 0) <= timestamp);
             if (relevant.length === 0) return 0;
             const valid = relevant.filter(p => p.rating && p.rating > 0);
-            if (valid.length === 0) return 20; 
+            if (valid.length === 0) return 30; // Baseline
             const avg = valid.reduce((s, p) => s + p.rating, 0) / valid.length;
             return Math.round((avg / 5) * 100);
         }
@@ -1330,7 +1349,13 @@
         if (type === 'skills') {
             if (!skills || skills.length === 0) return 30; // Min baseline
             const avg = skills.reduce((sum, sk) => sum + (sk.level || 0), 0) / skills.length;
-            return Math.round(avg);
+            
+            // Skill growth simulation relative to account age
+            const created = profile.createdAt || (Date.now() - 30 * 86400000);
+            const span = Date.now() - created;
+            const progress = span > 0 ? (timestamp - created) / span : 1;
+            const clamped = Math.max(0.4, Math.min(1.0, progress));
+            return Math.round(avg * clamped);
         }
 
         if (type === 'growth') {
@@ -1338,44 +1363,30 @@
             const sScore = calculateActualTrend('skills', timestamp, projects, skills);
             const rScore = calculateActualTrend('progress', timestamp, projects, skills);
             
-            // Formula requested: Rating + Reports + Skills (equally weighted)
-            return Math.round((pScore + sScore + rScore) / 3);
+            // Weighted growth: 40% projects, 30% skills, 30% reporting
+            return Math.round((pScore * 0.4) + (sScore * 0.3) + (rScore * 0.3));
         }
 
         if (type === 'progress') {
-            const reports = Storage.getHourlyReports(targetUid);
-            const targetDate = new Date(timestamp);
-            const todayStr = targetDate.toDateString();
+            const date = new Date(timestamp);
+            const dayStr = date.toDateString();
 
             if (curTimeFilter === 'today') {
-                // TODAY: Cumulative building to 100% (approx 16.6% per report for 6 windows)
-                const windows = [9, 11, 13, 15, 17, 18];
-                const hour = targetDate.getHours();
-                const pastWindows = windows.filter(w => w <= hour);
-                const count = reports.filter(r => {
-                    const dt = r.createdAt || r.timestamp || 0;
-                    if (!dt) return false;
-                    const d = new Date(dt);
-                    return d.toDateString() === todayStr && pastWindows.includes(r.window);
-                }).length;
-                return Math.min(100, Math.round(count * (100 / windows.length)));
+                // Check if reports exist for windows before or equal to this checkpoint
+                const hour = date.getHours();
+                const pastReports = reports.filter(r => {
+                    const rd = new Date(r.createdAt || r.timestamp);
+                    // Match window ID: 1 (9-13), 2 (14-18)
+                    const isToday = rd.toDateString() === dayStr;
+                    const isBefore = rd.getHours() <= hour;
+                    return isToday && isBefore;
+                });
+                // Target: 2 reports per day
+                return Math.min(100, Math.round((pastReports.length / 2) * 100));
             }
-            if (curTimeFilter === 'week') {
-                // WEEK: Daily Score (reports in that specific 24h block / 6)
-                const count = reports.filter(r => {
-                    const ts = r.createdAt || r.timestamp || 0;
-                    return ts && new Date(ts).toDateString() === todayStr;
-                }).length;
-                return Math.round((Math.min(count, 6) / 6) * 100);
-            }
-            // MONTH: Weekly Score rollup (reports in that 7-day period / 36)
-            const weekEnd = timestamp;
-            const weekStart = timestamp - (7 * 24 * 60 * 60 * 1000);
-            const count = reports.filter(r => {
-                const ts = r.createdAt || r.timestamp || 0;
-                return ts && ts > weekStart && ts <= weekEnd;
-            }).length;
-            return Math.round((Math.min(count, 36) / 36) * 100);
+            // Week/Month fallback: daily average
+            const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === dayStr);
+            return Math.min(100, Math.round((dayReports.length / 2) * 100));
         }
 
         return 50;
