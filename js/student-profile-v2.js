@@ -178,10 +178,9 @@
                         <div class="student-section-head">
                             <div class="student-section-icon" style="background:rgba(34,211,238,.1)"><span class="material-symbols-outlined" style="color:var(--clr-cyan)">bolt</span></div>
                             <h2 class="student-section-title">Technical Skills</h2>
-                            <button class="add-skill-btn" id="add-skill-btn" title="Add skill"><span class="material-symbols-outlined" style="font-size: 16px;">add</span></button>
                         </div>
                         <div class="student-section-body">
-                            <div class="inline-form" id="inline-skill-form" hidden style="margin-bottom:var(--sp-4)">
+                            <div class="inline-form" id="inline-skill-form" style="margin-bottom:var(--sp-4)">
                                 <div class="inline-form-row" style="gap: 8px;">
                                     <input type="text" id="new-skill-input" class="field-input" placeholder="Skill (e.g. React)" style="flex:2">
                                     <input type="number" id="new-skill-level" class="field-input" placeholder="%" style="flex:1" min="1" max="100">
@@ -322,11 +321,6 @@
              refresh(p, session);
         });
 
-        // Add skill UI
-        document.getElementById('add-skill-btn')?.addEventListener('click', () => {
-            const form = document.getElementById('inline-skill-form');
-            if(form) form.hidden = false;
-        });
         document.getElementById('save-skill-btn')?.addEventListener('click', async () => {
             const input = document.getElementById('new-skill-input');
             const levelInput = document.getElementById('new-skill-level');
