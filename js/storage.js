@@ -341,6 +341,25 @@ const Storage = (() => {
         return Math.round((ratingScore * 0.7) + (completionScore * 0.3));
     }
 
+    function computeInternPoints(profile) {
+        if (!profile) return 0;
+        // 1. Project Points: Multiplier based on rating
+        const projects = getProjects().filter(p => String(p.userId || p.ownerId) === String(profile.userId));
+        const projectPoints = projects.reduce((sum, p) => {
+            if (!p.rating) return sum + 10; // 10 pts for just submitting
+            const ratingMap = { 5: 150, 4: 100, 3: 60, 2: 30, 1: 15 };
+            return sum + (ratingMap[p.rating] || 0);
+        }, 0);
+        
+        // 2. Profile Completion Points
+        const completionPoints = Math.round(getCompletionStatus(profile) * 2.5); // Max 250 pts
+        
+        // 3. QA Points (preserved from existing points field)
+        const qaPoints = profile.qaStats?.points || profile.points || 0;
+        
+        return projectPoints + completionPoints + qaPoints;
+    }
+
     /** Compute all metrics for a profile */
     function getProfileMetrics(profile) {
         if (!profile) return { completion: 0, score: 0, rating: 0 };
@@ -356,6 +375,7 @@ const Storage = (() => {
         
         const completion = getCompletionStatus(profile);
         const score = computeInternScore(profile);
+        const points = computeInternPoints(profile);
         
         const projects = getProjects().filter(proj => String(proj.userId || proj.ownerId) === String(profile.userId));
         const ratedProjects = projects.filter(proj => proj.rating);
@@ -363,7 +383,7 @@ const Storage = (() => {
             ? (ratedProjects.reduce((s, p) => s + p.rating, 0) / ratedProjects.length).toFixed(1)
             : "0.0";
             
-        return { completion, score, rating: parseFloat(avgRating) };
+        return { completion, score, points, rating: parseFloat(avgRating) };
     }
 
     /** Calculate rank for a specific intern based on overall score */
@@ -442,6 +462,7 @@ const Storage = (() => {
             delete clean._isSkeleton;
             await fbDb.collection('users').doc(internId).set({
                 ...clean,
+                points: metrics.points, // Update total points field too!
                 metrics: metrics, // Store calculated metrics for easy fetching
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });

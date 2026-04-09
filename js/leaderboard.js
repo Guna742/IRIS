@@ -40,10 +40,10 @@
     let searchQuery = '';
 
     const FILTERS = {
-        overall: { sort: (a, b) => (b.score - a.score) || a.name.localeCompare(b.name), label: 'All Overall', icon: 'stars', header: 'Score' },
-        demo: { sort: (a, b) => (b.demoCount - a.demoCount) || a.name.localeCompare(b.name), label: 'Demo Projects', icon: 'science', header: 'Demo Projects' },
-        live: { sort: (a, b) => (b.liveCount - a.liveCount) || a.name.localeCompare(b.name), label: 'Live Projects', icon: 'rocket_launch', header: 'Live Projects' },
-        rating: { sort: (a, b) => (b.rating - a.rating) || a.name.localeCompare(b.name), label: 'Rating Based', icon: 'grade', header: 'Rating' },
+        overall: { sort: (a, b) => (b.points - a.points) || a.name.localeCompare(b.name), label: 'Global Points', icon: 'stars', header: 'Points' },
+        demo: { sort: (a, b) => (b.demoCount - a.demoCount) || a.name.localeCompare(b.name), label: 'Demo Projects', icon: 'science', header: 'Demos' },
+        live: { sort: (a, b) => (b.liveCount - a.liveCount) || a.name.localeCompare(b.name), label: 'Live Projects', icon: 'rocket_launch', header: 'Live' },
+        rating: { sort: (a, b) => (b.avgRating - a.avgRating) || a.name.localeCompare(b.name), label: 'Rating Based', icon: 'grade', header: 'Avg Rating' },
     };
 
     // ── Main Render Logic ──
@@ -62,9 +62,14 @@
             const myProjs = projects.filter(pr => String(pr.userId || pr.ownerId) === String(p.userId));
             const liveCount = myProjs.filter(pr => pr.liveLink && (pr.liveLinkType === 'Live' || !pr.liveLinkType)).length;
             const demoCount = myProjs.filter(pr => !pr.liveLink || pr.liveLinkType === 'Demo').length;
-            const score = Storage.computeInternScore(p);
-            const rating = parseFloat((score / 20).toFixed(1));
-            return { ...p, score, rating, liveCount, demoCount, totalProjects: myProjs.length };
+            
+            // Use metrics if available, otherwise calculate
+            const metrics = Storage.getProfileMetrics(p);
+            const score = metrics.score;
+            const points = metrics.points;
+            const avgRating = metrics.rating;
+            
+            return { ...p, score, points, avgRating, liveCount, demoCount, totalProjects: myProjs.length };
         });
 
         if (totalCount) totalCount.textContent = enriched.length;
@@ -108,11 +113,11 @@
                 <div class="lb-podium-card ${standPos[i]} card-3d" aria-label="Rank ${rank}: ${intern.name}" style="animation-delay: ${rank * 0.2}s">
                     <div class="glare" aria-hidden="true"></div>
                     ${rank === 1 ? '<span class="lb-crown">👑</span>' : ''}
-                    <div class="lb-podium-avatar-wrap">
+                    <div class="lb-podium-avatar-wrap" style="cursor:pointer" onclick="window.location.href='student-analytics.html?student=${intern.userId}'">
                       <div class="lb-podium-avatar">${intern.avatar ? `<img src="${intern.avatar}">` : `<span>${intern.name[0]}</span>`}</div>
                       <div class="lb-rank-badge ${medals[i]}">#${rank}</div>
                     </div>
-                    <div class="lb-podium-name">${intern.name}</div>
+                    <div class="lb-podium-name" style="cursor:pointer" onclick="window.location.href='student-analytics.html?student=${intern.userId}'">${intern.name}</div>
                     <div class="lb-podium-score">${getVal(intern)}</div>
                     <div class="lb-podium-score-label">${FILTERS[currentFilter].header}</div>
                     <div class="lb-podium-stand">
@@ -135,11 +140,11 @@
 
         tableBody.innerHTML = rest.map((intern, i) => {
             const rank = sorted.indexOf(intern) + 1;
-            const stars = Array.from({ length: 5 }, (_, s) => `<span class="lb-star ${s < Math.round(intern.rating) ? 'on' : ''}">★</span>`).join('');
+            const stars = Array.from({ length: 5 }, (_, s) => `<span class="lb-star ${s < Math.round(intern.avgRating) ? 'on' : ''}">★</span>`).join('');
             return `
                 <div class="lb-table-row card-3d visible" style="animation-delay: ${i * 0.05}s">
                     <div class="lb-row-rank ${rank <= 5 ? `top-rank rank-${rank}` : ''}">#${rank}</div>
-                    <div class="lb-row-name">
+                    <div class="lb-row-name" style="cursor:pointer" onclick="window.location.href='student-analytics.html?student=${intern.userId}'">
                         <div class="lb-row-avatar">${intern.avatar ? `<img src="${intern.avatar}">` : intern.name[0]}</div>
                         <div>
                           <div class="lb-row-intern-name">${intern.name}</div>
@@ -161,10 +166,10 @@
     }
 
     function getVal(intern) {
-        if (currentFilter === 'overall') return `${intern.score}%`;
+        if (currentFilter === 'overall') return `${intern.points} XP`;
         if (currentFilter === 'demo') return intern.demoCount;
         if (currentFilter === 'live') return intern.liveCount;
-        if (currentFilter === 'rating') return `${intern.rating}★`;
+        if (currentFilter === 'rating') return `${intern.avgRating}★`;
         return 0;
     }
 

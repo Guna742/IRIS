@@ -281,6 +281,12 @@
           <div class="card-stack" aria-label="Technologies used">
             ${(p.techStack || []).map(t => `<span class="stack-tag">${t}</span>`).join('')}
           </div>
+          ${p.rating ? `
+          <div class="card-rating-display" style="display:flex; align-items:center; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.05)">
+            <div class="stars active" style="color:#f59e0b; font-size:14px; letter-spacing:2px;">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
+            <div style="font-size:11px; font-weight:700; color:var(--clr-accent)">${p.rating}/5 Rating</div>
+          </div>
+          ` : ''}
         </div>
         <div class="card-footer">
           <div class="card-links">
@@ -331,12 +337,7 @@
                 </button>
               </div>
             </div>
-          </div>` : p.rating ? `
-          <div class="card-rating-display" style="display:flex; align-items:center; gap:8px;">
-            <div class="stars active" style="color:#f59e0b; font-size:14px; letter-spacing:2px;">${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</div>
-            <div style="font-size:10px; font-weight:700; color:var(--clr-accent)">${p.rating}/5</div>
-          </div>
-          ` : ''}
+          </div>` : ''}
           ${isUser && p.status === 'Changes Requested' ? `
           <button class="btn btn-primary btn-sm btn-resubmit" data-resubmit="${p.id}" style="width:100%; margin-top:12px; gap:8px;">
             <span class="material-symbols-outlined" style="font-size:18px">publish</span>
@@ -362,14 +363,27 @@
     }
 
     // ── Rating ──
-    function handleRate(id, rating) {
+    async function handleRate(id, rating) {
         const p = Storage.getProjectById(id);
         if (!p) return;
         p.rating = rating;
-        p.userId = p.userId || p.ownerId; // Compat
+        const userId = p.userId || p.ownerId;
+        p.userId = userId; // Compat
         const updated = Storage.saveProject(p);
+        
         // Sync rating to Firestore
-        if (Storage.syncProject) Storage.syncProject(updated || p);
+        if (Storage.syncProject) await Storage.syncProject(updated || p);
+        
+        // CRITICAL: Update intern's profile metrics (score/points) in Firestore
+        // This ensures the Leaderboard (which fetches from Firestore) stays in sync.
+        if (userId && Storage.syncInternProfile) {
+            const internProfile = Storage.getProfile(userId);
+            if (internProfile) {
+                // We don't change data, syncInternProfile will re-calculate metrics
+                await Storage.syncInternProfile(userId, internProfile);
+            }
+        }
+
         showToast(`Project rated ${rating}/5`, 'success');
         renderProjects();
     }
