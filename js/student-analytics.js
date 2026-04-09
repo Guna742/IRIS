@@ -894,11 +894,11 @@
                 const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 labels.push(d.toLocaleDateString([], { weekday: 'short' }));
                 const dailyReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === d.toDateString());
-                // Activity score: (Number of unique hours with reports / 6) * 100
-                const uniqueHours = new Set(dailyReports.map(r => new Date(r.createdAt || r.timestamp).getHours()));
-                data.push(Math.min(100, (uniqueHours.size / 6) * 100));
+                // Activity score: (Number of reports / 2) * 100
+                data.push(Math.min(100, (dailyReports.length / 2) * 100));
             }
         } else {
+            // Month view: Average over 5-day chunks
             for (let i = 25; i >= 0; i -= 5) {
                 const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 labels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
@@ -906,6 +906,7 @@
                     const rd = new Date(r.createdAt || r.timestamp);
                     return rd <= d && rd >= new Date(d.getTime() - 5*24*60*60*1000);
                 });
+                // Target: 2 reports per day * 5 days = 10 reports
                 data.push(Math.min(100, (monthlyReports.length / 10) * 100));
             }
         }
@@ -1281,12 +1282,13 @@
     }
 
     function calculateActualTrend(type, timestamp, projects, skills) {
+        const reports = Storage.getHourlyReports(targetUid);
+        
         if (type === 'projects') {
-            // Only count projects created before this point in time
             const relevant = projects.filter(p => (p.createdAt || 0) <= timestamp);
             if (relevant.length === 0) return 0;
             const valid = relevant.filter(p => p.rating && p.rating > 0);
-            if (valid.length === 0) return 20; // Default baseline if projects exist but no rating
+            if (valid.length === 0) return 30; // Baseline
             const avg = valid.reduce((s, p) => s + p.rating, 0) / valid.length;
             return Math.round((avg / 5) * 100);
         }
@@ -1294,50 +1296,44 @@
         if (type === 'skills') {
             if (!skills || skills.length === 0) return 0;
             const avg = skills.reduce((sum, sk) => sum + (sk.level || 0), 0) / skills.length;
-
-            // Skill levels are usually static (current state). 
-            // We simulate a growth curve leading to the current average 
-            // for the trend chart, otherwise it's just a flat line.
-            const now = Date.now();
-            const startOfProgram = now - (90 * 24 * 60 * 60 * 1000); // Assume 90 days ago
-            const progress = (timestamp - startOfProgram) / (now - startOfProgram);
-            const clamped = Math.max(0.2, Math.min(1.0, progress));
+            
+            // Skill growth simulation relative to account age
+            const created = profile.createdAt || (Date.now() - 30 * 86400000);
+            const span = Date.now() - created;
+            const progress = span > 0 ? (timestamp - created) / span : 1;
+            const clamped = Math.max(0.4, Math.min(1.0, progress));
             return Math.round(avg * clamped);
         }
 
         if (type === 'growth') {
             const pScore = calculateActualTrend('projects', timestamp, projects, skills);
             const sScore = calculateActualTrend('skills', timestamp, projects, skills);
-            return Math.round((pScore + sScore) / 2);
+            const rScore = calculateActualTrend('progress', timestamp, projects, skills);
+            
+            // Weighted growth: 40% projects, 30% skills, 30% reporting
+            return Math.round((pScore * 0.4) + (sScore * 0.3) + (rScore * 0.3));
         }
 
         if (type === 'progress') {
-            const reports = Storage.getHourlyReports(targetUid);
-            const targetDate = new Date(timestamp);
-            const todayStr = targetDate.toDateString();
+            const date = new Date(timestamp);
+            const dayStr = date.toDateString();
 
             if (curTimeFilter === 'today') {
-                // TODAY: Cumulative building to 100% (approx 16.6% per report for 6 windows)
-                const windows = [9, 11, 13, 15, 17, 18];
-                const hour = targetDate.getHours();
-                const pastWindows = windows.filter(w => w <= hour);
-                const count = reports.filter(r => {
-                    const d = new Date(r.createdAt);
-                    return d.toDateString() === todayStr && pastWindows.includes(r.window);
-                }).length;
-                return Math.min(100, Math.round(count * (100 / windows.length)));
+                // Check if reports exist for windows before or equal to this checkpoint
+                const hour = date.getHours();
+                const pastReports = reports.filter(r => {
+                    const rd = new Date(r.createdAt || r.timestamp);
+                    // Match window ID: 1 (9-13), 2 (14-18)
+                    const isToday = rd.toDateString() === dayStr;
+                    const isBefore = rd.getHours() <= hour;
+                    return isToday && isBefore;
+                });
+                // Target: 2 reports per day
+                return Math.min(100, Math.round((pastReports.length / 2) * 100));
             }
-            if (curTimeFilter === 'week') {
-                // WEEK: Daily Score (reports in that specific 24h block / 6)
-                const count = reports.filter(r => new Date(r.createdAt).toDateString() === todayStr).length;
-                return Math.round((Math.min(count, 6) / 6) * 100);
-            }
-            // MONTH: Weekly Score rollup (reports in that 7-day period / 36)
-            // This analyzes "each and every report" for the week's days (6 working days * 6 reports = 36)
-            const weekEnd = timestamp;
-            const weekStart = timestamp - (7 * 24 * 60 * 60 * 1000);
-            const count = reports.filter(r => r.createdAt > weekStart && r.createdAt <= weekEnd).length;
-            return Math.round((Math.min(count, 36) / 36) * 100);
+            // Week/Month fallback: daily average
+            const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === dayStr);
+            return Math.min(100, Math.round((dayReports.length / 2) * 100));
         }
 
         return 50;

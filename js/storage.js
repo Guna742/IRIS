@@ -205,6 +205,11 @@ const Storage = (() => {
         }
         all.push(report);
         localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+        
+        // Sync to Firebase
+        if (report.userId && fbDb) {
+            saveActivityReportToFirebase(report.userId, report);
+        }
         return report;
     }
     // ── Doubts / The Wall ──
@@ -224,8 +229,14 @@ const Storage = (() => {
         const all = getHourlyReports();
         const idx = all.findIndex(r => r.id === id);
         if (idx > -1) {
-            all[idx] = { ...all[idx], ...data, updatedAt: Date.now() };
+            const updated = { ...all[idx], ...data, updatedAt: Date.now() };
+            all[idx] = updated;
             localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
+            
+            // Sync to Firebase if available
+            if (updated.userId && fbDb) {
+                saveActivityReportToFirebase(updated.userId, updated);
+            }
             return all[idx];
         }
         return null;
@@ -784,6 +795,24 @@ const Storage = (() => {
                 localStorage.setItem(DOUBTS_KEY, JSON.stringify(doubts));
                 window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'doubts', count: snap.size } }));
             }, e => console.warn('[Storage] Questions stream error:', e));
+
+            // Reports Listener (User-specific)
+            const session = Auth.getSession();
+            if (session && session.userId) {
+                fbDb.collection('users').doc(session.userId).collection('reports').onSnapshot(snap => {
+                    console.log('[Storage] LIVE REPORTS fetched for user:', snap.size);
+                    const cloudReports = [];
+                    snap.forEach(doc => cloudReports.push({ ...doc.data(), id: doc.id }));
+                    
+                    // Merge cloud reports into local storage (keeping local-only ones if any)
+                    const localReports = getHourlyReports();
+                    const otherUsersReports = localReports.filter(r => String(r.userId) !== String(session.userId));
+                    const finalReports = [...otherUsersReports, ...cloudReports];
+                    localStorage.setItem(REPORTS_KEY, JSON.stringify(finalReports));
+                    
+                    window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'reports', count: snap.size } }));
+                }, e => console.warn('[Storage] User reports stream error:', e));
+            }
 
         } catch (err) {
             console.error('[Storage] sync-init high-level error:', err);
