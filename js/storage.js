@@ -8,8 +8,9 @@
 const Storage = (() => {
     const PROFILES_KEY = 'interntrack_profiles';
     const PROJECTS_KEY = 'interntrack_projects';
-    const REPORTS_KEY = 'interntrack_hourly_reports';
-    const SYNC_KEY    = 'interntrack_last_sync';
+    const REPORTS_KEY   = 'interntrack_hourly_reports';
+    const DOUBTS_KEY    = 'interntrack_doubts';
+    const SYNC_KEY      = 'interntrack_last_sync';
     const FETCH_COOLDOWN = 1000 * 30; // 30 seconds cache (snappy sync)
 
 
@@ -205,6 +206,13 @@ const Storage = (() => {
         all.push(report);
         localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
         return report;
+    }
+    // ── Doubts / The Wall ──
+    function getDoubts() {
+        try {
+            const raw = localStorage.getItem(DOUBTS_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
     }
 
     function getHourlyReportById(id) {
@@ -755,19 +763,27 @@ const Storage = (() => {
             // Users/Profiles Listener (for Leaderboard/Interns list)
             // Rebuilds fresh from Firestore every time. Skips any UID in _pendingDeleteIds
             // so a slow Firestore delete doesn't revive the user on-screen.
+            // Users/Profiles Listener
             fbDb.collection('users').onSnapshot(snap => {
                 console.log('[Storage] LIVE USERS: ' + snap.size);
                 const freshProfiles = {};
                 snap.forEach(doc => {
                     if (!_pendingDeleteIds.has(doc.id)) {
                         freshProfiles[doc.id] = { ...doc.data(), userId: doc.id };
-                    } else {
-                        console.log('[Storage] Skipping revive of pending-delete uid:', doc.id);
                     }
                 });
                 localStorage.setItem(PROFILES_KEY, JSON.stringify(freshProfiles));
                 window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'users', count: snap.size } }));
             }, e => console.warn('[Storage] Users stream error:', e));
+
+            // Questions/Doubts Listener
+            fbDb.collection('questions').onSnapshot(snap => {
+                console.log('[Storage] LIVE DOUBTS: ' + snap.size);
+                const doubts = [];
+                snap.forEach(doc => doubts.push({ ...doc.data(), id: doc.id }));
+                localStorage.setItem(DOUBTS_KEY, JSON.stringify(doubts));
+                window.dispatchEvent(new CustomEvent('iris-data-sync', { detail: { type: 'doubts', count: snap.size } }));
+            }, e => console.warn('[Storage] Questions stream error:', e));
 
         } catch (err) {
             console.error('[Storage] sync-init high-level error:', err);
@@ -907,6 +923,7 @@ const Storage = (() => {
         saveHourlyReport,
         getHourlyReportById,
         updateHourlyReport,
+        getDoubts,
         calculateReportScore,
         getInternStreak,
         markMissionVisited,

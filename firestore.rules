@@ -7,12 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Must check exists() before get() on users/{uid}; get() on a missing doc breaks rule evaluation.
+    // Check if user has admin role either via an 'admins' collection entry
+    // or through the 'role' field in their 'users' document.
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
     }
     
@@ -21,60 +21,61 @@ service cloud.firestore {
     }
 
     // ── Users & Profiles ──
-    // Standard intern profiles and admin descriptors
     match /users/{userId} {
+      // Allow any signed-in user to read intern profiles
       allow read: if isSignedIn();
-      // Added 'delete' to allow admins to remove profiles
-      allow write, delete: if isOwner(userId) || isAdmin();
+      // Allow user to manage their own profile, or admins to manage any profile
+      allow create, update, delete: if isOwner(userId) || isAdmin();
       
-      // Hourly reports (4-hour updates)
+      // Hourly reports ─ accessible to all signed-in users for transparency/collaboration
       match /reports/{reportId} {
         allow read: if isSignedIn();
-        allow write, delete: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
       
       // Missed report requests
       match /missed_requests/{requestId} {
         allow read: if isSignedIn();
-        allow write, delete: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
       
       // Analytics summaries
       match /analytics/{docId} {
         allow read: if isSignedIn();
-        allow write, delete: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
     }
 
     // ── Projects ──
-    // Shared project showcase
     match /projects/{projectId} {
       allow read: if isSignedIn();
+      // Standard CRUD for project owners and admins
       allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
-    // ── The Wall (Doubts/Questions) ──
+    // ── The Wall (Doubts/Questions/Messages) ──
     match /questions/{questionId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      // Allow updates for voting (anyone) and status changes (author/admin)
+      // Allow updates for voting (counts/arrays) and metadata (answer counts)
       allow update: if isSignedIn(); 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /answers/{answerId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     // ── Admin-Only Space ──
-    // Secure collection for admin-specific configurations or audit logs
+    // Secure collection for admin profiles and system configuration
     match /admins/{adminId} {
-      allow read, write: if isAdmin();
+      allow read: if isSignedIn(); // Allow reading admin info for profile display
+      allow write: if isAdmin();
       
       match /{allPaths=**} {
         allow read, write: if isAdmin();
