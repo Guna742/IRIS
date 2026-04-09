@@ -47,6 +47,12 @@
         return;
     }
 
+    // Force fetch of target user reports (especially for Admins viewing interns)
+    if (typeof Storage !== 'undefined' && Storage.fetchUserReports) {
+        Storage.fetchUserReports(targetUid);
+    }
+
+
     const allProjects = Storage.getProjects();
     const myProjects = allProjects.filter(p => String(p.userId || p.ownerId) === String(targetUid));
 
@@ -75,16 +81,19 @@
                 try {
                     refreshCharts();
                 } catch (e) { console.warn('Charts failed', e); }
-                try { renderBarChart(profile.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
+                try { renderBarChart(profile?.skills || []); } catch (e) { console.warn('Bar chart failed', e); }
+                
+                // Critical: Always reveal content and setup handlers after a refresh
+                try { initReveal(); } catch (e) {}
+                try { setupDetailHandlers(); } catch (e) {}
             };
+
 
             // Phase 1: Immediate-ish
             setTimeout(() => {
                 runRefresh();
-                // Critical: Always reveal content
-                initReveal();
-                setupDetailHandlers();
             }, 300);
+
 
             // Phase 2: Secondary pulse to catch async data updates
             setTimeout(runRefresh, 2000);
@@ -400,8 +409,8 @@
                         </td>
                         <td data-label="Role">
                             <div class="table-user">
-                                <div class="table-user-avatar" style="background:var(--clr-violet-alpha)">${initials}</div>
-                                <span>Intern</span>
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--clr-primary); margin-right: 8px;">badge</span>
+                                <span>${profile.internship?.role || 'Technical'} Intern</span>
                             </div>
                         </td>
                         <td>${proj.liveLink ? `<a href="${proj.liveLink}" target="_blank" rel="noopener" class="more-btn">Live ↗</a>` : `<button class="more-btn detail-trigger" data-id="${proj.id}">Details ▾</button>`}</td>
@@ -1503,4 +1512,20 @@
         });
     }
 
+    // ── Real-time Sync Listener ──
+    window.addEventListener('iris-data-sync', (e) => {
+        // Only refresh if the update is relevant to THIS dashboard
+        if (e.detail.type === 'reports' || (e.detail.type === 'users' && e.detail.userId === targetUid)) {
+            console.log(`[Analytics] ${e.detail.type} synced, updating dashboard...`);
+            const p = Storage.getProfile(targetUid);
+            if (!p) return; // Guard against empty profile during sync
+            
+            const projs = Storage.getProjects().filter(pr => String(pr.userId || pr.ownerId) === String(targetUid));
+            
+            outputEl.innerHTML = buildDashHTML(p, projs);
+            runRefresh();
+        }
+    });
+
 })();
+
