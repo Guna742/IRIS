@@ -120,20 +120,55 @@
                     grid-template-columns: 1fr !important;
                     gap: 15px;
                 }
+                .chart-controls {
+                    width: 100%;
+                    display: flex;
+                    gap: 8px;
+                }
+                .chart-controls .btn { flex: 1; }
+
+                /* Align the history actions area perfectly on mobile */
                 div[style*="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px"] {
                     flex-direction: column !important;
-                    align-items: flex-start !important;
+                    align-items: stretch !important;
                     gap: 15px !important;
+                    margin-bottom: 25px !important;
                 }
+
+                div[style*="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px"] h3 {
+                    margin-bottom: 5px !important;
+                    text-align: center;
+                    width: 100%;
+                }
+
+                /* History Action Buttons (View Demo, Email, etc) */
+                div[style*="display:flex; gap:12px"] {
+                    flex-direction: column !important;
+                    width: 100%;
+                }
+
+                div[style*="display:flex; gap:12px"] .btn {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    height: 44px; /* Better touch target */
+                }
+
+                #download-report-btn {
+                    display: none !important;
+                }
+
                 .report-history {
                     grid-template-columns: 1fr !important;
                 }
-                .chart-controls {
-                    width: 100%;
-                    justify-content: flex-start;
+
+                /* Inner Card Buttons */
+                .history-card div[style*="margin-top:15px; display:flex; gap:10px"] {
+                    flex-direction: row; 
                 }
-                #download-report-btn {
-                    display: none !important;
+                .history-card .btn {
+                    flex: 1;
+                    height: 40px;
+                    font-size: 0.8rem;
                 }
             }
     </style>
