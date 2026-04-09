@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I.R.I.S — Sign In</title>
+  <meta name="description"
+    content="I.R.I.S: Secure internal review and intelligence system for intern management. Sign in to access your workspace.">
+  <link rel="stylesheet" href="css/page-transition.css">
+  <link rel="stylesheet" href="css/login.css">
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <link rel="stylesheet" href="css/iris-modal.css">
+  <link rel="icon" type="image/png" href="img/site-logo.png">
+  <link rel="apple-touch-icon" href="img/site-logo.png">
+  <!-- Page Transition: must be in <head> to run before first paint -->
+  <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-wrap" aria-hidden="true">
+    <div class="bg-aurora"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-scan"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
+
+  <div class="main-container">
+    <div class="content-wrapper">
+
+      <!-- LEFT: Hero Panel -->
+      <aside class="left" aria-label="Platform introduction">
+        <div class="hero-content">
+          <div class="brand-mark">
+            <div class="brand-logo" aria-hidden="true">
+              <img src="img/site-logo.png" alt="I.R.I.S">
+            </div>
+            <div class="brand-info">
+              <span class="brand-name">I.R.I.S</span>
+              <span class="brand-tagline">Intern Review &amp; Intelligence System</span>
+            </div>
+          </div>
+
+          <h1 class="hero-headline">
+            Your Career Journey<br>
+            <span class="gradient-text">Starts Here</span>
+          </h1>
+
+          <p class="hero-desc">
+            A role-based internship management &amp; project portfolio platform built for modern teams.
+            Showcase your work, track your progress, and get noticed.
+          </p>
+
+          <ul class="feature-list" aria-label="Platform features">
+            <li class="feature-pill">
+              <span class="pill-dot" aria-hidden="true"></span>
+              Role-based access control for teams
+            </li>
+            <li class="feature-pill">
+              <span class="pill-dot cyan" aria-hidden="true"></span>
+              Admin-controlled profile management
+            </li>
+            <li class="feature-pill">
+              <span class="pill-dot violet" aria-hidden="true"></span>
+              Professional project portfolio showcase
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+
+      <!-- RIGHT: LOGIN CARD (Flex Center) -->
+      <main class="login-card" id="auth-card">
+        <div class="auth-inner">
+
+          <!-- ── SIGN IN VIEW ── -->
+          <div id="view-signin">
+            <div class="auth-header">
+              <h2 class="auth-title">Welcome back</h2>
+              <p class="auth-subtitle">Sign in to your I.R.I.S workspace</p>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="role-toggle" role="group" aria-label="Select your role">
+              <button class="role-btn active" id="role-admin" data-role="admin" type="button" aria-pressed="true">
+                <span class="material-symbols-outlined" style="font-size: 16px;">school</span>
+                Admin
+              </button>
+              <button class="role-btn" id="role-user" data-role="user" type="button" aria-pressed="false">
+                <span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                Intern
+              </button>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-box" id="error-box" role="alert" aria-live="polite">
+              <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
+              <span id="error-msg">Invalid credentials. Please try again.</span>
+            </div>
+
+            <!-- Sign In Form -->
+            <form class="auth-form" id="login-form" novalidate>
+              <div class="field-group">
+                <label class="field-label" for="email">Email ID</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-outlined input-icon" style="font-size: 16px;">mail</span>
+                  <input class="field-input" type="email" id="email" name="email" placeholder="Enter email id"
+                    autocomplete="email" required>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="password">Password</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-outlined input-icon" style="font-size: 16px;">lock</span>
+                  <input class="field-input" type="password" id="password" name="password" placeholder="Enter password"
+                    autocomplete="current-password" required>
+                  <button type="button" class="toggle-password" id="toggle-pw" aria-label="Toggle password visibility">
+                    <span class="material-symbols-outlined" id="pw-eye" style="font-size: 16px;">visibility</span>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-login hover-shimmer" id="login-btn">
+                <span class="btn-text">Sign In</span>
+                <div class="spinner" aria-hidden="true"></div>
+              </button>
+
+
+            </form>
+          </div>
+
+
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/theme-switcher.js"></script>
+  <script src="js/animation-engine.js"></script>
+
+  <script src="js/iris-modal.js"></script>
+</body>
+
+</html>

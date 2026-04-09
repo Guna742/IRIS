@@ -1,0 +1,108 @@
+/* =============================================
+   I.R.I.S — Cinematic Page Transition (V14 - MINIMAL BLUR)
+   Ultra Low Blur (5px) & High-Speed Typing.
+   ============================================= */
+
+/* ── Cinematic Entrance ── */
+body {
+    margin: 0;
+    background: #000;
+    overflow-x: hidden;
+    
+    /* Start State: High Visibility Failsafe */
+    opacity: 1;
+    filter: blur(10px);
+    /* NOTE: No transform:scale here — a transformed body breaks fixed-position
+       children (CSS spec: transformed elements become the containing block).
+       Use translate(0,0) only if GPU compositing is needed. */
+    will-change: opacity, filter;
+}
+
+body.ready {
+    opacity: 1 !important;
+    animation: cinematicBlurIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cinematicBlurIn {
+    from {
+        filter: blur(10px);
+        opacity: 0;
+    }
+    to {
+        filter: blur(0px);
+        opacity: 1;
+    }
+}
+
+
+/* ── Overlay ── */
+#page-loader, .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: #060912;
+    background: radial-gradient(circle at center, #0e0b1e 0%, #060912 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999999;
+    
+    opacity: 0;
+    pointer-events: none; /* 🔥 Prevent blocking clicks after fade */
+    
+    /* Reduced for massive clarity during typing */
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    
+    transform: translateZ(0);
+    will-change: opacity, backdrop-filter;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.5s ease;
+}
+
+#page-loader.active, .page-transition-overlay.active {
+    opacity: 1 !important;
+    pointer-events: all;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+#page-loader.ipl-hiding {
+    background: transparent !important;
+    pointer-events: none;
+    opacity: 0 !important;
+    backdrop-filter: blur(0px) !important;
+    -webkit-backdrop-filter: blur(0px) !important;
+    transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.6s ease-out;
+}
+
+/* ── Typewriter Text ── */
+.ipl-page-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 8vw, 3.5rem); /* ✅ Responsive Scaling */
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-align: center;
+    filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.6));
+    
+    position: relative;
+    opacity: 0;
+    width: 90%; /* ✅ Prevent cutting off at the edges */
+    margin: 0 auto;
+    display: block;
+    
+    will-change: opacity, transform;
+    transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@media (max-width: 768px) {
+    .ipl-page-name {
+        letter-spacing: 0.12em; /* ✅ Tighter for mobile */
+        line-height: 1.4;
+    }
+}
+
+/* Cleanup */
+.ipl-logo, .ipl-spinner, .ipl-bar-wrap, .ipl-floating, #iris-page-loader {
+    display: none !important;
+}

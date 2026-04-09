@@ -1,0 +1,59 @@
+# I.R.I.S — Intern Review & Intelligence System
+
+**I.R.I.S** is a comprehensive platform designed for managing intern profiles, tracking project progress, and fostering collaboration within an internship program. It provides a centralized dashboard for both administrators and interns to interact with evaluation metrics, leaderboards, and peer Q&A.
+
+## 🚀 Features
+
+- **Dynamic Dashboards**: Role-based views for Admins and Interns.
+- **Profile Management**: Detailed profiles with badge-based recognition and skill tracking.
+- **Project Tracking**: Manage and review ongoing intern projects.
+- **The Wall (Q&A)**: Collaborative messaging and doubt resolution system.
+- **Analytics Engine**: Visualized progress data for performance evaluation.
+- **Leaderboard**: Gamified experience to encourage healthy competition.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: HTML5, Vanilla CSS, JavaScript (ES6+).
+- **Backend/Storage**: Firebase (Auth, Firestore).
+- **Server**: Node.js (Simple HTTP server for static hosting).
+
+## 📥 Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) installed on your machine.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd IRIS-Web-master
+   ```
+
+### Running Locally
+
+You can start the built-in server using the npm script:
+
+```bash
+npm start
+```
+
+Open [http://localhost:8081](http://localhost:8081) in your browser to view the application.
+
+## 📁 Repository Structure
+
+- `admin-profile.html`: Interface for administrative tasks.
+- `dashboard.html`: The central hub for all users.
+- `students.html`: Directory of all interns (Admin only).
+- `projects.html`: Repository for intern projects.
+- `js/`: Core application logic, Firebase configuration, and UI engines.
+- `css/`: Modular stylesheets for clean UI/UX.
+- `img/`: Static assets and branding.
+
+## 📄 License
+
+This project is licensed under the ISC License.

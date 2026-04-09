@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Information</title>
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        .info-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            color: var(--clr-text-primary);
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--clr-accent);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .back-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+    <div class="info-container">
+        <h1>Information Page</h1>
+        <p>This page is currently blank as requested.</p>
+        <a href="dashboard.html" class="back-btn">Go Back to Dashboard</a>
+    </div>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+
+</html>
