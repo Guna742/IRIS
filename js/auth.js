@@ -32,7 +32,7 @@ const Auth = (() => {
    * Attempt login using Firebase Auth.
    * @param {string} email
    * @param {string} password
-   * @param {string} role — 'admin' | 'user'
+   * @param {string} role — 'admin' | 'employee' | 'user'
    * @returns {Promise<{ success: boolean, user?: object, error?: string }>}
    */
   async function login(email, password, role) {
@@ -43,8 +43,8 @@ const Auth = (() => {
       // Look up role from Firestore
       let storedRole = null;
       let displayName = firebaseUser.displayName || '';
+      let data = null; 
       try {
-        let data = null;
         const doc = await fbDb.collection('users').doc(firebaseUser.uid).get();
         if (doc.exists) {
           data = doc.data();
@@ -102,10 +102,18 @@ const Auth = (() => {
       // Verify role matches what the user selected
       if (!storedRole || storedRole !== role) {
         await fbAuth.signOut();
+        const roleLabels = { admin: 'an Admin', employee: 'an Employee', user: 'an Intern' };
         const errorMessage = !storedRole 
           ? "Unauthorized access. This account has no assigned role in the system."
-          : `This account is registered as ${storedRole === 'admin' ? 'an Admin' : 'an Intern'}, not ${role === 'admin' ? 'an Admin' : 'an Intern'}.`;
+          : `This account is registered as ${roleLabels[storedRole] || storedRole}, not ${roleLabels[role] || role}.`;
         return { success: false, error: errorMessage };
+      }
+
+      // ── VERIFICATION CHECK FOR EMPLOYEES ──
+      // Requirement: "after verification only the emp can enter to this dashboard"
+      if (storedRole === 'employee' && data && data.verified === false) {
+        await fbAuth.signOut();
+        return { success: false, error: "Account pending verification. Please contact your administrator." };
       }
 
       // Sync everything from the cloud to local storage (force = true)
@@ -119,13 +127,23 @@ const Auth = (() => {
     } catch (err) {
       console.error('Login error:', err);
       let msg = 'Sign in failed. Please try again.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        msg = 'Invalid email or password. Please check your credentials.';
-      } else if (err.code === 'auth/too-many-requests') {
-        msg = 'Too many failed attempts. Please try again later.';
-      } else if (err.code === 'auth/invalid-email') {
-        msg = 'Please enter a valid email address.';
+      
+      if (err.code) {
+        const isCredentialError = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/user-disabled', 'auth/invalid-email'].includes(err.code);
+        if (isCredentialError) {
+          msg = 'Invalid email or password. Please check your credentials.';
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = 'Too many failed attempts. Please try again later.';
+        } else if (err.code === 'auth/network-request-failed') {
+          msg = 'Network error. Please check your internet connection.';
+        } else {
+          msg = `Login Error: ${err.message} (${err.code})`;
+        }
+      } else {
+        // Handle generic Javascript errors (TypeErrors, ReferenceErrors, etc.)
+        msg = `System Error: ${err.name} - ${err.message}`;
       }
+      
       return { success: false, error: msg };
     }
   }
@@ -189,6 +207,8 @@ const Auth = (() => {
     if (session) {
       if (session.role === 'admin') {
         window.location.replace('dashboard.html');
+      } else if (session.role === 'employee') {
+        window.location.replace('employee-dashboard.html');
       } else {
         window.location.replace('dashboard.html');
       }

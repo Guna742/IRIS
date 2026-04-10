@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Employee Profile</title>
+    <meta name="description" content="I.R.I.S Corporate: Employee professional profile and credentials.">
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/student-profile.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="app-shell">
+        <aside class="app-sidebar" id="app-sidebar" role="navigation"></aside>
+        <header class="app-topbar"></header>
+        <main class="app-content">
+            <div class="container">
+                <div id="profile-loading">
+                    <div class="shimmer-line" style="height:160px;margin-bottom:8px;border-radius:16px"></div>
+                    <div class="shimmer-line" style="height:120px"></div>
+                </div>
+                <div id="profile-output" hidden></div>
+            </div>
+        </main>
+    </div>
+    <script src="js/storage.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/badge-engine.js"></script>
+    <script src="js/admin-popup.js"></script>
+    <script src="js/student-profile-v2.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+</html>

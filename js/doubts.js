@@ -24,8 +24,9 @@ const IMAGE_UPLOAD_ENABLED = false;
     }
 
     const isAdmin = session.role === 'admin';
+    const isEmployee = session.role === 'employee';
     const profile = Storage.getProfile ? Storage.getProfile(session.userId) : null;
-    const currentName = profile?.name || session.displayName || 'Intern';
+    const currentName = profile?.name || session.displayName || (isEmployee ? 'Employee' : 'Intern');
 
     // ── DOM refs ──
     const sidebarNav       = document.getElementById('sidebar-nav');
@@ -62,7 +63,7 @@ const IMAGE_UPLOAD_ENABLED = false;
     const subtitleEl = document.querySelector('.doubts-header-text .page-subtitle');
     if (subtitleEl) {
         subtitleEl.textContent = isAdmin
-            ? 'Review intern messages and provide clear, helpful answers.'
+            ? 'Review intern and employee messages and provide clear, helpful answers.'
             : 'Post messages, get answers from your admin, and clear the wall.';
     }
 
@@ -149,8 +150,8 @@ const IMAGE_UPLOAD_ENABLED = false;
             const emptyMsg = activeTab === 'mine'
                 ? "You haven't asked any questions yet."
                 : isAdmin
-                    ? 'No intern questions yet. Check back soon!'
-                    : 'No questions yet. Be the first to ask!';
+                    ? 'No messages yet. Check back soon!'
+                    : 'No messages yet. Be the first to post!';
             doubtsList.innerHTML = `
                 <div class="doubts-empty">
                     <div class="doubts-empty-icon"><span class="material-symbols-outlined" style="font-size:48px">quiz</span></div>
@@ -214,7 +215,7 @@ const IMAGE_UPLOAD_ENABLED = false;
                             <span class="material-symbols-outlined" style="font-size:12px">person</span>You
                         </span>` : ''}
                         ${isAdmin ? `<span class="doubt-meta-item" style="color:var(--clr-text-muted);font-style:italic">
-                            by ${escHtml(q.authorName || 'Intern')}
+                            by ${escHtml(q.authorName || 'User')}
                         </span>` : ''}
                     </div>
                 </div>

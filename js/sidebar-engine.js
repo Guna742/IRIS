@@ -11,6 +11,7 @@ const SidebarEngine = (() => {
         if (!session) return;
 
         const isAdmin = session.role === 'admin';
+        const isEmployee = session.role === 'employee';
 
         // ── DOM refs ──
         const sidebarNav = document.getElementById('sidebar-nav');
@@ -25,7 +26,7 @@ const SidebarEngine = (() => {
 
         // ── Populate User Info ──
         const adminProfile = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : null;
-        const userProfile = !isAdmin ? (Storage.getProfile ? Storage.getProfile(session.userId) : null) : null;
+        const userProfile = (isEmployee || !isAdmin) ? (Storage.getProfile ? Storage.getProfile(session.userId) : null) : null;
         const currentName = (isAdmin ? adminProfile?.name : userProfile?.name) || session.displayName || 'User';
         const currentAvatar = isAdmin ? adminProfile?.avatar : userProfile?.avatar;
 
@@ -39,7 +40,8 @@ const SidebarEngine = (() => {
         if (userNameSb) userNameSb.textContent = currentName;
         
         const points = (isAdmin ? 0 : userProfile?.points) || 0;
-        const assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Technical Intern');
+        let assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Technical Intern');
+        if (isEmployee) assignedRole = userProfile?.internship?.role || 'Corporate Employee';
         const levelTitle = assignedRole;
         
         if (userRoleSb) {
@@ -49,7 +51,7 @@ const SidebarEngine = (() => {
                         <span style="color:var(--clr-primary); font-weight:700;">${levelTitle}</span>
                         <span style="opacity:0.6; font-size:10px; display:flex; align-items:center; gap:3px;">
                             <span class="material-symbols-outlined" style="font-size:12px;">psychology</span>
-                             Intelligence Active
+                              Intelligence Active
                         </span>
                     </div>
                 </div>
@@ -60,8 +62,8 @@ const SidebarEngine = (() => {
         const roleBadges = [document.getElementById('topbar-role-badge'), document.getElementById('role-badge-main')];
         roleBadges.forEach(badge => {
             if (badge) {
-                badge.textContent = isAdmin ? 'Admin' : assignedRole;
-                badge.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+                badge.textContent = isAdmin ? 'Admin' : (isEmployee ? 'Employee' : assignedRole);
+                badge.className = `badge ${isAdmin ? 'badge-admin' : (isEmployee ? 'badge-employee' : 'badge-user')}`;
             }
         });
 
@@ -135,7 +137,17 @@ const SidebarEngine = (() => {
             { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub', alertCount: wallAlertCount }, 
         ];
 
-        const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
+        const NAV_EMPLOYEE = [
+            { label: 'Dashboard', href: 'employee-dashboard.html', icon: 'grid_view', tooltip: 'Employee portal' },
+            { label: 'My Profile', href: 'employee-profile.html', icon: 'person', tooltip: 'Your info' },
+            { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Corporate lounge', alertCount: wallAlertCount }, 
+            { label: 'Workforce', href: 'employees.html', icon: 'badge', tooltip: 'Meet the team' },
+            { label: 'Performance', href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics', tooltip: 'Efficiency tracking' },
+            { label: 'Daily Logs', href: 'report-submission.html', icon: 'description', tooltip: 'Drop progress' },
+            { label: 'Projects', href: 'employee-projects.html', icon: 'folder', tooltip: 'Active ventures', alertCount: projectAlertCount },
+        ];
+
+        const navItems = isAdmin ? NAV_ADMIN : (isEmployee ? NAV_EMPLOYEE : NAV_INTERN);
         const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
 
         if (sidebarNav) {

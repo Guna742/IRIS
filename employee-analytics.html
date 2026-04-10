@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Employee Analytics</title>
+    <meta name="description" content="I.R.I.S Corporate: Employee efficiency and performance metrics.">
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/student-analytics.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <div class="app-shell">
+        <aside class="app-sidebar" id="app-sidebar" role="navigation"></aside>
+        <header class="app-topbar"></header>
+        <main class="app-content">
+            <div class="container">
+                <div id="analytics-loading" style="color:#9898a6;padding:60px 0;text-align:center">
+                    <div style="font-size:2.5rem;margin-bottom:12px" class="material-symbols-outlined">analytics</div>
+                    <div>Processing Corporate Analytics…</div>
+                </div>
+                <div id="analytics-output" hidden></div>
+            </div>
+        </main>
+    </div>
+    <script src="js/storage.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/student-analytics.js"></script> 
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+</html>
