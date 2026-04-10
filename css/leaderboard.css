@@ -666,6 +666,23 @@
     margin-top: 1px;
 }
 
+.lb-row-badge-image {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    margin-top: 4px;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+}
+
+.lb-podium-badge-image {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-top: 8px;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+}
+
+
 /* Score Cell */
 .lb-row-score {
     font-size: var(--fs-base);

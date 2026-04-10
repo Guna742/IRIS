@@ -203,9 +203,14 @@
                 <div>
                      <!-- Points & Badges -->
                     <section class="student-section reveal anim-d1" id="rewards-section">
-                        <div class="student-section-head">
-                            <div class="student-section-icon" style="background:rgba(139,92,246,.1)"><span class="material-symbols-outlined" style="color:var(--clr-accent)">military_tech</span></div>
-                            <h2 class="student-section-title">Rewards & Badges</h2>
+                        <div class="student-section-head" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:var(--sp-3);">
+                                <div class="student-section-icon" style="background:rgba(139,92,246,.1)"><span class="material-symbols-outlined" style="color:var(--clr-accent)">military_tech</span></div>
+                                <h2 class="student-section-title">Rewards & Badges</h2>
+                            </div>
+                            <button onclick="window.location.href='badges.html'" class="btn-icon-subtle" title="How points work" style="background:none; border:none; color:var(--clr-accent); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.2s ease;">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">stars</span>
+                            </button>
                         </div>
                         <div class="student-section-body">
                             <div id="rewards-content" style="display:flex;flex-direction:column;gap:var(--sp-4);">

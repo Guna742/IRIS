@@ -1,0 +1,459 @@
+/* ============================================
+   I.R.I.S — Badges Page Styles
+   ============================================ */
+
+.badges-header {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(30, 41, 59, 0.5));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-2xl);
+    padding: var(--sp-10) var(--sp-8);
+    margin-bottom: var(--sp-10);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--sp-4);
+}
+
+.badges-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 60%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.badges-header-icon {
+    font-size: 4rem;
+    background: linear-gradient(135deg, #FFD700, #F59E0B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
+    margin-bottom: var(--sp-2);
+}
+
+.badges-header h1 {
+    font-size: var(--fs-4xl);
+    font-weight: var(--fw-black);
+    margin: 0;
+}
+
+.badges-header p {
+    color: var(--clr-text-secondary);
+    max-width: 600px;
+    font-size: var(--fs-lg);
+}
+
+/* ── Points System Section ── */
+.points-system-card {
+    background: var(--clr-bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--sp-8);
+    margin-bottom: var(--sp-10);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--sp-6);
+    color: var(--clr-text-primary);
+}
+
+.section-title span.material-symbols-outlined {
+    color: var(--clr-accent);
+}
+
+.points-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--sp-6);
+}
+
+.point-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    transition: all 0.3s var(--ease-out);
+}
+
+.point-item:hover {
+    background: rgba(139, 92, 246, 0.05);
+    border-color: rgba(139, 92, 246, 0.2);
+    transform: translateY(-5px);
+}
+
+.point-value {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-black);
+    color: var(--clr-accent);
+}
+
+.point-label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--clr-text-primary);
+}
+
+.point-desc {
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+    text-align: center;
+}
+
+/* ── Badges Showcase ── */
+/* ── League Levels Showcase (COC Style) ── */
+.league-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--sp-2);
+    padding: var(--sp-10) var(--sp-4);
+    margin-top: var(--sp-10);
+    overflow-x: auto;
+    min-height: 400px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-2xl);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; 
+}
+
+.league-container::-webkit-scrollbar {
+    display: none;
+}
+
+.league-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 130px;
+    position: relative;
+    flex-shrink: 0;
+    scroll-snap-align: center;
+    transition: all 0.5s var(--ease-out-expo);
+    animation: leagueRise 0.8s var(--ease-out-expo) both;
+}
+
+
+@keyframes leagueRise {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.league-badge-wrapper {
+    margin-bottom: var(--sp-4);
+    position: relative;
+    z-index: 2;
+    transition: transform 0.4s var(--ease-spring);
+}
+
+.league-column:hover .league-badge-wrapper {
+    transform: translateY(-15px) scale(1.15);
+}
+
+.league-icon-container {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.4s ease;
+    background: transparent !important;
+    border: none !important;
+}
+
+.league-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    mix-blend-mode: screen !important; /* Forces black transparency */
+}
+
+/* Removed all Glowing Animations and Shadows */
+
+/* Pedestal Heights remain the same */
+
+
+.league-pedestal {
+    width: 100%;
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.15), rgba(30, 41, 59, 0.5));
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sp-4) 0;
+    position: relative;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -10px 30px rgba(139, 92, 246, 0.25);
+    transition: all 0.4s ease;
+}
+
+/* Base glow for all league pedestals */
+.league-pedestal::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(0deg, transparent, rgba(139, 92, 246, 0.4));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* More intense breathing glow for the current rank's pedestal */
+.league-column.current-rank .league-pedestal {
+    border-color: var(--clr-accent);
+    box-shadow: 0 -15px 45px rgba(139, 92, 246, 0.6);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.25), rgba(30, 41, 59, 0.7));
+    animation: pedestalPulse 1.5s infinite alternate;
+}
+
+@keyframes pedestalPulse {
+    from { 
+        box-shadow: 0 -10px 25px rgba(139, 92, 246, 0.3);
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+    to { 
+        box-shadow: 0 -25px 60px rgba(139, 92, 246, 0.8);
+        border-color: var(--clr-accent);
+    }
+}
+
+
+
+/* Stepped Heights */
+.league-column.bronze .league-pedestal   { height: 80px; }
+.league-column.silver .league-pedestal   { height: 110px; }
+.league-column.gold   .league-pedestal   { height: 140px; }
+.league-column.crystal .league-pedestal  { height: 180px; }
+.league-column.master  .league-pedestal  { height: 220px; }
+.league-column.champion .league-pedestal { height: 260px; }
+.league-column.titan   .league-pedestal  { height: 300px; }
+
+/* ── Mobile Responsive Adjustments ── */
+@media (max-width: 768px) {
+    .league-container {
+        justify-content: flex-start; /* Start from left on mobile */
+        padding: var(--sp-12) var(--sp-6);
+        gap: var(--sp-1);
+    }
+    
+    .league-column {
+        width: 100px; /* Slimmer columns */
+    }
+
+    .league-icon-container {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .league-column.bronze .league-pedestal { height: 60px; }
+    .league-column.silver .league-pedestal { height: 85px; }
+    .league-column.gold .league-pedestal { height: 110px; }
+    .league-column.crystal .league-pedestal { height: 135px; }
+    .league-column.master .league-pedestal { height: 160px; }
+    .league-column.champion .league-pedestal { height: 185px; }
+    .league-column.titan .league-pedestal { height: 210px; }
+
+    .league-name {
+        font-size: 10px;
+    }
+
+    .league-req {
+        font-size: 10px;
+    }
+}
+
+
+.league-name {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-black);
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.league-req {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: #FFD700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    text-align: center;
+}
+
+.league-req .material-symbols-outlined {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+/* Status Indicators */
+.league-column.locked {
+    filter: opacity(0.4); 
+}
+
+.league-column.current-rank .league-icon-container {
+    /* Glowing Effect Removed */
+}
+
+/* Current rank indicator removed as per 'no background/glow' request */
+
+.league-column.earned .league-badge-wrapper::before {
+    content: 'EARNED';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: var(--fw-black);
+    background: var(--clr-success);
+    color: white;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    z-index: 3;
+}
+
+
+
+/* Progress Section */
+.user-progress-panel {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.05), transparent);
+    border-left: 4px solid var(--clr-accent);
+    border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+    padding: var(--sp-6) var(--sp-8);
+    margin-bottom: var(--sp-8);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-6);
+}
+
+.progress-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+}
+
+.progress-title {
+    font-size: var(--fs-sm);
+    color: var(--clr-text-muted);
+}
+
+.progress-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-black);
+    color: var(--clr-text-primary);
+}
+
+.progress-track {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+    margin: var(--sp-2) 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--clr-accent), #c084fc);
+    width: 0%;
+    transition: width 1.5s var(--ease-out-expo);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Shimmer/Line Animation (Optimized for Mobile) */
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0) 20%, 
+        rgba(255, 255, 255, 0.6) 50%, 
+        rgba(255, 255, 255, 0) 80%, 
+        transparent 100%);
+    transform: translateX(-150%);
+    animation: progressShimmer 2s infinite linear;
+    will-change: transform;
+    z-index: 1;
+}
+
+@keyframes progressShimmer {
+    0% { transform: translateX(-150%); }
+    100% { transform: translateX(150%); }
+}
+
+
+
+@media (max-width: 768px) {
+    .badges-header {
+        padding: var(--sp-6) var(--sp-4);
+    }
+    
+    .user-progress-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--sp-4);
+        padding: var(--sp-6);
+        border-left: none;
+        border-top: 4px solid var(--clr-accent);
+        border-radius: var(--radius-xl);
+    }
+
+    .progress-info {
+        text-align: center !important;
+        width: 100%;
+    }
+
+    .progress-track {
+        height: 12px;
+        margin: var(--sp-4) 0;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .progress-value {
+        font-size: var(--fs-xl);
+    }
+}
+

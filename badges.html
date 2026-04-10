@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Badges & Achievements</title>
+    <meta name="description" content="Explore IRIS badges and learn how to earn points through community engagement.">
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/badges.css">
+    <link rel="stylesheet" href="css/glowing-effect.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+
+        <!-- ── Sidebar ── -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S"
+                        style="width:100%;height:100%;object-fit:contain;padding:4px;">
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Intern Review & Intelligence System</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation">
+                <!-- Injected by JS -->
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar">
+                    <div class="user-avatar" id="user-avatar-sidebar">A</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Loading...</div>
+                        <div class="user-role" id="user-role-sidebar">—</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Topbar ── -->
+        <header class="app-topbar" role="banner">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <span class="topbar-title">Badges & Achievements</span>
+                </div>
+                <div class="topbar-right">
+                    <span class="badge" id="topbar-role-badge">Loading...</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Main Content ── -->
+        <main class="app-content">
+            <div class="container" data-reveal data-stagger>
+                
+                <!-- Header -->
+                <div class="badges-header reveal anim-fadeIn">
+                    <span class="material-symbols-outlined badges-header-icon" style="background: linear-gradient(135deg, #FFD700, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">social_leaderboard</span>
+                    <h1>League Levels</h1>
+                    <p>Climb the ranks of the I.R.I.S elite. Earn points through meaningful contributions and unlock legendary league status.</p>
+                </div>
+
+                <!-- User Progress (Visible for interns) -->
+                <div class="user-progress-panel reveal anim-fadeInUp" id="user-progress-panel" style="display: none;">
+                    <div class="progress-info">
+                        <span class="progress-title">Global XP Standing</span>
+                        <span class="progress-value" id="user-points-display">0 Points</span>
+                    </div>
+                    <div class="progress-track" title="Overall contribution progress">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-info" style="text-align: right;">
+                        <span class="progress-title">Legendary Milestone</span>
+                        <span class="progress-value" id="next-milestone-points">41000 XP</span>
+                    </div>
+                </div>
+
+                <!-- How Points Work -->
+                <section class="points-system-card reveal anim-fadeInUp anim-d1">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined">bolt</span>
+                        Point Extraction Protocol
+                    </h2>
+                    <p style="color: var(--clr-text-secondary); margin-bottom: var(--sp-6);">Points (XP) are granted automatically for every positive contribution you make to "The Wall".</p>
+                    
+                    <div class="points-grid">
+                        <div class="point-item">
+                            <span class="point-value">+5</span>
+                            <span class="point-label">Mission Briefing</span>
+                            <span class="point-desc">Awarded for each thoughtful question asked on The Wall.</span>
+                        </div>
+                        <div class="point-item">
+                            <span class="point-value">+10</span>
+                            <span class="point-label">Tactical Support</span>
+                            <span class="point-desc">Awarded for providing helpful answers to community doubts.</span>
+                        </div>
+                        <div class="point-item">
+                            <span class="point-value">+2</span>
+                            <span class="point-label">Commendation</span>
+                            <span class="point-desc">Awarded when another intern upvotes your response.</span>
+                        </div>
+                        <div class="point-item">
+                            <span class="point-value">+15</span>
+                            <span class="point-label">Direct Impact</span>
+                            <span class="point-desc">Awarded when your answer is officially accepted as the solution.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Badges Gallery -->
+                <section class="badges-section reveal anim-fadeInUp anim-d2">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined">stars</span>
+                        Badge Repository
+                    </h2>
+                    <div class="badges-grid" id="badges-gallery">
+                        <!-- Injected by badges.js -->
+                    </div>
+                </section>
+
+                <!-- Achievement Rules -->
+                <div class="dash-card reveal anim-fadeInUp anim-d3" style="margin-top: var(--sp-10); background: rgba(139, 92, 246, 0.02);">
+                    <div class="dash-card-body">
+                        <h3 style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                            <span class="material-symbols-outlined" style="color:var(--clr-accent)">info</span>
+                            Promotion Mechanics
+                        </h3>
+                        <p style="font-size: var(--fs-sm); color: var(--clr-text-secondary); line-height: 1.6;">
+                            Badges at IRIS are sequential. You must earn the preceding badge before you can qualify for the next level. 
+                            Engage consistently to climb the ranks from a Newbie to a Verified Active Intern. 
+                            Your total points and badges are displayed on your public profile and help admins identify top-tier talent.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Storage and Engines -->
+    <script src="js/storage.js"></script>
+    <script src="js/badge-engine.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/badges.js"></script>
+    <script src="js/animation-engine.js"></script>
+    <script src="js/theme-switcher.js"></script>
+
+</body>
+</html>

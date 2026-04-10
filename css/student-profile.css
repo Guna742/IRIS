@@ -1216,3 +1216,21 @@ body.theme-instagram .inline-form .field-input:focus {
         align-items: flex-start;
     }
 }
+
+/* Subtle icon button for redirection */
+.btn-icon-subtle {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s var(--ease-out);
+    opacity: 0.6;
+}
+
+.btn-icon-subtle:hover {
+    opacity: 1;
+    background: rgba(139, 92, 246, 0.1);
+    transform: translateX(3px) scale(1.1);
+}
