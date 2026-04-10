@@ -1054,6 +1054,12 @@
 
     .doubts-header {
         flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .doubts-header-text .page-subtitle {
+        text-align: center;
     }
 
     .question-layout {
