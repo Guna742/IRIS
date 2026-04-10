@@ -90,8 +90,8 @@ const Auth = (() => {
           } catch (_) { /* admin doc may not exist yet */ }
         }
 
-        // Sync cloud profile to local storage for interns
-        if (data && storedRole === 'user' && typeof Storage !== 'undefined' && Storage.saveProfile) {
+        // Sync cloud profile to local storage for interns and employees
+        if (data && (storedRole === 'user' || storedRole === 'employee') && typeof Storage !== 'undefined' && Storage.saveProfile) {
           Storage.saveProfile(firebaseUser.uid, data);
         }
 
@@ -102,9 +102,10 @@ const Auth = (() => {
       // Verify role matches what the user selected
       if (!storedRole || storedRole !== role) {
         await fbAuth.signOut();
+        const roleLabel = { admin: 'an Admin', employee: 'an Employee', user: 'an Intern' };
         const errorMessage = !storedRole 
           ? "Unauthorized access. This account has no assigned role in the system."
-          : `This account is registered as ${storedRole === 'admin' ? 'an Admin' : 'an Intern'}, not ${role === 'admin' ? 'an Admin' : 'an Intern'}.`;
+          : `This account is registered as ${roleLabel[storedRole] || storedRole}, not ${roleLabel[role] || role}.`;
         return { success: false, error: errorMessage };
       }
 
@@ -137,6 +138,8 @@ const Auth = (() => {
     try { await fbAuth.signOut(); } catch (_) { }
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
+    // When logging out, clear any return path to avoid confusion
+    sessionStorage.removeItem('iris_return_url');
     window.location.href = 'login.html';
   }
 
@@ -187,8 +190,18 @@ const Auth = (() => {
   function redirectByRole() {
     const session = getSession();
     if (session) {
+      // Check for a saved return URL first
+      const returnUrl = sessionStorage.getItem('iris_return_url');
+      if (returnUrl) {
+        sessionStorage.removeItem('iris_return_url'); // Use once
+        window.location.replace(returnUrl);
+        return;
+      }
+
       if (session.role === 'admin') {
         window.location.replace('dashboard.html');
+      } else if (session.role === 'employee') {
+        window.location.replace('employee-profile.html');
       } else {
         window.location.replace('dashboard.html');
       }
@@ -208,13 +221,16 @@ const Auth = (() => {
 
     if (!isLoginPage && !session) {
       // Not on login page & not logged in -> redirect to login immediately.
-      // Page stays hidden during redirect — user never sees protected content.
+      // Save the current path to return here after login
+      sessionStorage.setItem('iris_return_url', window.location.href);
       window.location.replace('login.html');
       return; // Don't reveal the page
     } 
     
-    // NOTE: We have removed the "Already logged in -> skip login page" logic 
-    // to satisfy the requirement that the login page must come first when requested.
+    // If on login page and already have a session, maybe they want to go to their dashboard?
+    // But we are respecting the "login page must come first" or manual access.
+    // If the user is on login page but ALREADY has a returnUrl (from a previous session/redirect),
+    // we keep it so redirectByRole can use it after login.
 
     // ── User is allowed on this page — reveal it ──
     document.documentElement.style.visibility = '';

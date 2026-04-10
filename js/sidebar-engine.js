@@ -11,6 +11,7 @@ const SidebarEngine = (() => {
         if (!session) return;
 
         const isAdmin = session.role === 'admin';
+        const isEmployee = session.role === 'employee';
 
         // ── DOM refs ──
         const sidebarNav = document.getElementById('sidebar-nav');
@@ -22,6 +23,15 @@ const SidebarEngine = (() => {
         const appSidebar = document.getElementById('app-sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const logoutBtn = document.getElementById('logout-btn');
+        const sidebarSlogan = document.querySelector('.sidebar-slogan');
+
+        // FORCE "Employee" slogan/branding if on an employee-specific page
+        const isEmployeePage = window.location.pathname.includes('employee-');
+        
+        if (sidebarSlogan) {
+            // Slogan is "Internal" for professional roles (Employee, Admin) or on professional pages
+            sidebarSlogan.textContent = (isEmployee || isAdmin || isEmployeePage) ? 'Internal Review & Intelligence System' : 'Intern Review & Intelligence System';
+        }
 
         // ── Populate User Info ──
         const adminProfile = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : null;
@@ -38,9 +48,15 @@ const SidebarEngine = (() => {
         }
         if (userNameSb) userNameSb.textContent = currentName;
         
-        const points = (isAdmin ? 0 : userProfile?.points) || 0;
-        const assignedRole = isAdmin ? 'Administrator' : (userProfile?.internship?.role || 'Technical Intern');
-        const levelTitle = assignedRole;
+        const assignedRole = isAdmin 
+            ? 'Administrator' 
+            : isEmployee 
+                ? (userProfile?.internship?.role || 'Employee')
+                : (userProfile?.internship?.role || 'Technical Intern');
+        
+        // If on an employee page, we use 'Employee' as the label for any non-admin
+        const isEmployeePage_label = window.location.pathname.includes('employee-');
+        const levelTitle = (isEmployeePage_label && !isAdmin) ? 'Employee' : assignedRole;
         
         if (userRoleSb) {
             userRoleSb.innerHTML = `
@@ -60,8 +76,12 @@ const SidebarEngine = (() => {
         const roleBadges = [document.getElementById('topbar-role-badge'), document.getElementById('role-badge-main')];
         roleBadges.forEach(badge => {
             if (badge) {
-                badge.textContent = isAdmin ? 'Admin' : assignedRole;
-                badge.className = `badge ${isAdmin ? 'badge-admin' : 'badge-user'}`;
+                badge.textContent = isAdmin ? 'Admin' : isEmployee ? 'Employee' : assignedRole;
+                badge.className = `badge ${isAdmin ? 'badge-admin' : (isEmployee || isEmployeePage) ? 'badge-employee' : 'badge-user'}`;
+                // Double check: if we are on an employee page, the badge should probably say "Employee" unless it's an admin
+                if (isEmployeePage && !isAdmin) {
+                    badge.textContent = 'Employee';
+                }
             }
         });
 
@@ -84,10 +104,8 @@ const SidebarEngine = (() => {
 
             if (activityTime > lastSeen) {
                 if (isAdmin) {
-                    // Admins see a dot if a project was Resubmitted
                     if (p.status === 'Resubmitted') projectAlertCount++;
                 } else {
-                    // Interns see a dot if THEIR project has 'Changes Requested' or a new Admin comment
                     if (String(p.userId || p.ownerId) === String(session.userId)) {
                         const hasAdminCmt = p.comments?.length && p.comments[p.comments.length - 1].role === 'admin';
                         if (p.status === 'Changes Requested' || hasAdminCmt) projectAlertCount++;
@@ -101,10 +119,8 @@ const SidebarEngine = (() => {
         if (typeof Storage !== 'undefined' && Storage.getDoubts) {
             const doubts = Storage.getDoubts() || [];
             if (isAdmin) {
-                // Admins see a dot if there are any 'Open' questions
                 wallAlertCount = doubts.filter(d => d.status === 'Open').length;
             } else {
-                // Interns see a dot if their own question has a new reply or was resolved
                 const myDoubts = doubts.filter(d => String(d.userId) === String(session.userId));
                 wallAlertCount = myDoubts.filter(d => {
                     const lastSeen = parseInt(localStorage.getItem(`iris_wall_seen_${d.id}`) || '0', 10);
@@ -135,14 +151,24 @@ const SidebarEngine = (() => {
             { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub', alertCount: wallAlertCount }, 
         ];
 
-        const navItems = isAdmin ? NAV_ADMIN : NAV_INTERN;
+        const NAV_EMPLOYEE = [
+            { label: 'Dashboard',    href: 'employee-profile.html',                              icon: 'home',         tooltip: 'Your workspace' },
+            { label: 'Leaderboard', href: 'employee-leaderboard.html',                          icon: 'leaderboard',  tooltip: 'Employee rankings' },
+            { label: 'Analytics',   href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics',    tooltip: 'Performance tracking' },
+            { label: 'Log Progress',href: 'employee-report.html',                               icon: 'description',  tooltip: 'Document your work' },
+            { label: 'Projects',    href: 'projects.html',                                      icon: 'folder',       tooltip: 'The vault', alertCount: projectAlertCount },
+            { label: 'The Wall',    href: 'doubts.html',                                        icon: 'chat',         tooltip: 'Community hub', alertCount: wallAlertCount },
+        ];
+
+        const navItems = isAdmin ? NAV_ADMIN : (isEmployee || isEmployeePage) ? NAV_EMPLOYEE : NAV_INTERN;
         const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
 
         if (sidebarNav) {
             let navHTML = `<div class="nav-section-label">Menu</div>`;
             navItems.forEach(item => {
                 const itemBase = item.href.split('?')[0];
-                const isActive = (currentPath === itemBase) || (currentPath === 'index.html' && itemBase === 'dashboard.html');
+                // Match exact path or handle index.html -> dashboard mapping
+                const isActive = (currentPath === itemBase) || (currentPath === 'index.html' && itemBase.includes('dashboard'));
                 const badgeHTML = item.alertCount ? `
                     <span class="nav-dot" style="position:absolute; top:-4px; right:-6px; width:16px; height:16px; background:var(--clr-accent, #8b5cf6); border-radius:50%; border:2px solid var(--clr-bg-surface); box-shadow:0 0 10px var(--clr-accent); color:white; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;">
                         ${item.alertCount}
@@ -160,7 +186,7 @@ const SidebarEngine = (() => {
             sidebarNav.innerHTML = navHTML;
         }
 
-        // ── Update Topbar Title with Mobile Support ──
+        // ── Update Topbar Title ──
         const topbarTitle = document.querySelector('.topbar-title');
         if (topbarTitle) {
             const activeItem = navItems.find(item => {
@@ -182,11 +208,9 @@ const SidebarEngine = (() => {
             if (appSidebar) appSidebar.classList.add('open');
             if (sidebarOverlay) {
                 sidebarOverlay.classList.add('visible');
-                // Force display if inline styles were used previously
                 sidebarOverlay.style.display = 'block';
             }
             if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
-            // Prevent body scroll when open
             document.body.style.overflow = 'hidden';
         };
 
@@ -220,7 +244,7 @@ const SidebarEngine = (() => {
             });
         }
 
-        // ── Ensure Admin Popup is initialized for this page ──
+        // ── Admin Popup ──
         if (typeof AdminPopup !== 'undefined' && AdminPopup.init) {
             AdminPopup.init();
         }
@@ -229,15 +253,13 @@ const SidebarEngine = (() => {
     return { init };
 })();
 
-// Initialize on DOMContentLoaded
+// Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', SidebarEngine.init);
 } else {
     SidebarEngine.init();
 }
 
-// Global listener for dynamic data updates (e.g. marking as read)
 window.addEventListener('iris-data-sync', (e) => {
-    console.log('[Sidebar] Data sync event received:', e.detail);
     SidebarEngine.init();
 });

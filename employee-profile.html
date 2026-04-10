@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — My Profile</title>
+    <meta name="description" content="I.R.I.S employee profile: showcase your skills, role, and project contributions.">
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/student-profile.css">
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <link rel="stylesheet" href="css/iris-modal.css">
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
+</head>
+
+<body>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S">
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Review &amp; Intelligence System</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation"></nav>
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar" role="button" tabindex="0" aria-label="User info">
+                    <div class="user-avatar" id="user-avatar-sidebar" aria-hidden="true">E</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Employee</div>
+                        <div class="user-role" id="user-role-sidebar">Employee</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Topbar -->
+        <header class="app-topbar" role="banner">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <span class="topbar-title">My Profile</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="info-btn" id="info-btn" aria-label="Platform information">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                    <span class="badge badge-employee" id="topbar-role-badge">Employee</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn" aria-label="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-content" id="profile-content" aria-label="Employee profile">
+            <div class="container">
+
+                <!-- Loading Shimmer -->
+                <div id="profile-loading" aria-live="polite" aria-busy="true">
+                    <div class="shimmer-line" style="height:160px;margin-bottom:8px;border-radius:16px"></div>
+                    <div class="shimmer-line" style="height:20px;width:60%;margin-bottom:12px"></div>
+                    <div class="shimmer-line" style="height:120px"></div>
+                </div>
+
+                <!-- Profile Output (injected by JS) -->
+                <div id="profile-output" hidden></div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/badge-engine.js"></script>
+    <script src="js/admin-popup.js"></script>
+    <script src="js/employee-profile.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    <script src="js/iris-modal.js"></script>
+</body>
+
+</html>

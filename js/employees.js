@@ -312,7 +312,7 @@
                 <a href="profile-builder.html?student=${profile.userId}" class="btn btn-secondary btn-sm btn-magnetic">
                   <span class="material-symbols-outlined" style="font-size:16px">edit</span> Edit Profile
                 </a>
-                <a href="student-analytics.html?student=${profile.userId}" class="btn btn-primary btn-sm btn-magnetic"
+                <a href="employee-analytics.html?student=${profile.userId}" class="btn btn-primary btn-sm btn-magnetic"
                    style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">
                   <span class="material-symbols-outlined" style="font-size:16px">analytics</span> Analytics
                 </a>

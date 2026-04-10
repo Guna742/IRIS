@@ -26,6 +26,14 @@ const server = http.createServer((request, response) => {
         filePath = './login.html';
     }
 
+    // Support extensionless URLs for HTML files
+    if (path.extname(filePath) === '' && !filePath.endsWith('/')) {
+        const potentialHtml = filePath + '.html';
+        if (fs.existsSync(potentialHtml)) {
+            filePath = potentialHtml;
+        }
+    }
+
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
 

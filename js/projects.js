@@ -63,7 +63,7 @@
     }
     
     const isAdmin = session.role === 'admin';
-    const isUser = session.role === 'user';
+    const isUser = session.role === 'user' || session.role === 'employee';
 
     // SidebarEngine.init() handles badges and banners globally
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
@@ -77,7 +77,7 @@
     } else if (isAdmin) {
         document.getElementById('fab-btn').style.display = 'none';
         document.getElementById('add-btn-top').style.display = 'none';
-        document.getElementById('no-permission-tip').innerHTML = '⭐ <strong>Reviewer Mode</strong>: You can provide feedback and ratings for intern projects below.';
+        document.getElementById('no-permission-tip').innerHTML = '⭐ <strong>Reviewer Mode</strong>: You can provide feedback and ratings for member projects below.';
         document.getElementById('no-permission-tip').style.display = 'block';
     } else {
         document.getElementById('no-permission-tip').style.display = 'block';
@@ -104,12 +104,12 @@
             projects.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); // Ascending as requested
             
             const profile = Storage.getProfile(filterIntern);
-            const internName = profile?.name || projects[0]?.userName || 'Intern';
+            const ownerName = profile?.name || projects[0]?.userName || 'Owner';
             
             if (isUser) {
                 countLabel.innerHTML = `Viewing <strong>Your Portfolio</strong>`;
             } else {
-                countLabel.innerHTML = `Showing projects for <strong>${internName}</strong> <a href="projects.html" style="margin-left:12px; color:var(--clr-accent); font-size:12px; text-decoration:none;">(Show All Interns)</a>`;
+                countLabel.innerHTML = `Showing projects for <strong>${ownerName}</strong> <a href="projects.html" style="margin-left:12px; color:var(--clr-accent); font-size:12px; text-decoration:none;">(Show All Members)</a>`;
             }
             
             if (projects.length === 0) {
@@ -121,7 +121,7 @@
             attachCardListeners();
         } else if (isAdmin) {
             // Tier 1: Summary cards per intern (Admin only)
-            countLabel.textContent = `Project portfolios from ${new Set(projects.map(p => p.userId || p.ownerId)).size} interns`;
+            countLabel.textContent = `Project portfolios from ${new Set(projects.map(p => p.userId || p.ownerId)).size} members`;
             
             // Group by intern
             const internGroups = {};
@@ -192,7 +192,7 @@
 
     function buildInternGroupCard(g, index) {
         const profile = Storage.getProfile(g.uid);
-        const name = profile?.name || g.projects[0]?.userName || 'Unknown Intern';
+        const name = profile?.name || g.projects[0]?.userName || 'Unknown Member';
         const company = profile?.internship?.company || profile?.company || 'IRIS Partner';
         const avatar = profile?.avatar || '';
         const count = g.projects.length;
@@ -362,7 +362,7 @@
                     : `<span class="card-owner-icon" style="background:var(--clr-primary-alpha); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:8px;"><span class="material-symbols-outlined" style="font-size: 14px; color:var(--clr-primary)">person</span></span>`;
             })()}
           <div style="display:flex; flex-direction:column; line-height:1.2;">
-            <span class="card-owner-name" style="font-size: 0.8rem; font-weight:700; color:var(--clr-text-primary); letter-spacing:0.2px;">${userName || 'Unassigned Intern'}</span>
+            <span class="card-owner-name" style="font-size: 0.8rem; font-weight:700; color:var(--clr-text-primary); letter-spacing:0.2px;">${userName || 'Unassigned Member'}</span>
             <span style="font-size: 0.65rem; color:var(--clr-accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.8;">Software Developer</span>
           </div>
         </div>

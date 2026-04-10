@@ -1,20 +1,21 @@
 /**
- * I.R.I.S — Report Submission Logic (Template Edition)
- * Handles structured reporting intervals, PDF generation, and cross-window editing.
+ * I.R.I.S — Employee Progress Reporting Logic
+ * Handles structured reporting intervals, PDF generation, and log history.
+ * Zero mention of interns.
  */
 
 'use strict';
 
 (() => {
     // ── Auth Guard ──
-    const session = Auth.requireAuth(['user', 'employee']);
+    const session = Auth.requireAuth(['employee', 'admin']);
     if (!session) return;
 
     // ── Global State ──
     const userId = session.userId;
     const WINDOWS = [
-        { id: 1, label: 'Morning Report (9AM - 1PM)', start: 9, end: 13, name: 'Morning Progress' },
-        { id: 2, label: 'Afternoon Report (2PM - 6PM)', start: 14, end: 18, name: 'Final Progress' }
+        { id: 1, label: 'Morning Session (9AM - 1PM)', start: 9, end: 13, name: 'Morning Report' },
+        { id: 2, label: 'Afternoon Session (2PM - 6PM)', start: 14, end: 18, name: 'Evening Report' }
     ];
 
     let editMode = false;
@@ -30,7 +31,7 @@
     const historyContainer = document.getElementById('report-history');
     const downloadBtn = document.getElementById('download-report-btn');
     
-    // New Fields
+    // Fields
     const fields = {
         loginTime: document.getElementById('login-time'),
         logoutTime: document.getElementById('logout-time'),
@@ -70,8 +71,7 @@
         // Pre-fill signature if profile exists
         const profile = Storage.getProfile(userId);
         if (profile && fields.signature) {
-            const roleLabel = session.role === 'employee' ? 'Employee' : 'Technical Intern';
-            fields.signature.value = `Regards, ${profile.name || session.displayName} | ${roleLabel} @ ${profile.internship?.company || 'I.R.I.S'}`;
+            fields.signature.value = `Regards, ${profile.name || session.displayName} | Employee @ ${profile.internship?.company || 'I.R.I.S'}`;
         }
         
         setTimeout(() => refreshAnalyticsChart(), 500);
@@ -93,47 +93,42 @@
         const isLate = hr >= 18;
         renderHistory(todayReports);
 
-        // Always ensure form is interactive for preparation
+        // Always ensure form is interactive
         setFormDisabled(false);
 
         if (isLate) {
-            windowTitle.textContent = "Reporting Hours Closed (6 PM)";
-            windowTimer.textContent = "You can still prepare your report, but submissions are currently locked until tomorrow.";
+            windowTitle.textContent = "Reporting Period Closed";
+            windowTimer.textContent = "Today's reporting window is closed. You can still prepare drafts for tomorrow.";
             submitBtn.disabled = true;
-            submitBtnText.textContent = "Window Closed";
+            submitBtnText.textContent = "Log Closed";
         } else if (!activeWindow) {
             const isLunch = hr === 13;
-            windowTitle.textContent = isLunch ? "Lunch Break (1PM - 2PM)" : "Outside Reporting Hours";
-            windowTimer.textContent = isLunch ? "Window 2 starts at 2:00 PM. You can prepare your notes now!" : "Next window starts at 9:00 AM. Feel free to draft your updates.";
+            windowTitle.textContent = isLunch ? "Break Time" : "Outside Reporting Window";
+            windowTimer.textContent = isLunch ? "Session 2 starts at 2:00 PM." : "Next reporting session starts at 9:00 AM.";
             submitBtn.disabled = true;
-            submitBtnText.textContent = "Window Inactive";
+            submitBtnText.textContent = "Log Inactive";
         } else if (submittedCurrent) {
-            // If they already submitted but aren't in explicit 'Edit Mode', 
-            // we'll auto-populate the form so they see their work and can update it easily.
             loadReportToForm(submittedCurrent);
-            windowTitle.textContent = `Submitted: ${activeWindow.label}`;
-            windowTimer.textContent = "Update received. You can modify your report below and click 'Update' to save changes.";
+            windowTitle.textContent = "Updates Recorded";
+            windowTimer.textContent = "You have already submitted a report for this session. You can update it below.";
             submitBtn.disabled = false;
-            submitBtnText.textContent = "Update Submission";
+            submitBtnText.textContent = "Update Progress Log";
             
-            // Set internal state so handleFormSubmit knows it's an update
-            editMode = false; // We don't need 'global' edit mode for auto-updates
+            editMode = false;
             editingReportId = submittedCurrent.id; 
         } else {
-            windowTitle.textContent = `Active: ${activeWindow.label}`;
-            windowTimer.textContent = `Please fill out your full progress report. Window closes at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
+            windowTitle.textContent = `Active Session: ${activeWindow.label}`;
+            windowTimer.textContent = `Logging your progress for the current session. Ends at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
             submitBtn.disabled = false;
-            submitBtnText.textContent = "Submit Full Report";
+            submitBtnText.textContent = "Submit Daily Progress";
             editingReportId = null;
 
-            // Optional logout requirement logic
             if (fields.logoutTime) {
                 fields.logoutTime.required = (activeWindow.id === 2);
-                fields.logoutTime.placeholder = (activeWindow.id === 1) ? "(Optional for morning)" : "";
             }
         }
 
-        downloadBtn.style.display = todayReports.length >= 1 ? 'flex' : 'none';
+        if (downloadBtn) downloadBtn.style.display = todayReports.length >= 1 ? 'flex' : 'none';
         refreshAnalyticsChart();
     }
 
@@ -155,7 +150,7 @@
         } else {
             const activeWindow = WINDOWS.find(w => hr >= w.start && hr < w.end);
             if (!activeWindow) {
-                await IrisModal.alert("No active reporting window found.");
+                await IrisModal.alert("No active session window found.");
                 return;
             }
             windowId = activeWindow.id;
@@ -181,19 +176,19 @@
         const report = {
             userId: userId,
             window: windowId,
-            note: `Task Summary: ${reportData.tasksAssigned.substring(0, 50)}...`, // Searchable summary
+            note: `Log Summary: ${reportData.tasksAssigned.substring(0, 50)}...`,
             data: reportData,
             timestamp: now.getTime()
         };
 
         if ((editMode || editingReportId) && editingReportId) {
             Storage.updateHourlyReport(editingReportId, report);
-            await IrisModal.alert("Report updated successfully!");
+            await IrisModal.alert("Progress log updated successfully!");
             if (editMode) cancelEdit();
         } else {
             Storage.saveHourlyReport(report);
             reportForm.reset();
-            await IrisModal.alert("Daily progress report submitted successfully!");
+            await IrisModal.alert("Progress log submitted successfully!");
         }
         
         updateUI();
@@ -201,7 +196,7 @@
 
     function renderHistory(reports) {
         if (reports.length === 0) {
-            historyContainer.innerHTML = `<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--clr-text-muted); border:1px dashed var(--clr-border); border-radius:16px">No reports submitted today yet.</div>`;
+            historyContainer.innerHTML = `<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--clr-text-muted); border:1px dashed var(--clr-border); border-radius:16px">No logs submitted today.</div>`;
             return;
         }
 
@@ -209,10 +204,8 @@
         const isToday = (ts) => new Date(ts).toDateString() === now.toDateString();
 
         historyContainer.innerHTML = reports.sort((a,b) => a.window - b.window).map(r => {
-            const w = WINDOWS.find(win => win.id === r.window) || { label: 'Special Window' };
+            const w = WINDOWS.find(win => win.id === r.window) || { label: 'Progress Session' };
             const timeStr = new Date(r.createdAt || r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            // Allow edit if it's today's report
             const canEdit = isToday(r.createdAt || r.timestamp);
 
             return `
@@ -221,10 +214,10 @@
                         <span class="badge ${r.window === 1 ? 'badge-primary' : 'badge-success'}">${w.label}</span>
                         <span class="history-time">${timeStr}</span>
                     </div>
-                    <div class="history-note"><strong>Status:</strong> ${r.note}</div>
+                    <div class="history-note"><strong>Summary:</strong> ${r.note}</div>
                     <div style="margin-top:15px; display:flex; gap:10px">
                         <button class="btn btn-secondary btn-xs" onclick="viewDetailedReport('${r.id}')">View Details</button>
-                        ${canEdit ? `<button class="btn btn-primary btn-xs" onclick="prepareEdit('${r.id}')">Edit Report</button>` : ''}
+                        ${canEdit ? `<button class="btn btn-primary btn-xs" onclick="prepareEdit('${r.id}')">Modify log</button>` : ''}
                     </div>
                 </div>
             `;
@@ -233,26 +226,24 @@
 
     window.viewDetailedReport = async (id) => {
         const r = Storage.getHourlyReportById(id);
-        if (!r || !r.data) {
-            return IrisModal.alert("This report uses an older format and has no technical details.");
-        }
+        if (!r || !r.data) return IrisModal.alert("Report data unavailable.");
         
         const d = r.data;
         const html = `
             <div style="text-align:left; font-size:0.9rem; line-height:1.6; max-height:70vh; overflow-y:auto; padding-right:10px">
-                <p><strong>Login/Logout:</strong> ${d.loginTime} - ${d.logoutTime}</p>
-                <p><strong>Tasks Assigned:</strong> ${d.tasksAssigned}</p>
-                <h4 style="margin:15px 0 5px; color:var(--clr-primary)">Completed Tasks</h4>
+                <p><strong>Work Period:</strong> ${d.loginTime} - ${d.logoutTime}</p>
+                <p><strong>Objectives:</strong> ${d.tasksAssigned}</p>
+                <h4 style="margin:15px 0 5px; color:var(--clr-primary); font-family:inherit">Tasks Completed</h4>
                 ${d.tasksCompleted.map(tc => tc.name ? `<div style="margin-bottom:10px"><strong>${tc.name}:</strong><br>${tc.desc}</div>` : '').join('')}
-                ${d.extraWork ? `<p><strong>Extra Work:</strong> ${d.extraWork}</p>` : ''}
+                ${d.extraWork ? `<p><strong>Additional:</strong> ${d.extraWork}</p>` : ''}
                 <p><strong>Work in Progress:</strong> ${d.workInProgress}</p>
                 <p><strong>Pending:</strong> ${d.pendingTasks}</p>
-                <p><strong>Learned Today:</strong> ${d.whatLearned}</p>
-                <p><strong>Challenges:</strong> ${d.challenges}</p>
-                <p><strong>Next Steps:</strong> ${d.nextSteps}</p>
+                <p><strong>Research & Findings:</strong> ${d.whatLearned}</p>
+                <p><strong>Obstacles:</strong> ${d.challenges}</p>
+                <p><strong>Roadmap:</strong> ${d.nextSteps}</p>
             </div>
         `;
-        await IrisModal.confirm(html, { title: 'Technical Progress Details', confirmText: 'Close', hideCancel: true });
+        await IrisModal.confirm(html, { title: 'Progress Log Details', confirmText: 'Close', hideCancel: true });
     };
 
     function loadReportToForm(report) {
@@ -276,25 +267,17 @@
 
     window.prepareEdit = (id) => {
         const r = Storage.getHourlyReportById(id);
-        if (!r) return;
-        
-        if (!r.data) {
-            IrisModal.alert("Old format reports cannot be edited using the new template.");
-            return;
-        }
+        if (!r || !r.data) return;
 
         editMode = true;
         editingReportId = id;
-        
         loadReportToForm(r);
 
-        // UI Changes
         setFormDisabled(false);
-        submitBtnText.textContent = "Update Report (" + (r.window === 1 ? 'Morning' : 'Afternoon') + ")";
+        submitBtnText.textContent = "Update Session log";
         cancelEditBtn.style.display = 'block';
-        windowTitle.textContent = "Editing Mode Active";
-        windowTimer.textContent = "You are currently updating your previously submitted report.";
-        
+        windowTitle.textContent = "Updating Record";
+        windowTimer.textContent = "You are currently editing a previously submitted log.";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -302,12 +285,12 @@
         editMode = false;
         editingReportId = null;
         reportForm.reset();
-        submitBtnText.textContent = "Submit Full Report";
-        cancelEditBtn.style.display = 'none';
+        submitBtnText.textContent = "Submit Daily Progress";
+        if (cancelEditBtn) cancelEditBtn.style.display = 'none';
         updateUI();
     }
 
-    // ── PDF Generation ──
+    // PDF 
     async function generateDailyPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -323,22 +306,18 @@
         
         doc.setTextColor(80, 80, 80);
         doc.setFontSize(10);
-        doc.text(`Intern: ${profile.name || session.displayName} | Date: ${now.toDateString()}`, 15, 40);
+        doc.text(`Employee: ${profile.name || session.displayName} | Date: ${now.toDateString()}`, 15, 40);
         doc.line(15, 43, 195, 43);
 
         let y = 55;
-        
         todayReports.forEach((r, idx) => {
             if (!r.data) return;
             const d = r.data;
-            const winLabel = r.window === 1 ? "Morning Updates" : "Afternoon Updates";
-            
             doc.setFont("helvetica", "bold");
             doc.setFontSize(12);
-            doc.setTextColor(139, 92, 246);
-            doc.text(`${winLabel} (${d.loginTime} - ${d.logoutTime})`, 15, y);
+            doc.setTextColor(59, 130, 246);
+            doc.text(`${r.window === 1 ? 'Morning' : 'Evening'} updates (${d.loginTime} - ${d.logoutTime})`, 15, y);
             y += 8;
-
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
             doc.setTextColor(40, 40, 40);
@@ -354,90 +333,59 @@
             };
 
             writeField("Assigned", d.tasksAssigned);
-            
-            d.tasksCompleted.forEach((tc, i) => {
-                if (tc.name) {
-                    writeField(`Task ${i+1} (${tc.name})`, tc.desc);
-                }
-            });
-
-            writeField("In Progress", d.workInProgress);
-            writeField("Learned", d.whatLearned);
-            writeField("Challenges", d.challenges);
+            d.tasksCompleted.forEach((tc, i) => { if (tc.name) writeField(`Task ${i+1} (${tc.name})`, tc.desc); });
+            writeField("Progressing", d.workInProgress);
+            writeField("Key Findings", d.whatLearned);
+            writeField("Obstacles", d.challenges);
             writeField("Next Steps", d.nextSteps);
-            
             y += 5;
             if (y > 250) { doc.addPage(); y = 20; }
         });
-
-        const signature = todayReports[todayReports.length-1]?.data?.signature || "Sincerely, Intern";
-        y += 15;
-        doc.setFont("helvetica", "italic");
-        doc.text(signature, 15, y);
-
-        doc.save(`IRIS_FullReport_${now.toISOString().split('T')[0]}.pdf`);
+        const sig = todayReports[todayReports.length-1]?.data?.signature || "Sincerely, Employee";
+        y += 15; doc.setFont("helvetica", "italic"); doc.text(sig, 15, y);
+        doc.save(`IRIS_Employee_Log_${now.toISOString().split('T')[0]}.pdf`);
     }
 
-    // ── Analytics Chart Component (Performance Overview) ──
     let chartFilter = 'today';
-
     window.updateChartFilter = function (filter, el) {
         chartFilter = filter;
-        
-        // Update active class on buttons
         const parent = el.closest('.chart-controls');
         if (parent) {
             parent.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
         }
-        
         refreshAnalyticsChart();
     };
 
     function refreshAnalyticsChart() {
         const container = document.getElementById('report-analytics-chart');
         if (!container) return;
-        
         const reports = Storage.getHourlyReports(userId);
-        const now = new Date();
-        now.setHours(0,0,0,0);
-        
-        let perc = 0;
-        let label = "Daily Target Completed";
-        
+        const now = new Date(); now.setHours(0,0,0,0);
+        let perc = 0; let label = "Target Completed";
         if (chartFilter === 'today') {
             const todayCount = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === new Date().toDateString()).length;
             perc = Math.min(100, Math.round((todayCount / 2) * 100));
-            label = "Daily Target Completed";
+            label = "Daily Achievement Score";
         } else if (chartFilter === 'week') {
-            // Check last 7 days (6 reports per day expected if using 2 slots, maybe? Wait, WINDOWS has only 2 slots)
-            // Actually WINDOWS in this file has 2 slots. So 2 reports per day.
             const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-            const weekReports = reports.filter(r => {
-                const rt = r.createdAt || r.timestamp;
-                return rt >= sevenDaysAgo.getTime();
-            });
-            perc = Math.min(100, Math.round((weekReports.length / 14) * 100)); // 7 days * 2 reports
+            const weekReports = reports.filter(r => (r.createdAt || r.timestamp) >= sevenDaysAgo.getTime());
+            perc = Math.min(100, Math.round((weekReports.length / 14) * 100));
             label = "Weekly Consistency Score";
         } else if (chartFilter === 'month') {
             const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            const monthReports = reports.filter(r => {
-                const rt = r.createdAt || r.timestamp;
-                return rt >= thirtyDaysAgo.getTime();
-            });
-            perc = Math.min(100, Math.round((monthReports.length / 60) * 100)); // 30 days * 2 reports
+            const monthReports = reports.filter(r => (r.createdAt || r.timestamp) >= thirtyDaysAgo.getTime());
+            perc = Math.min(100, Math.round((monthReports.length / 60) * 100));
             label = "Monthly Consistency Score";
         }
-        
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%">
-                <div style="font-size:3.5rem; font-weight:800; color:var(--clr-primary); text-shadow: 0 0 20px rgba(139, 92, 246, 0.3)">${perc}%</div>
+                <div style="font-size:3.5rem; font-weight:800; color:#3b82f6; text-shadow: 0 0 20px rgba(59, 130, 246, 0.3)">${perc}%</div>
                 <div style="color:var(--clr-text-muted); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; margin-top: 5px;">${label}</div>
                 <div style="width:240px; height:6px; background:rgba(255,255,255,0.05); border-radius:10px; margin-top:20px; overflow:hidden">
-                    <div style="width:${perc}%; height:100%; background:var(--clr-primary); box-shadow:0 0 15px var(--clr-primary); transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"></div>
+                    <div style="width:${perc}%; height:100%; background:#3b82f6; box-shadow:0 0 15px #3b82f6; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"></div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 
     function initReveal() {
@@ -446,6 +394,5 @@
         }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
     }
-
     init();
 })();

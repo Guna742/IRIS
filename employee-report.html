@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.R.I.S — Daily Progress Report</title>
+    <meta name="description" content="I.R.I.S Daily Progress Reporting System for Employees.">
+    <link rel="stylesheet" href="css/page-transition.css">
+    <link rel="stylesheet" href="css/student-analytics.css">
+    <link rel="stylesheet" href="css/iris-modal.css">
+    
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <link rel="icon" type="image/png" href="img/site-logo.png">
+    <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
+    <script src="js/page-transition.js"></script>
+    
+    <style>
+        .report-card {
+            background: var(--clr-bg-card);
+            border: 1px solid var(--clr-border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .window-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--clr-border);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #9898a6;
+        }
+        .status-dot.active {
+            background: var(--clr-success);
+            box-shadow: 0 0 10px var(--clr-success);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--clr-text-main); }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--clr-border);
+            background: rgba(255,255,255,0.03);
+            color: var(--clr-text-main);
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: var(--clr-purple);
+            outline: none;
+            background: rgba(255,255,255,0.06);
+        }
+        .report-history {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .history-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--clr-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .history-time { font-size: 0.8rem; color: var(--clr-text-muted); margin-bottom: 8px; }
+        .history-note { font-size: 0.95rem; }
+        
+        /* Missed report styling */
+        .missed-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 25px;
+            }
+
+            @media (max-width: 768px) {
+                .app-topbar .container {
+                    padding: 0 15px;
+                }
+                .sidebar-title { font-size: 1.2rem; }
+                .report-card { padding: 20px; }
+                .history-actions { flex-direction: column; gap: 8px; }
+                .history-actions .btn { width: 100%; }
+                .form-grid {
+                    grid-template-columns: 1fr !important;
+                    gap: 15px;
+                }
+                .chart-controls {
+                    width: 100%;
+                    display: flex;
+                    gap: 8px;
+                }
+                .chart-controls .btn { flex: 1; }
+
+                /* Align the history actions area perfectly on mobile */
+                div[style*="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px"] {
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                    gap: 15px !important;
+                    margin-bottom: 25px !important;
+                }
+
+                div[style*="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px"] h3 {
+                    margin-bottom: 5px !important;
+                    text-align: center;
+                    width: 100%;
+                }
+
+                /* History Action Buttons (View Demo, Email, etc) */
+                div[style*="display:flex; gap:12px"] {
+                    flex-direction: column !important;
+                    width: 100%;
+                }
+
+                div[style*="display:flex; gap:12px"] .btn {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    height: 44px; /* Better touch target */
+                }
+
+                #download-report-btn {
+                    display: none !important;
+                }
+
+                .report-history {
+                    grid-template-columns: 1fr !important;
+                }
+
+                /* Inner Card Buttons */
+                .history-card div[style*="margin-top:15px; display:flex; gap:10px"] {
+                    flex-direction: row; 
+                }
+                .history-card .btn {
+                    flex: 1;
+                    height: 40px;
+                    font-size: 0.8rem;
+                }
+            }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="app-sidebar" role="navigation">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><img src="img/site-logo.png" alt="IRIS"></div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-title">I.R.I.S</span>
+                    <span class="sidebar-slogan">Review & Intelligence System</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" id="sidebar-nav"></nav>
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info-sidebar">
+                    <div class="user-avatar" id="user-avatar-sidebar">U</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="user-name-sidebar">Loading...</div>
+                        <div class="user-role" id="user-role-sidebar">Employee</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Topbar -->
+        <header class="app-topbar">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn"><span class="material-symbols-outlined">menu</span></button>
+                    <span class="topbar-title">Progress Submission</span>
+                </div>
+                <div class="topbar-right">
+                    <span class="badge badge-employee">Employee</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span> Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-content">
+            <div class="container">
+                
+                <!-- Performance Analytics Chart -->
+                <div class="report-card reveal" style="padding: 20px; overflow: hidden;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+                        <div>
+                            <h3 style="font-size:1.1rem; margin:0">Work Consistency</h3>
+                            <p style="font-size:0.85rem; color:var(--clr-text-muted); margin:4px 0 0">Tracking your daily reporting metrics</p>
+                        </div>
+                        <div class="chart-controls" style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary btn-xs active" data-filter="today" onclick="updateChartFilter('today', this)">Today</button>
+                            <button class="btn btn-secondary btn-xs" data-filter="week" onclick="updateChartFilter('week', this)">Week</button>
+                            <button class="btn btn-secondary btn-xs" data-filter="month" onclick="updateChartFilter('month', this)">Month</button>
+                        </div>
+                    </div>
+                    <div id="report-analytics-chart" style="height:220px; width:100%; position:relative;">
+                        <!-- SVG Chart injected by JS -->
+                        <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--clr-text-muted)">
+                            Initializing analytics...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Row & Edit Requests -->
+                <div id="status-container"></div>
+
+                <!-- Submission Form Area -->
+                <div id="submission-area">
+                    <div class="report-card reveal">
+                        <div class="window-status">
+                            <div class="status-dot active"></div>
+                            <div>
+                                <h2 id="window-title" style="font-size:1.2rem; margin:0">Loading Window...</h2>
+                                <p id="window-timer" style="font-size:0.85rem; color:var(--clr-text-muted); margin:4px 0 0">Active reporting window</p>
+                            </div>
+                        </div>
+
+                        <form id="report-form">
+                            <!-- Basic Header Row -->
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="login-time">Login Time</label>
+                                    <input type="time" id="login-time" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="logout-time">Logout Time</label>
+                                    <input type="time" id="logout-time" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <!-- Tasks Assigned -->
+                            <div class="form-group">
+                                <label class="form-label">Tasks / Objectives for the Day</label>
+                                <textarea id="tasks-assigned" class="form-textarea" rows="2" placeholder="List assigned tasks..." required></textarea>
+                            </div>
+
+                            <!-- Tasks Completed -->
+                            <div class="form-group" style="margin-top:25px">
+                                <label class="form-label" style="font-size:1.1rem; border-left:4px solid var(--clr-primary); padding-left:12px; margin-bottom:15px">Tasks Completed (Documentation)</label>
+                                
+                                <div style="display:flex; flex-direction:column; gap:15px">
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Project / Module 1</label>
+                                        <input type="text" id="task-1-name" class="form-input" style="margin-bottom:10px" placeholder="e.g. ERP Development">
+                                        <textarea id="task-1-desc" class="form-textarea" rows="3" placeholder="Description of work done..."></textarea>
+                                    </div>
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Project / Module 2</label>
+                                        <input type="text" id="task-2-name" class="form-input" style="margin-bottom:10px" placeholder="e.g. System Maintenance">
+                                        <textarea id="task-2-desc" class="form-textarea" rows="3" placeholder="Description of work done..."></textarea>
+                                    </div>
+                                    <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:12px; border:1px solid var(--clr-border)">
+                                        <label class="form-label" style="font-size:0.85rem; color:var(--clr-text-muted)">Miscellaneous Work</label>
+                                        <textarea id="task-extra" class="form-textarea" rows="2" placeholder="Any additional tasks or research"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="form-grid" style="margin-top:25px">
+                                <div class="form-group">
+                                    <label class="form-label">Work in Progress</label>
+                                    <textarea id="work-in-progress" class="form-textarea" rows="3" placeholder="Open items..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Pending Items</label>
+                                    <textarea id="pending-tasks" class="form-textarea" rows="3" placeholder="What is scheduled for later?"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Key Takeaways & Research</label>
+                                <textarea id="what-learned" class="form-textarea" rows="2" placeholder="Insights gained today..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Obstacles Encountered</label>
+                                <textarea id="challenges" class="form-textarea" rows="2" placeholder="Challenges faced and resolution status"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Tomorrow's Objectives</label>
+                                <textarea id="next-steps" class="form-textarea" rows="2" placeholder="Key focus areas for the next session"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Professional Signature</label>
+                                <input type="text" id="signature" class="form-input" placeholder="Regards, [Your Name] | Employee @ I.R.I.S">
+                            </div>
+
+                            <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:30px">
+                                <button type="button" class="btn btn-secondary" id="cancel-edit-btn" style="display:none">Cancel Edit</button>
+                                <button type="submit" class="btn btn-primary" id="submit-btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);">
+                                    <span class="material-symbols-outlined" style="margin-right:8px">rocket_launch</span>
+                                    <span id="submit-btn-text">Submit Daily Report</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History Area -->
+                <div class="reveal" style="margin-top:40px">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+                        <h3 style="font-size:1.1rem">Today's Log history</h3>
+                        <div style="display:flex; gap:12px">
+                            <button id="download-demo-pdf-btn" class="btn btn-secondary btn-sm" style="border:1px solid #3b82f6; color:#3b82f6">
+                                <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">visibility</span>
+                                Preview Daily Report
+                            </button>
+                            <button id="send-email-btn" class="btn btn-secondary btn-sm" style="border:1px solid var(--clr-primary); color:var(--clr-primary)">
+                                <span class="material-symbols-outlined" style="margin-right:8px; font-size:18px">mail</span>
+                                Email Report
+                            </button>
+                        </div>
+                    </div>
+                    <div id="report-history" class="report-history">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals & Scripts -->
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/storage.js"></script>
+    <script src="js/sidebar-engine.js"></script>
+    <script src="js/iris-modal.js"></script>
+    <script src="js/reminder-system.js"></script>
+    <script src="js/employee-report.js"></script>
+</body>
+</html>

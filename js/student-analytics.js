@@ -8,7 +8,7 @@
 
 (async () => {
     // ── Auth Guard (admin or intern) ──
-    const session = Auth.requireAuth(['admin', 'user']);
+    const session = Auth.requireAuth(['admin', 'user', 'employee']);
     if (!session) return;
 
     if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
@@ -118,17 +118,17 @@
         const internObj2 = p.internship || {};
         const periodStr = internObj2.startDate
             ? `${fmtDate(internObj2.startDate)} — ${internObj2.endDate ? fmtDate(internObj2.endDate) : 'Present'}`
-            : 'Internship Period';
+            : (p.role === 'employee' ? 'Employment Period' : 'Internship Period');
 
         return `
-        <!-- ═══ INTERN PROFILE BANNER ═══ -->
-        <div class="role-banner ${isAdmin ? 'admin' : 'user'} reveal anim-d1" style="margin-bottom:var(--sp-8)">
+        <!-- ═══ PROFILE BANNER ═══ -->
+        <div class="role-banner ${isAdmin ? 'admin' : (p.role === 'employee' ? 'employee' : 'user')} reveal anim-d1" style="margin-bottom:var(--sp-8)">
             <span class="role-banner-icon" aria-hidden="true">${p.avatar ? `<img src="${p.avatar}" alt="${p.name}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">` : '<span class="material-symbols-outlined">analytics</span>'}</span>
             <div class="role-banner-text">
-                <div class="role-banner-title">${p.name || 'Technical Intern'}</div>
-                <div class="role-banner-sub">${internObj2.role || 'Technical Intern'} ${internObj2.company ? '· ' + internObj2.company : ''} · ${periodStr}</div>
+                <div class="role-banner-title">${p.name || (p.role === 'employee' ? 'Employee' : 'Technical Intern')}</div>
+                <div class="role-banner-sub">${internObj2.role || (p.role === 'employee' ? 'Employee' : 'Technical Intern')} ${internObj2.company ? '· ' + internObj2.company : ''} · ${periodStr}</div>
             </div>
-            <span class="badge ${isAdmin ? 'badge-admin' : 'badge-user'}">${isAdmin ? 'Admin View' : 'My Stats'}</span>
+            <span class="badge ${isAdmin ? 'badge-admin' : (p.role === 'employee' ? 'badge-employee' : 'badge-user')}">${isAdmin ? 'Admin View' : 'My Stats'}</span>
         </div>
 
         <!-- ═══ HOURLY REPORT WIDGET ═══ -->

@@ -23,11 +23,15 @@
 }
 
 .student-hero-banner {
-    height: 160px;
-    /* Default Dark Mode Gradient */
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 92, 252, 0.2));
+    height: 180px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1));
     position: relative;
     overflow: hidden;
+    /* Mesh Gradient Effect */
+    background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,0.3) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
 }
 
 /* Instagram Theme Override */
@@ -67,33 +71,49 @@ body.theme-instagram .student-hero-banner {
 }
 
 .student-orb-1 {
-    width: 260px;
-    height: 260px;
-    background: radial-gradient(circle, var(--clr-cyan), transparent);
-    top: -90px;
-    left: -40px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.15), transparent);
+    top: -120px;
+    left: -60px;
+    filter: blur(40px);
     animation-delay: 1s;
 }
 
 .student-orb-2 {
-    width: 180px;
-    height: 180px;
-    background: radial-gradient(circle, var(--clr-accent), transparent);
-    top: 10px;
-    right: 10%;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent);
+    top: -20px;
+    right: 5%;
+    filter: blur(30px);
     animation-delay: 3s;
+}
+
+/* Glass Orb for extra depth */
+.student-orb-3 {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent);
+    bottom: -30px;
+    left: 40%;
+    filter: blur(20px);
+    animation: anim-float 12s ease-in-out infinite alternate;
 }
 
 /* ── Student Hero Body ── */
 .student-hero-body {
-    padding: var(--sp-8) var(--sp-10) var(--sp-8);
+    padding: var(--sp-10) var(--sp-10) var(--sp-10);
     display: flex;
-    align-items: flex-end;
-    gap: var(--sp-6);
-    margin-top: -55px;
+    align-items: center;
+    gap: var(--sp-8);
+    margin-top: -65px;
     position: relative;
-    z-index: 1;
+    z-index: 10;
     flex-wrap: wrap;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(to bottom, transparent, rgba(15, 23, 42, 0.4));
 }
 
 .student-avatar-wrap {
@@ -102,20 +122,27 @@ body.theme-instagram .student-hero-banner {
 }
 
 .student-avatar {
-    width: 110px;
-    height: 110px;
+    width: 130px;
+    height: 130px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--clr-cyan), var(--clr-indigo));
+    background: linear-gradient(135deg, #00d2ff, #3a7bd5, #8e2de2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.6rem;
+    font-size: 3.2rem;
     font-weight: var(--fw-black);
-    border: 4px solid var(--clr-bg-base);
-    box-shadow: 0 0 35px rgba(34, 211, 238, 0.3), 0 4px 24px rgba(0, 0, 0, .4);
+    border: 6px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 
+        0 0 40px rgba(59, 130, 246, 0.4),
+        inset 0 0 20px rgba(255,255,255,0.2);
     color: #fff;
     overflow: hidden;
-    animation: anim-float 4s ease-in-out infinite;
+    animation: avatarFloat 6s ease-in-out infinite;
+}
+
+@keyframes avatarFloat {
+    0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
+    50% { transform: translateY(-8px) scale(1.02); filter: brightness(1.1); }
 }
 
 .student-avatar img {
@@ -126,14 +153,14 @@ body.theme-instagram .student-hero-banner {
 
 .student-status-dot {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    width: 18px;
-    height: 18px;
-    background: var(--clr-success, #10b981);
+    bottom: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    background: #10b981;
     border-radius: 50%;
-    border: 3px solid var(--clr-bg-base);
-    box-shadow: 0 0 8px rgba(16, 185, 129, .5);
+    border: 4px solid #1a1b26;
+    box-shadow: 0 0 15px rgba(16, 185, 129, .6);
     z-index: 15;
 }
 
@@ -204,15 +231,17 @@ body.theme-instagram .student-hero-banner {
 }
 
 .student-display-name {
-    font-size: var(--fs-3xl);
-    font-weight: var(--fw-black);
-    line-height: 1.2;
-    color: var(--clr-text-primary);
-    margin-bottom: var(--sp-1);
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: var(--sp-2);
     display: inline-flex;
     align-items: center;
     gap: var(--sp-4);
     flex-wrap: wrap;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .student-name-text {
@@ -272,11 +301,12 @@ body.theme-instagram .student-hero-banner {
 
 /* Default Dark Theme Enhanced Name Gradient */
 body:not(.theme-google):not(.theme-instagram) .student-name-text {
-    background: linear-gradient(135deg, var(--clr-text-primary) 0%, var(--clr-accent) 100%);
+    background: linear-gradient(to right, #fff, #3b82f6, #8b5cf6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.2));
 }
 
 
@@ -298,19 +328,22 @@ body:not(.theme-google):not(.theme-instagram) .student-name-text {
     align-items: center;
     gap: var(--sp-2);
     font-size: var(--fs-xs);
-    color: var(--clr-text-secondary);
-    background: rgba(255, 255, 255, .04);
-    border: 1px solid var(--glass-border);
-    padding: .3rem .75rem;
+    color: rgba(255,255,255,0.7);
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: .4rem .9rem;
     border-radius: var(--radius-full);
     text-decoration: none;
-    transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
 }
 
 .student-meta-item:hover {
-    background: rgba(139, 92, 246, .1);
-    border-color: rgba(139, 92, 246, .3);
-    color: var(--clr-accent);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .student-hero-actions {
@@ -414,15 +447,16 @@ body.theme-instagram .completion-pct {
 }
 
 .student-stat-card {
-    background: var(--clr-bg-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    padding: var(--sp-5) var(--sp-6);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: var(--sp-6);
     display: flex;
     align-items: center;
-    gap: var(--sp-4);
-    transition: transform var(--dur-normal) var(--ease-out), border-color var(--dur-normal), box-shadow var(--dur-normal);
-    animation: fadeInUp .5s var(--ease-out) both;
+    gap: var(--sp-5);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: fadeInUp .6s var(--ease-out) both;
 }
 
 .student-stat-card:nth-child(1) {
@@ -438,9 +472,12 @@ body.theme-instagram .completion-pct {
 }
 
 .student-stat-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(34, 211, 238, .25);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-8px) scale(1.02);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.1);
 }
 
 .clickable-stat {
@@ -453,14 +490,19 @@ body.theme-instagram .completion-pct {
 }
 
 .student-stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.student-stat-card:hover .student-stat-icon {
+    transform: rotate(12deg) scale(1.1);
 }
 
 .student-stat-info {
@@ -468,19 +510,19 @@ body.theme-instagram .completion-pct {
 }
 
 .student-stat-value {
-    font-size: var(--fs-2xl);
-    font-weight: var(--fw-black);
+    font-size: 2.2rem;
+    font-weight: 900;
     line-height: 1;
-    color: #8b5cf6;
+    color: #fff;
+    margin-bottom: 4px;
 }
 
 .student-stat-label {
-    font-size: var(--fs-xs);
-    color: var(--clr-text-muted);
-    font-weight: var(--fw-medium);
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .06em;
-    margin-top: 4px;
+    letter-spacing: .12em;
 }
 
 /* ── Main grid ── */
@@ -1233,4 +1275,20 @@ body.theme-instagram .inline-form .field-input:focus {
     opacity: 1;
     background: rgba(139, 92, 246, 0.1);
     transform: translateX(3px) scale(1.1);
+}
+
+.btn-glow {
+    position: relative;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    border: none !important;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #d946ef) !important;
+    background-size: 200% auto !important;
+    transition: all 0.3s ease !important;
+    color: #fff !important;
+}
+
+.btn-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+    background-position: right center !important;
 }

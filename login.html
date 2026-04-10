@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>I.R.I.S — Sign In</title>
   <meta name="description"
-    content="I.R.I.S: Secure internal review and intelligence system for intern management. Sign in to access your workspace.">
+    content="I.R.I.S: Secure internal review and intelligence system for performance management. Sign in to access your workspace.">
   <link rel="stylesheet" href="css/page-transition.css">
   <link rel="stylesheet" href="css/login.css">
   <!-- Firebase CDN -->
@@ -47,7 +47,7 @@
             </div>
             <div class="brand-info">
               <span class="brand-name">I.R.I.S</span>
-              <span class="brand-tagline">Intern Review &amp; Intelligence System</span>
+              <span class="brand-tagline">Internal Review &amp; Intelligence System</span>
             </div>
           </div>
 
@@ -57,7 +57,7 @@
           </h1>
 
           <p class="hero-desc">
-            A role-based internship management &amp; project portfolio platform built for modern teams.
+            A role-based professional management &amp; project portfolio platform built for modern teams.
             Showcase your work, track your progress, and get noticed.
           </p>
 
@@ -93,8 +93,12 @@
             <!-- Role Selector -->
             <div class="role-toggle" role="group" aria-label="Select your role">
               <button class="role-btn active" id="role-admin" data-role="admin" type="button" aria-pressed="true">
-                <span class="material-symbols-outlined" style="font-size: 16px;">school</span>
+                <span class="material-symbols-outlined" style="font-size: 16px;">shield_person</span>
                 Admin
+              </button>
+              <button class="role-btn" id="role-employee" data-role="employee" type="button" aria-pressed="false">
+                <span class="material-symbols-outlined" style="font-size: 16px;">badge</span>
+                Employee
               </button>
               <button class="role-btn" id="role-user" data-role="user" type="button" aria-pressed="false">
                 <span class="material-symbols-outlined" style="font-size: 16px;">person</span>

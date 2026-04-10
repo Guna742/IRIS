@@ -18,6 +18,13 @@
   }
 
   const isAdmin = session.role === 'admin';
+  const isEmployee = session.role === 'employee';
+
+  // Employees have their own dedicated profile page
+  if (isEmployee) {
+    window.location.replace('employee-profile.html');
+    return;
+  }
 
   // ── Sync latest data ──
   try {
