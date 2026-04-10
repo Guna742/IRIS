@@ -301,6 +301,23 @@
     // ─────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────
+    
+    async function loadRewards(userId) {
+        if (typeof BadgeEngine === 'undefined') return;
+        const ptsEl = document.getElementById('points-display');
+        const badgesEl = document.getElementById('badges-display');
+
+        try {
+            const { points, badges } = await BadgeEngine.getUserRewards(userId);
+            if (ptsEl) ptsEl.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">bolt</span> ${points} Points`;
+            if (badgesEl) badgesEl.innerHTML = BadgeEngine.renderBadges(badges);
+        } catch (err) {
+            console.warn('[AdminProfile] loadRewards error:', err);
+        }
+    }
+    
+    // Trigger load
+    loadRewards(session.userId);
 
     function setEl(id, html) {
         const el = document.getElementById(id);

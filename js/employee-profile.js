@@ -247,7 +247,14 @@
                                 </div>
                                 <div>
                                     <div style="font-size:10px;color:var(--clr-text-muted);margin-bottom:var(--sp-2);text-transform:uppercase;letter-spacing:.05em">Unlocked Highlights</div>
-                                    <div class="badge-showcase" id="badges-display">Loading...</div>
+                                    <div class="badge-showcase" id="badges-display" style="margin-bottom: 12px;">Loading...</div>
+                                    <div style="font-size:11px;color:var(--clr-text-secondary);margin-bottom:var(--sp-3);line-height:1.4;background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);">
+                                        Earn points and unlock prestigious badges through active collaboration, problem-solving, and continuous growth.
+                                    </div>
+                                    <a href="badges.html" class="btn btn-primary btn-sm" style="width:100%; margin-bottom: 8px; justify-content:center;">
+                                        <span class="material-symbols-outlined" style="font-size:16px">explore</span>
+                                        Explore About Badges
+                                    </a>
                                 </div>
                                 <a href="doubts.html" class="btn btn-secondary btn-sm" style="width:100%">
                                     <span class="material-symbols-outlined" style="font-size:16px">chat</span>The Wall
