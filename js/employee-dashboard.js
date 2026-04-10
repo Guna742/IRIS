@@ -48,7 +48,7 @@
         renderRecentReports(reports);
         renderRecentProjects(myProjects);
         renderInsights(profile, reports);
-        renderMission(reports);
+        renderMission(profile, reports, myProjects);
         renderJourney(profile, reports);
         renderSkills(profile);
 
@@ -165,24 +165,26 @@
                     <div class="insights-text" style="font-size:12px; line-height:1.4; color:var(--clr-text-muted);">
                         Current Performance Index: <b style="color:var(--clr-accent)">${evalRes.score}/100</b>. <br>
                         <span style="opacity:0.9">${evalRes.feedback}</span>
-                        ${evalRes.score > 0 ? `<br><small style="color:var(--clr-success); font-weight:700;">Optimization target achieved! 🔥</small>` : ''}
+                        <br><small style="color:var(--clr-accent); opacity:0.8;">The iris system detected an <b>8%</b> efficiency surge in your sector. Standing by for next sync. 🔥</small>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    function renderMission(reports) {
+    function renderMission(profile, reports, projects) {
         const el = document.getElementById('checklist-content');
         if (!el) return;
 
         const today = new Date().toDateString();
         const hasLogToday = reports.some(r => new Date(r.createdAt).toDateString() === today);
+        const hasProjects = projects.length > 0;
+        const profileComplete = (Storage.getProfileMetrics ? Storage.getProfileMetrics(profile).completion : 0) > 80;
 
         const tasks = [
             { label: 'Submit Daily Activity Log', done: hasLogToday, href: 'employee-report.html' },
-            { label: 'Review Project Benchmarks', done: false, href: 'employee-projects.html' },
-            { label: 'Update Corporate Portfolio', done: true, href: 'employee-profile.html' }
+            { label: 'Review Project Benchmarks', done: hasProjects, href: 'employee-projects.html' },
+            { label: 'Update Corporate Portfolio', done: profileComplete, href: 'employee-profile.html' }
         ];
 
         el.innerHTML = tasks.map(t => `
