@@ -14,8 +14,8 @@
     // ── Global State ──
     const userId = session.userId;
     const WINDOWS = [
-        { id: 1, label: 'Morning Session (9AM - 1PM)', start: 9, end: 13, name: 'Morning Report' },
-        { id: 2, label: 'Afternoon Session (2PM - 6PM)', start: 14, end: 18, name: 'Evening Report' }
+        { id: 1, label: 'Morning Session (9AM - 2PM)', start: 9, end: 14, name: 'Morning Report' },
+        { id: 2, label: 'Afternoon Session (2PM - 8PM)', start: 14, end: 20, name: 'Evening Report' }
     ];
 
     let editMode = false;
@@ -67,6 +67,10 @@
         if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEdit);
         if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
         if (downloadBtn) downloadBtn.addEventListener('click', generateDailyPDF);
+        
+        // Link new Preview and Email buttons
+        document.getElementById('download-demo-pdf-btn')?.addEventListener('click', generateDailyPDF);
+        document.getElementById('send-email-btn')?.addEventListener('click', handleEmailReport);
 
         // Pre-fill signature if profile exists
         const profile = Storage.getProfile(userId);
@@ -90,7 +94,7 @@
         let activeWindow = WINDOWS.find(w => hr >= w.start && hr < w.end);
         const submittedCurrent = activeWindow ? todayReports.find(r => r.window === activeWindow.id) : null;
         
-        const isLate = hr >= 18;
+        const isLate = hr >= 20;
         renderHistory(todayReports);
 
         // Always ensure form is interactive
@@ -98,7 +102,7 @@
 
         if (isLate) {
             windowTitle.textContent = "Reporting Period Closed";
-            windowTimer.textContent = "Today's reporting window is closed. You can still prepare drafts for tomorrow.";
+            windowTimer.textContent = "Today's reporting window is closed (8 PM). You can still prepare drafts for tomorrow.";
             submitBtn.disabled = true;
             submitBtnText.textContent = "Log Closed";
         } else if (!activeWindow) {
@@ -118,7 +122,7 @@
             editingReportId = submittedCurrent.id; 
         } else {
             windowTitle.textContent = `Active Session: ${activeWindow.label}`;
-            windowTimer.textContent = `Logging your progress for the current session. Ends at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
+            windowTimer.textContent = `Logging your progress for the current session. Ends at ${activeWindow.end === 14 ? '2:00 PM' : '8:00 PM'}.`;
             submitBtn.disabled = false;
             submitBtnText.textContent = "Submit Daily Progress";
             editingReportId = null;
@@ -344,6 +348,18 @@
         const sig = todayReports[todayReports.length-1]?.data?.signature || "Sincerely, Employee";
         y += 15; doc.setFont("helvetica", "italic"); doc.text(sig, 15, y);
         doc.save(`IRIS_Employee_Log_${now.toISOString().split('T')[0]}.pdf`);
+    }
+
+    function handleEmailReport() {
+        const profile = Storage.getProfile(userId);
+        const name = profile.name || session.displayName;
+        const subject = encodeURIComponent(`Daily Progress Log - ${name} - ${new Date().toDateString()}`);
+        const body = encodeURIComponent(`Hello,\n\nPlease find my daily progress log for ${new Date().toDateString()} attached.\n\nBest regards,\n${name}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        
+        if (typeof IrisModal !== 'undefined') {
+            IrisModal.alert("Email client opened! Please confirm you have attached the PDF log before sending.", "Email Report");
+        }
     }
 
     let chartFilter = 'today';
