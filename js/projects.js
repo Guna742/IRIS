@@ -64,6 +64,7 @@
     
     const isAdmin = session.role === 'admin';
     const isUser = session.role === 'user' || session.role === 'employee';
+    let activeRoleFilter = 'all';
 
     // SidebarEngine.init() handles badges and banners globally
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
@@ -79,6 +80,20 @@
         document.getElementById('add-btn-top').style.display = 'none';
         document.getElementById('no-permission-tip').innerHTML = '⭐ <strong>Reviewer Mode</strong>: You can provide feedback and ratings for member projects below.';
         document.getElementById('no-permission-tip').style.display = 'block';
+        
+        // Initialize Role Filters for Admin
+        const roleFilters = document.getElementById('role-filters');
+        if (roleFilters) {
+            roleFilters.style.display = 'flex';
+            roleFilters.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    roleFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeRoleFilter = btn.dataset.role;
+                    renderProjects();
+                });
+            });
+        }
     } else {
         document.getElementById('no-permission-tip').style.display = 'block';
     }
@@ -136,9 +151,18 @@
                 }
             });
 
-            const groups = Object.values(internGroups);
+            let groups = Object.values(internGroups);
+            
+            // Apply Role Filter
+            if (activeRoleFilter !== 'all') {
+                groups = groups.filter(g => {
+                    const profile = Storage.getProfile(g.uid);
+                    return profile?.role === activeRoleFilter;
+                });
+            }
+
             if (groups.length === 0) {
-                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-title">No intern portfolios yet.</div></div>`;
+                grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-title">${activeRoleFilter === 'all' ? 'No intern portfolios yet.' : 'No profiles found for this category.'}</div></div>`;
                 return;
             }
 

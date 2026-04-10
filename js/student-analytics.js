@@ -830,6 +830,7 @@
 
         const colors = ['#7c5cfc', '#22d3ee', '#10b981', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6'];
 
+        console.log('[Analytics] Rendering bar chart with skills:', skills);
         const categories = skills.length > 0
             ? skills.map((s, i) => {
                 const name = typeof s === 'object' ? s.name : s;

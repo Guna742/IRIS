@@ -13,8 +13,8 @@
     // ── Global State ──
     const userId = session.userId;
     const WINDOWS = [
-        { id: 1, label: 'Morning Report (9AM - 1PM)', start: 9, end: 13, name: 'Morning Progress' },
-        { id: 2, label: 'Afternoon Report (2PM - 6PM)', start: 14, end: 18, name: 'Final Progress' }
+        { id: 1, label: 'Morning Report (9AM - 2PM)', start: 9, end: 14, name: 'Morning Progress' },
+        { id: 2, label: 'Afternoon Report (2PM - 8PM)', start: 14, end: 20, name: 'Final Progress' }
     ];
 
     let editMode = false;
@@ -66,6 +66,10 @@
         if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEdit);
         if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
         if (downloadBtn) downloadBtn.addEventListener('click', generateDailyPDF);
+        
+        // Link new Preview and Email buttons
+        document.getElementById('download-demo-pdf-btn')?.addEventListener('click', generateDailyPDF);
+        document.getElementById('send-email-btn')?.addEventListener('click', handleEmailReport);
 
         // Pre-fill signature if profile exists
         const profile = Storage.getProfile(userId);
@@ -90,14 +94,14 @@
         let activeWindow = WINDOWS.find(w => hr >= w.start && hr < w.end);
         const submittedCurrent = activeWindow ? todayReports.find(r => r.window === activeWindow.id) : null;
         
-        const isLate = hr >= 18;
+        const isLate = hr >= 20;
         renderHistory(todayReports);
 
         // Always ensure form is interactive for preparation
         setFormDisabled(false);
 
         if (isLate) {
-            windowTitle.textContent = "Reporting Hours Closed (6 PM)";
+            windowTitle.textContent = "Reporting Hours Closed (8 PM)";
             windowTimer.textContent = "You can still prepare your report, but submissions are currently locked until tomorrow.";
             submitBtn.disabled = true;
             submitBtnText.textContent = "Window Closed";
@@ -121,7 +125,7 @@
             editingReportId = submittedCurrent.id; 
         } else {
             windowTitle.textContent = `Active: ${activeWindow.label}`;
-            windowTimer.textContent = `Please fill out your full progress report. Window closes at ${activeWindow.end === 13 ? '1:00 PM' : '6:00 PM'}.`;
+            windowTimer.textContent = `Please fill out your full progress report. Window closes at ${activeWindow.end === 14 ? '2:00 PM' : '8:00 PM'}.`;
             submitBtn.disabled = false;
             submitBtnText.textContent = "Submit Full Report";
             editingReportId = null;
@@ -376,6 +380,18 @@
         doc.text(signature, 15, y);
 
         doc.save(`IRIS_FullReport_${now.toISOString().split('T')[0]}.pdf`);
+    }
+
+    function handleEmailReport() {
+        const profile = Storage.getProfile(userId);
+        const name = profile.name || session.displayName;
+        const subject = encodeURIComponent(`Daily Progress Report - ${name} - ${new Date().toDateString()}`);
+        const body = encodeURIComponent(`Hello,\n\nPlease find attached my daily progress report for ${new Date().toDateString()}.\n\nRegards,\n${name}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        
+        if (typeof IrisModal !== 'undefined') {
+            IrisModal.alert("Email client opened. Remember to attach the PDF you just generated!", "Email Report");
+        }
     }
 
     // ── Analytics Chart Component (Performance Overview) ──

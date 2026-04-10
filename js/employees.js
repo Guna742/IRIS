@@ -33,16 +33,7 @@
   // ── Helper: get all employee profiles ──
   function getEmployeeProfiles() {
     const all = Object.values(Storage.getProfiles());
-    return all.filter(p => {
-      // Direct role match (Preferred)
-      if (p.role === 'employee') return true;
-      // Fallback for transitionary profiles
-      const tagline = (p.tagline || '').toLowerCase();
-      const roleTitle = (p.roleTitle || '').toLowerCase();
-      if (tagline.includes('employee') || roleTitle.includes('employee')) return true;
-      if (p.salary && p.salary > 0) return true; // Employees usually have salary recorded
-      return false;
-    });
+    return all.filter(p => p.role === 'employee');
   }
 
   // ── Global Search Filter ──
@@ -170,7 +161,13 @@
             ${hasPic ? `<img src="${profile.avatar}" alt="${profile.name}">` : `<span class="student-avatar-initials">${initial}</span>`}
           </div>
           <div class="student-identity">
-            <div class="student-name">${profile.name || 'Unnamed Employee'}</div>
+            <div class="student-name">
+              ${profile.name || 'Unnamed Employee'}
+              ${Storage.getEmployeeRank ? (() => {
+                const rank = Storage.getEmployeeRank(profile.userId);
+                return rank ? `<span class="intern-rank-badge" style="background:rgba(59,130,246,0.1); color:var(--clr-accent); border-color:rgba(59, 130, 246, 0.2)">#${rank}</span>` : '';
+              })() : ''}
+            </div>
             <div class="student-role-tag">${dept}${company ? ' @ ' + company : ''}</div>
           </div>
           ${isSuspended ? `<div class="suspended-badge">Suspended</div>` : ''}

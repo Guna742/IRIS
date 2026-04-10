@@ -428,12 +428,26 @@ const Storage = (() => {
         return { completion, score, points, rating: parseFloat(avgRating) };
     }
 
-    /** Calculate rank for a specific intern based on overall score */
+    /** Calculate rank for a specific intern based on overall score (Interns Only) */
     function getInternRank(userId) {
         const profiles = getProfiles();
-        const internList = Object.values(profiles);
+        const internList = Object.values(profiles).filter(p => !p.role || p.role === 'user');
 
         const enriched = internList.map(p => ({
+            userId: p.userId,
+            score: computeInternScore(p)
+        })).sort((a, b) => b.score - a.score);
+
+        const index = enriched.findIndex(p => p.userId === userId);
+        return index > -1 ? index + 1 : null;
+    }
+
+    /** Calculate rank for a specific employee based on overall score (Employees Only) */
+    function getEmployeeRank(userId) {
+        const profiles = getProfiles();
+        const employeeList = Object.values(profiles).filter(p => p.role === 'employee');
+
+        const enriched = employeeList.map(p => ({
             userId: p.userId,
             score: computeInternScore(p)
         })).sort((a, b) => b.score - a.score);

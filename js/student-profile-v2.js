@@ -205,6 +205,7 @@
                                     </span>
                                 `).join('')}
                             </div>
+                            ${(p.skills || []).length > 0 ? `<button id="clear-skills-btn" class="btn-text" style="color:var(--clr-danger);font-size:11px;margin-top:10px;display:flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:14px">delete_forever</span> Clear All Skills</button>` : ''}
                         </div>
                     </section>
                 </div>
@@ -367,6 +368,16 @@
                 if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
                 refresh(p, session);
             });
+        });
+
+        document.getElementById('clear-skills-btn')?.addEventListener('click', async () => {
+            if (await IrisModal.confirm('Are you sure you want to delete ALL skills?')) {
+                p.skills = [];
+                Storage.saveProfile(session.userId, p);
+                if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
+                showToast('All skills cleared.', 'success');
+                refresh(p, session);
+            }
         });
     }
 

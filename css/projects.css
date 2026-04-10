@@ -13,6 +13,23 @@
     margin-bottom: var(--sp-8);
 }
 
+/* -- Filter Buttons -- */
+.filter-group .btn {
+    border-radius: var(--radius-full);
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.filter-btn.active {
+    background: var(--clr-accent) !important;
+    color: #fff !important;
+    border-color: var(--clr-accent) !important;
+    box-shadow: 0 8px 20px var(--clr-accent-glow);
+    transform: translateY(-2px);
+}
+
 /* ── Card Grid ── */
 .projects-grid {
     display: grid;

@@ -89,6 +89,14 @@
                         </div>
                         <p class="page-subtitle" id="project-count-label">Loading projects...</p>
                     </div>
+
+                    <!-- Role Filters (Admin Only) -->
+                    <div class="filter-group anim-fadeInUp" id="role-filters" style="margin-top: 20px; display: none; gap: 10px;">
+                        <button class="btn btn-secondary btn-sm filter-btn active" data-role="all">All Members</button>
+                        <button class="btn btn-secondary btn-sm filter-btn" data-role="user">Technical Interns</button>
+                        <button class="btn btn-secondary btn-sm filter-btn" data-role="employee">Employees</button>
+                    </div>
+
                     <!-- Admin desktop Add button (alternative to FAB) -->
                     <button class="btn btn-primary" id="add-btn-top" style="display:none" aria-label="Add new project">
                         <span class="material-symbols-outlined" style="font-size: 16px;">add</span>

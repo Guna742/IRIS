@@ -198,13 +198,14 @@
                                     <button class="btn btn-primary btn-sm" id="save-skill-btn">Add</button>
                                 </div>
                             </div>
-                            <div class="skills-cloud">
+                            <div class="skills-cloud" id="skills-cloud-container">
                                 ${(p.skills || []).map(s => `
                                     <span class="skill-badge">${typeof s === 'object' ? s.name : s} ${typeof s === 'object' ? `<span class="skill-pct-tag">${s.level}%</span>` : ''}
                                         <button class="skill-remove-btn" data-skill="${typeof s === 'object' ? s.name : s}">&times;</button>
                                     </span>
                                 `).join('')}
                             </div>
+                            ${(p.skills || []).length > 0 ? `<button id="clear-skills-btn" class="btn-text" style="color:var(--clr-danger);font-size:11px;margin-top:10px;display:flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:14px">delete_forever</span> Clear All Skills</button>` : ''}
                         </div>
                     </section>
 
@@ -364,6 +365,16 @@
                 if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
                 refresh(p, session);
             });
+        });
+
+        document.getElementById('clear-skills-btn')?.addEventListener('click', async () => {
+            if (await IrisModal.confirm('Are you sure you want to delete ALL skills? This cannot be undone.')) {
+                p.skills = [];
+                Storage.saveProfile(session.userId, p);
+                if (Storage.syncInternProfile) await Storage.syncInternProfile(session.userId, p);
+                showToast('All skills cleared from database.', 'success');
+                refresh(p, session);
+            }
         });
     }
 
