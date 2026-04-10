@@ -103,6 +103,7 @@
             email: email.trim().toLowerCase(),
             tagline: `${role} at ${company}`,
             role: type === 'employee' ? 'employee' : 'user',
+            verified: type === 'employee' ? true : true, // When admin creates, they are verified by default
             skills: [],
             internship: {
                 company: company,
@@ -122,7 +123,7 @@
         profile = allProfiles[currentStudentId];
         skills = [];
         populateForm(profile);
-        showToast(`Created draft for ${name} (${label})`, 'success');
+        showToast(`Draft created for ${name}! Please fill details and click "Save Profile" to sync to database.`, 'info');
     }
 
     // ── Add Admin ──
@@ -246,8 +247,9 @@
             }
         };
 
-        // If it's a new intern, we need account creation
+        // If it's a new intern/employee, we need account creation
         if (p._isNew) {
+            IrisModal.alert(`This is a new account for ${p.name}. You must now set a password to create their cloud account and sync to the database.`, 'Account Creation');
             const password = await showCredentialModal();
             if (!password) {
                 showToast('Creation cancelled. Profile not saved to cloud.', 'info');

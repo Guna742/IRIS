@@ -499,20 +499,22 @@ const Storage = (() => {
         }
     }
 
-    // ── ADMIN: Create intern credential record in admins/{adminId}/interns/{internId} ──
-    async function createInternRecord(adminId, internId, internEmail, internName) {
-        if (!adminId || !internId) return;
+    // ── ADMIN: Create staff record in admins/{adminId}/[interns|employees]/{id} ──
+    async function createStaffRecord(adminId, staffId, email, name, role = 'user') {
+        if (!adminId || !staffId) return;
+        const sub = role === 'employee' ? 'employees' : 'interns';
         try {
             await fbDb.collection('admins').doc(adminId)
-                .collection('interns').doc(internId).set({
-                    email: internEmail,
-                    name: internName,
-                    internId,
+                .collection(sub).doc(staffId).set({
+                    email,
+                    name,
+                    userId: staffId,
+                    role: role,
                     createdAt: Date.now()
                 });
-            console.log('[Storage] Intern record created under admin.');
+            console.log(`[Storage] ${role} record created under admin.`);
         } catch (err) {
-            console.error('[Storage] createInternRecord error:', err);
+            console.error('[Storage] createStaffRecord error:', err);
         }
     }
 
@@ -652,6 +654,7 @@ const Storage = (() => {
                 ...profile,
                 userId,
                 role: profile.role || 'user',
+                verified: profile.role === 'employee' ? (profile.verified ?? true) : true,
                 displayName: name,
                 createdAt: Date.now()
             };
@@ -679,13 +682,13 @@ const Storage = (() => {
                 };
             }
 
-            // 5. Write credential record to admins/{adminId}/interns/{internId}
-            console.log('[Storage] Step 5: Writing admin credential record...');
+            // 5. Write credential record to admins/{adminId}/[interns|employees]/{userId}
+            console.log('[Storage] Step 5: Writing admin staff record...');
             try {
-                await createInternRecord(adminSession.userId, userId, email, name);
+                await createStaffRecord(adminSession.userId, userId, email, name, finalProfile.role);
                 console.log('[Storage] Step 5 OK.');
             } catch (recErr) {
-                console.warn('[Storage] Step 5 WARN — createInternRecord failed (non-critical):', recErr.message);
+                console.warn('[Storage] Step 5 WARN — createStaffRecord failed (non-critical):', recErr.message);
             }
 
             // 6. Update localStorage with the real Firebase UID
@@ -1028,7 +1031,7 @@ const Storage = (() => {
         updateMissedReportRequestStatus,
         // Firestore Sync
         syncAdminProfile,
-        createInternRecord,
+        createStaffRecord,
         syncInternProfile,
         syncAnalytics,
         syncProject,

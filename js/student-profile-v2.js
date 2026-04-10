@@ -31,7 +31,11 @@
 
     // Topbar badge
     const badge = document.getElementById('topbar-role-badge');
-    if (badge) { badge.textContent = 'Intern'; badge.className = 'badge badge-user'; }
+    const isEmployee = session.role === 'employee';
+    if (badge) { 
+        badge.textContent = isEmployee ? 'Employee' : 'Intern'; 
+        badge.className = `badge ${isEmployee ? 'badge-employee' : 'badge-user'}`; 
+    }
 
     document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
@@ -119,7 +123,7 @@
                                 ? `<img src="${p.avatar}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
                                 : `<span>${(p.name || 'I')[0].toUpperCase()}</span>`}
                         </div>
-                        ${isActive ? `<div class="student-status-dot" title="Active Intern"></div>` : ''}
+                        ${isActive ? `<div class="student-status-dot" title="Active Account"></div>` : ''}
                     </div>
                     <div class="student-info">
                         <div class="student-display-name">
@@ -131,7 +135,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="student-tagline">${p.tagline || (intern.role ? `${intern.role} at ${intern.company || 'I.R.I.S'}` : 'Intern at I.R.I.S')}</div>
+                        <div class="student-tagline">${p.tagline || (intern.role ? `${intern.role} at ${intern.company || 'I.R.I.S'}` : (isEmployee ? 'Employee at I.R.I.S' : 'Intern at I.R.I.S'))}</div>
                         <div class="student-meta-row">
                              ${p.location ? `<span class="student-meta-item"><span class="material-symbols-outlined" style="font-size: 14px;">location_on</span>${p.location}</span>` : ''}
                             ${intern.company ? `<span class="student-meta-item"><span class="material-symbols-outlined" style="font-size: 14px;">domain</span>${intern.company}</span>` : ''}
@@ -287,7 +291,9 @@
 
             if (rankBatch && Storage.getInternRank) {
                 const rank = Storage.getInternRank(userId);
-                if (rank) rankBatch.innerHTML = `<span class="student-rank-badge">#${rank} Rank</span>`;
+                if (rank) {
+                    rankBatch.innerHTML = `<span class="student-rank-badge">#${rank} ${session.role === 'employee' ? 'Employee' : 'Intern'} Rank</span>`;
+                }
             }
         } catch (err) {
             console.warn('[Profile] loadRewards error:', err);
@@ -370,7 +376,7 @@
             outputEl.innerHTML = buildStudentHTML(p, session, currentProjectIdx);
             setupEventListeners(p, session);
             loadRewards(session.userId);
-            SidebarEngine.init(session, 'student-profile.html');
+            SidebarEngine.init();
             initReveal();
         }
     }

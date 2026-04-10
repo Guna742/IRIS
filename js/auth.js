@@ -32,7 +32,7 @@ const Auth = (() => {
    * Attempt login using Firebase Auth.
    * @param {string} email
    * @param {string} password
-   * @param {string} role — 'admin' | 'user'
+   * @param {string} role — 'admin' | 'employee' | 'user'
    * @returns {Promise<{ success: boolean, user?: object, error?: string }>}
    */
   async function login(email, password, role) {
@@ -43,8 +43,8 @@ const Auth = (() => {
       // Look up role from Firestore
       let storedRole = null;
       let displayName = firebaseUser.displayName || '';
+      let data = null; 
       try {
-        let data = null;
         const doc = await fbDb.collection('users').doc(firebaseUser.uid).get();
         if (doc.exists) {
           data = doc.data();
@@ -69,9 +69,7 @@ const Auth = (() => {
               }
 
               // ── CRITICAL FIX ──
-              // Ensure users/{uid} has role:'admin' so Firestore security rules
-              // (isAdmin() checks users/{uid}.role == 'admin') work correctly.
-              // Without this, all admin Firestore writes return permission-denied.
+              // Ensure users/{uid} has role:'admin' so Firestore security rules work correctly.
               if (!data || data.role !== 'admin') {
                 try {
                   await fbDb.collection('users').doc(firebaseUser.uid).set({
@@ -109,6 +107,12 @@ const Auth = (() => {
         return { success: false, error: errorMessage };
       }
 
+      // ── VERIFICATION CHECK FOR EMPLOYEES ──
+      if (storedRole === 'employee' && data && data.verified === false) {
+        await fbAuth.signOut();
+        return { success: false, error: "Account pending verification. Please contact your administrator." };
+      }
+
       // Sync everything from the cloud to local storage (force = true)
       if (typeof Storage !== 'undefined' && Storage.fetchEverything) {
         await Storage.fetchEverything(true);
@@ -120,25 +124,31 @@ const Auth = (() => {
     } catch (err) {
       console.error('Login error:', err);
       let msg = 'Sign in failed. Please try again.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        msg = 'Invalid email or password. Please check your credentials.';
-      } else if (err.code === 'auth/too-many-requests') {
-        msg = 'Too many failed attempts. Please try again later.';
-      } else if (err.code === 'auth/invalid-email') {
-        msg = 'Please enter a valid email address.';
+      
+      if (err.code) {
+        const isCredentialError = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/user-disabled', 'auth/invalid-email'].includes(err.code);
+        if (isCredentialError) {
+          msg = 'Invalid email or password. Please check your credentials.';
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = 'Too many failed attempts. Please try again later.';
+        } else if (err.code === 'auth/network-request-failed') {
+          msg = 'Network error. Please check your internet connection.';
+        } else {
+          msg = `Login Error: ${err.message} (${err.code})`;
+        }
+      } else {
+        msg = `System Error: ${err.name} - ${err.message}`;
       }
+      
       return { success: false, error: msg };
     }
   }
-
-
 
   /** Clear session and redirect to login. */
   async function logout() {
     try { await fbAuth.signOut(); } catch (_) { }
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
-    // When logging out, clear any return path to avoid confusion
     sessionStorage.removeItem('iris_return_url');
     window.location.href = 'login.html';
   }
@@ -170,30 +180,32 @@ const Auth = (() => {
   }
 
   /**
-   * Guard: require auth. If not authenticated, redirect to login.
+   * Guard: require auth.
    * @param {string[]} [allowedRoles]
    */
   function requireAuth(allowedRoles) {
     const session = getSession();
     if (!session) {
+      // Save return URL
+      sessionStorage.setItem('iris_return_url', window.location.href);
       window.location.replace('login.html');
       return null;
     }
     if (allowedRoles && !allowedRoles.includes(session.role)) {
-      redirectByRole(); // Smart redirect based on role
+      redirectByRole();
       return null;
     }
     return session;
   }
 
-  /** Redirect authenticated users away from login page or on auth failure. */
+  /** Redirect authenticated users based on role. */
   function redirectByRole() {
     const session = getSession();
     if (session) {
       // Check for a saved return URL first
       const returnUrl = sessionStorage.getItem('iris_return_url');
       if (returnUrl) {
-        sessionStorage.removeItem('iris_return_url'); // Use once
+        sessionStorage.removeItem('iris_return_url');
         window.location.replace(returnUrl);
         return;
       }
@@ -201,7 +213,8 @@ const Auth = (() => {
       if (session.role === 'admin') {
         window.location.replace('dashboard.html');
       } else if (session.role === 'employee') {
-        window.location.replace('employee-profile.html');
+        // Use the new employee dashboard if available
+        window.location.replace('employee-dashboard.html');
       } else {
         window.location.replace('dashboard.html');
       }
@@ -211,28 +224,16 @@ const Auth = (() => {
   }
 
   // ── Automatic Auth Guard ──
-  // Triggers immediately when Auth module loads to prevent unauthorized access.
-  // Page is hidden (see top of file) and only revealed here if user is allowed.
   (() => {
     const path = window.location.pathname;
-    // Robust check for login page: ends with login.html, is the root /, or is index.html
     const isLoginPage = path.endsWith('login.html') || path === '/' || path.endsWith('/') || path.endsWith('index.html');
     const session = getSession();
 
     if (!isLoginPage && !session) {
-      // Not on login page & not logged in -> redirect to login immediately.
-      // Save the current path to return here after login
       sessionStorage.setItem('iris_return_url', window.location.href);
       window.location.replace('login.html');
-      return; // Don't reveal the page
+      return;
     } 
-    
-    // If on login page and already have a session, maybe they want to go to their dashboard?
-    // But we are respecting the "login page must come first" or manual access.
-    // If the user is on login page but ALREADY has a returnUrl (from a previous session/redirect),
-    // we keep it so redirectByRole can use it after login.
-
-    // ── User is allowed on this page — reveal it ──
     document.documentElement.style.visibility = '';
   })();
 

@@ -35,7 +35,7 @@ const SidebarEngine = (() => {
 
         // ── Populate User Info ──
         const adminProfile = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : null;
-        const userProfile = !isAdmin ? (Storage.getProfile ? Storage.getProfile(session.userId) : null) : null;
+        const userProfile = (isEmployee || !isAdmin) ? (Storage.getProfile ? Storage.getProfile(session.userId) : null) : null;
         const currentName = (isAdmin ? adminProfile?.name : userProfile?.name) || session.displayName || 'User';
         const currentAvatar = isAdmin ? adminProfile?.avatar : userProfile?.avatar;
 
@@ -65,7 +65,7 @@ const SidebarEngine = (() => {
                         <span style="color:var(--clr-primary); font-weight:700;">${levelTitle}</span>
                         <span style="opacity:0.6; font-size:10px; display:flex; align-items:center; gap:3px;">
                             <span class="material-symbols-outlined" style="font-size:12px;">psychology</span>
-                             Intelligence Active
+                              Intelligence Active
                         </span>
                     </div>
                 </div>

@@ -157,6 +157,7 @@
     const hasPic   = !!profile.avatar;
     const now      = Date.now();
     const isSuspended = profile.suspendedUntil && profile.suspendedUntil > now;
+    const isVerified = profile.verified !== false; // Default to true if not explicitly false
     const dept     = profile.internship?.role || profile.department || 'Employee';
     const company  = profile.internship?.company || profile.company || '';
 
@@ -173,6 +174,8 @@
             <div class="student-role-tag">${dept}${company ? ' @ ' + company : ''}</div>
           </div>
           ${isSuspended ? `<div class="suspended-badge">Suspended</div>` : ''}
+          ${!isVerified ? `<div class="unverified-badge" style="background:rgba(239,68,68,0.1);color:#f87171;font-size:10px;padding:2px 8px;border-radius:12px;border:1px solid rgba(239,68,68,0.2);margin-right:12px">Unverified</div>` : ''}
+          ${profile._isNew ? `<div class="draft-badge" style="background:rgba(251,191,36,0.1);color:#fbbf24;font-size:10px;padding:2px 8px;border-radius:12px;border:1px solid rgba(251,191,36,0.2);margin-right:12px">Local Draft</div>` : ''}
           <div class="student-rating" aria-label="Rating ${rating} out of 5">
             <div class="stars">${renderStars(parseFloat(rating))}</div>
             <span class="rating-value">${rating}</span>
@@ -307,6 +310,13 @@
                 <button onclick="event.stopPropagation();deleteEmployee('${profile.userId}')" class="btn btn-danger btn-sm btn-magnetic">
                   <span class="material-symbols-outlined" style="font-size:16px">delete</span> Delete
                 </button>
+                ${!isVerified ? `
+                <button onclick="event.stopPropagation();verifyEmployee('${profile.userId}')" class="btn btn-success btn-sm btn-magnetic" style="background:linear-gradient(135deg,#10b981,#059669)">
+                  <span class="material-symbols-outlined" style="font-size:16px">verified</span> Verify
+                </button>` : `
+                <button onclick="event.stopPropagation();unverifyEmployee('${profile.userId}')" class="btn btn-secondary btn-sm btn-magnetic">
+                  <span class="material-symbols-outlined" style="font-size:16px">do_not_disturb_on</span> Unverify
+                </button>`}
               </div>
               <div class="detail-actions-right">
                 <a href="profile-builder.html?student=${profile.userId}" class="btn btn-secondary btn-sm btn-magnetic">
@@ -460,5 +470,33 @@
 
   // ── Logout ──
   if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
+
+  // ── Verification ──
+  window.verifyEmployee = async function (uid) {
+    const profile = Storage.getProfile(uid);
+    if (!profile) return;
+    profile.verified = true;
+    try {
+      await Storage.saveProfileToFirebase(uid, profile);
+      Storage.saveProfile(uid, profile);
+      renderAllCards();
+    } catch (e) {
+      console.error('Verification failed:', e);
+    }
+  };
+
+  window.unverifyEmployee = async function (uid) {
+    const profile = Storage.getProfile(uid);
+    if (!profile) return;
+    if (!(await IrisModal.confirm(`Are you sure you want to unverify ${profile.name}? They will lose access to their dashboard.`))) return;
+    profile.verified = false;
+    try {
+      await Storage.saveProfileToFirebase(uid, profile);
+      Storage.saveProfile(uid, profile);
+      renderAllCards();
+    } catch (e) {
+      console.error('Action failed:', e);
+    }
+  };
 
 })();
