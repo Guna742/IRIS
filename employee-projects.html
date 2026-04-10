@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I.R.I.S — Employee Projects</title>
-    <meta name="description" content="I.R.I.S Corporate: Managed projects and venture portfolio.">
+    <title>I.R.I.S — Managed Ventures</title>
+    <meta name="description" content="I.R.I.S Professional: Portfolio of managed projects and corporate ventures.">
     <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/projects.css">
     <!-- Firebase CDN -->
@@ -24,21 +24,132 @@
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <div class="app-shell">
         <aside class="app-sidebar" id="app-sidebar" role="navigation"></aside>
-        <header class="app-topbar"></header>
+        
+        <header class="app-topbar">
+            <div class="container flex-between" style="height:100%">
+                <div class="topbar-left">
+                    <button id="hamburger-btn" aria-label="Toggle sidebar"><span class="material-symbols-outlined">menu</span></button>
+                    <span class="topbar-title">Managed Ventures</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn btn-primary btn-sm btn-glow" id="add-btn-top" style="display:none">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">add</span> Add New
+                    </button>
+                    <span class="badge badge-employee">Employee</span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span> Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
         <main class="app-content">
             <div class="container">
                 <div class="projects-header">
-                    <h1>Employee Projects</h1>
-                    <p>Track and manage your corporate ventures.</p>
+                    <div class="page-header">
+                        <h1>Corporate Portfolio</h1>
+                        <p id="project-count-label">Loading your active ventures...</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary btn-sm" id="push-cloud-btn" style="display:none">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">cloud_upload</span> Push to Cloud
+                        </button>
+                    </div>
                 </div>
-                <div id="projects-container"></div>
+                <div id="projects-grid" class="projects-grid"></div>
+                <div id="no-permission-tip" style="display:none"></div>
             </div>
         </main>
     </div>
+
+    <!-- FAB -->
+    <button class="fab" id="fab-btn" style="display:none" aria-label="Add new project">
+        <span aria-hidden="true">+</span>
+        <span class="fab-tooltip" aria-hidden="true">Add Project</span>
+    </button>
+
+    <!-- Add/Edit Project Modal -->
+    <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal" id="project-modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Add New Project</h2>
+                <button class="modal-close" id="modal-close" aria-label="Close modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field-group" id="proj-owner-group" style="display:none">
+                    <label class="field-label" for="proj-owner">Member / Owner <span style="color:var(--clr-danger)">*</span></label>
+                    <select class="field-input" id="proj-owner">
+                        <option value="">Select Member</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="proj-title">Project Title <span style="color:var(--clr-danger)">*</span></label>
+                    <input class="field-input" type="text" id="proj-title" placeholder="e.g. Finance Hub">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="proj-desc">Description <span style="color:var(--clr-danger)">*</span></label>
+                    <textarea class="field-input" id="proj-desc" rows="4" placeholder="Describe the purpose and your contribution..."></textarea>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="proj-stack-input">Tech Stack</label>
+                    <div class="tags-input-wrap" id="stack-wrap">
+                        <div id="stack-tags-list"></div>
+                        <input class="tags-input" type="text" id="proj-stack-input" placeholder="e.g. React + Enter">
+                    </div>
+                </div>
+                <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div class="field-group">
+                        <label class="field-label" for="proj-status">Status</label>
+                        <select class="field-input" id="proj-status">
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="proj-github">GitHub URL</label>
+                        <input class="field-input" type="url" id="proj-github" placeholder="https://github.com/user">
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" id="proj-live-label" for="proj-live">Live URL</label>
+                    <input class="field-input" type="url" id="proj-live" placeholder="https://yourproject.live">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Screenshot Reference</label>
+                    <div class="screenshot-upload" id="screenshot-drop">
+                        <input type="file" id="proj-screenshot" accept="image/*">
+                        <div id="screenshot-placeholder">
+                            <div class="material-symbols-outlined" style="font-size:2rem;margin-bottom:8px">image</div>
+                            <div style="font-size:var(--fs-sm)">Drop image here or click to browse</div>
+                        </div>
+                        <div id="screenshot-preview-wrap" style="display:none">
+                            <div class="screenshot-preview">
+                                <img id="screenshot-preview-img" src="" alt="Preview">
+                                <button class="screenshot-reset" id="screenshot-reset" type="button">✕ Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel Action</button>
+                <button class="btn btn-primary btn-glow" id="modal-save">
+                    <span class="material-symbols-outlined" style="font-size:16px">rocket_launch</span> Confirm & Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/theme-switcher.js"></script>
     <script src="js/iris-modal.js"></script>
 </body>
+
 </html>

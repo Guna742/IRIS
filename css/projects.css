@@ -453,8 +453,12 @@
 }
 
 .modal-title {
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-semi);
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
+    background: linear-gradient(135deg, var(--clr-text-primary), var(--clr-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
 }
 
 .modal-close {
@@ -480,7 +484,55 @@
     padding: var(--sp-6);
     display: flex;
     flex-direction: column;
-    gap: var(--sp-5);
+    gap: var(--sp-6);
+}
+
+/* ── Form Fields ── */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.field-label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 2px;
+}
+
+.field-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-3) var(--sp-4);
+    color: var(--clr-text-primary);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    transition: all var(--dur-normal) var(--ease-out);
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--clr-accent);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+}
+
+.field-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+select.field-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
 }
 
 .modal-footer {
@@ -488,7 +540,31 @@
     border-top: 1px solid var(--glass-border);
     display: flex;
     justify-content: flex-end;
-    gap: var(--sp-3);
+    align-items: center;
+    gap: var(--sp-4);
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.modal-footer .btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+.modal-footer .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--clr-text-muted);
+}
+
+.modal-footer .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--clr-text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-footer .btn-primary {
+    background: linear-gradient(135deg, var(--clr-accent), var(--clr-indigo));
+    box-shadow: 0 8px 24px var(--clr-accent-glow);
 }
 
 /* ── Screenshot upload ── */

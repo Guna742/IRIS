@@ -29,19 +29,16 @@
 
     function render() {
         const profile = Storage.getProfile(session.userId) || {};
-        const projects = Storage.getProjects() || [];
-        const myProjects = projects.filter(p => (p.userId || p.ownerId) === session.userId);
         const reports = Storage.getHourlyReports(session.userId) || [];
 
         // ── Welcome ──
         const firstName = (profile.name || 'Professional').split(' ')[0];
         if (welcomeTitle) welcomeTitle.innerHTML = `Welcome back, ${firstName} <span class="material-symbols-outlined" style="vertical-align:middle;color:var(--clr-accent)">verified</span>`;
-        if (welcomeSub) welcomeSub.textContent = `You have ${myProjects.length} active ventures and ${reports.length} logs recorded.`;
+        if (welcomeSub) welcomeSub.textContent = `You have ${reports.length} logs recorded.`;
 
-        renderStats(profile, myProjects, reports);
+        renderStats(profile, reports);
         renderActions();
         renderRecentReports(reports);
-        renderRecentProjects(myProjects);
         renderInsights(profile, reports);
         renderMission(reports);
 
@@ -49,7 +46,7 @@
         if (typeof animateCounters === 'function') animateCounters();
     }
 
-    function renderStats(profile, myProjects, reports) {
+    function renderStats(profile, reports) {
         if (!statsGrid) return;
         
         const metrics = Storage.getProfileMetrics(profile);
@@ -57,7 +54,6 @@
         
         const stats = [
             { label: 'System Efficiency', value: metrics.score, suffix: '%', icon: 'bolt', color: '#3b82f6', comic: 'Performance index' },
-            { label: 'Active Ventures', value: myProjects.length, icon: 'folder_managed', color: '#8b5cf6', comic: 'Managed projects' },
             { label: 'Work Streak', value: streakDays, suffix: ' Days', icon: 'local_fire_department', color: '#f59e0b', comic: 'Consecutive activity' },
             { label: 'Total Logs', value: reports.length, icon: 'history', color: '#10b981', comic: 'Hourly submissions' }
         ];
@@ -118,26 +114,6 @@
         `).join('');
     }
 
-    function renderRecentProjects(projects) {
-        if (!recentProjList) return;
-        const recent = projects.slice(0, 3);
-        
-        if (recent.length === 0) {
-            recentProjList.innerHTML = `<p class="text-muted text-sm">No managed ventures yet.</p>`;
-            return;
-        }
-
-        recentProjList.innerHTML = recent.map(p => `
-            <div class="proj-item visible card-3d" onclick="window.location.href='employee-projects.html#${p.id}'">
-                <div class="proj-thumb" style="background:var(--clr-accent)">${p.title[0]}</div>
-                <div class="proj-info">
-                    <div class="proj-name">${p.title}</div>
-                    <div class="proj-tech">${(p.techStack || []).join(' · ')}</div>
-                </div>
-                <span class="badge ${p.status === 'Completed' ? 'badge-success' : 'badge-warning'}" style="font-size:10px">${p.status || 'Active'}</span>
-            </div>
-        `).join('');
-    }
 
     function renderInsights(profile, reports) {
         const el = document.getElementById('insights-content');
@@ -170,7 +146,6 @@
 
         const tasks = [
             { label: 'Submit Daily Activity Log', done: hasLogToday, href: 'report-submission.html' },
-            { label: 'Review Project Benchmarks', done: false, href: 'employee-projects.html' },
             { label: 'Update Corporate Profile', done: true, href: 'employee-profile.html' }
         ];
 

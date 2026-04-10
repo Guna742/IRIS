@@ -98,7 +98,6 @@
 
         const stats = [
             { id: 'skill-stat-card',   label: 'Skills Listed',  value: skillCount,      icon: 'bolt',      color: 'cyan' },
-            { id: 'project-stat-card', label: 'Projects',        value: myProjects.length, icon: 'folder', color: 'blue', clickable: true },
             { id: 'q-stat-card',       label: 'Wall Questions',  value: '...',           icon: 'quiz',      color: 'orange' },
             { id: 'a-stat-card',       label: 'Wall Answers',    value: '...',           icon: 'forum',     color: 'purple' },
         ];
