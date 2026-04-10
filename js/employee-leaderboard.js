@@ -132,8 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="lb-row-name" style="cursor:pointer" onclick="window.location.href='employee-analytics.html?student=${emp.userId}'">
                         <div class="lb-row-avatar">${emp.avatar ? `<img src="${emp.avatar}">` : emp.name[0]}</div>
                         <div>
-                          <div class="lb-row-intern-name" style="font-weight:700">${emp.name}</div>
-                          <div class="lb-row-intern-role">${emp.internship?.role || 'Employee'}</div>
+                          <div class="lb-row-emp-name" style="font-weight:700">${emp.name}</div>
+                          <div class="lb-row-emp-role">${emp.internship?.role || 'Employee'}</div>
                         </div>
                     </div>
                     <div class="lb-row-score" style="color:var(--clr-accent)">${getVal(emp)}</div>
