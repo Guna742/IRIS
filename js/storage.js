@@ -651,7 +651,7 @@ const Storage = (() => {
             const finalProfile = {
                 ...profile,
                 userId,
-                role: 'user',
+                role: profile.role || 'user',
                 displayName: name,
                 createdAt: Date.now()
             };
@@ -811,7 +811,16 @@ const Storage = (() => {
             // Users/Profiles Listener
             fbDb.collection('users').onSnapshot(snap => {
                 console.log('[Storage] LIVE USERS: ' + snap.size);
+                
+                const currentLocal = getProfiles();
                 const freshProfiles = {};
+
+                // Preserve local-only drafts (profiles not yet in Firestore)
+                Object.values(currentLocal).forEach(p => {
+                    if (p._isNew) freshProfiles[p.userId] = p;
+                });
+
+                // Add/Update with cloud data
                 snap.forEach(doc => {
                     if (!_pendingDeleteIds.has(doc.id)) {
                         freshProfiles[doc.id] = { ..._processFirestoreData(doc.data()), userId: doc.id };

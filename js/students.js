@@ -142,19 +142,31 @@
 
   // ── Render cards ──
   function renderAllCards() {
-    const profileList = Object.values(Storage.getProfiles());
+    const allProfiles = Object.values(Storage.getProfiles());
+    const interns = allProfiles.filter(p => !p.role || p.role === 'user');
 
     // Always keep the count badge in sync
-    studentsCountEl.textContent = `${profileList.length} user${profileList.length !== 1 ? 's' : ''}`;
+    studentsCountEl.textContent = `${interns.length} intern${interns.length !== 1 ? 's' : ''}`;
 
-    if (profileList.length === 0) {
+    if (allProfiles.length === 0) {
       studentsContainer.innerHTML = `
         <div class="students-empty">
           <div class="students-empty-icon"><span class="material-symbols-outlined" style="font-size: 48px;">group_off</span></div>
           <p>No intern profiles found. Add an intern using the button above.</p>
         </div>`;
     } else {
-      studentsContainer.innerHTML = profileList.map((profile, i) => buildStudentCardHTML(profile, i)).join('');
+      // Filter to show ONLY interns (role 'user' or undefined)
+      const interns = allProfiles.filter(p => !p.role || p.role === 'user');
+      
+      if (interns.length === 0) {
+        studentsContainer.innerHTML = `
+          <div class="students-empty">
+            <div class="students-empty-icon"><span class="material-symbols-outlined" style="font-size: 48px;">person_off</span></div>
+            <p>No active interns in the directory.</p>
+          </div>`;
+      } else {
+        studentsContainer.innerHTML = interns.map((profile, i) => buildStudentCardHTML(profile, i)).join('');
+      }
     }
 
     // Apply search filter if active
@@ -369,7 +381,7 @@
                             if (pending.length === 0) return '<div class="text-dim text-xs">No pending requests.</div>';
                             
                             return pending.map(r => `
-                                <div class="missed-request-item" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:12px; border:1px solid var(--clr-border); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center">
+                                <div class="missed-request-item" style="padding:12px; border-radius:12px; border:1px solid var(--clr-border); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center">
                                     <div>
                                         <div style="font-size:0.85rem; font-weight:600">Update ${r.window === 1 ? '1 (10AM-2PM)' : '2 (2PM-6PM)'}</div>
                                         <div style="font-size:0.75rem; color:var(--clr-text-muted)">Requested: ${new Date(r.createdAt).toLocaleTimeString()}</div>

@@ -20,7 +20,8 @@
 
     const logoutBtn = document.getElementById('logout-btn');
     const studentSelector = document.getElementById('student-selector');
-    const addStudentBtn = document.getElementById('add-student-btn');
+    const addStudentBtn  = document.getElementById('add-student-btn');
+    const addEmployeeBtn = document.getElementById('add-employee-btn');
     const addAdminBtn   = document.getElementById('add-admin-btn');
 
     // ── Logout ──
@@ -77,43 +78,52 @@
         });
     }
 
-        addStudentBtn.addEventListener('click', async () => {
-            const name = await IrisModal.prompt('Enter new intern name:', 'Prathosh S');
-            if (!name) return;
-            const email = await IrisModal.prompt('Enter intern email address:');
-            if (!email) return;
-            const company = await IrisModal.prompt('Enter intern company name:', 'FortuMars');
-            if (!company) return;
-            const role = await IrisModal.prompt('Enter intern role title:', 'Software Developer');
-            if (!role) return;
+    if (addStudentBtn) {
+        addStudentBtn.addEventListener('click', async () => createDraftProfile('intern'));
+    }
+    if (addEmployeeBtn) {
+        addEmployeeBtn.addEventListener('click', async () => createDraftProfile('employee'));
+    }
 
-            const id = 'u_' + Date.now();
-            const newProfile = {
-                userId: id,
-                name: name,
-                email: email.trim().toLowerCase(),
-                tagline: `${role} at ${company}`,
-                skills: [],
-                internship: {
-                    company: company,
-                    role: role,
-                    startDate: new Date().toISOString().split('T')[0]
-                },
-                socialLinks: {},
-                _isNew: true // Flag to trigger credential capture on Save
-            };
-            allProfiles[id] = newProfile;
-            Storage.saveProfile(id, newProfile);
+    async function createDraftProfile(type = 'intern') {
+        const label = type === 'employee' ? 'employee' : 'intern';
+        const name = await IrisModal.prompt(`Enter new ${label} name:`, 'Arun Kumar');
+        if (!name) return;
+        const email = await IrisModal.prompt(`Enter ${label} email address:`);
+        if (!email) return;
+        const company = await IrisModal.prompt(`Enter ${label} company name:`, 'FortuMars');
+        if (!company) return;
+        const role = await IrisModal.prompt(`Enter ${label} role title:`, type === 'employee' ? 'Project Manager' : 'Software Developer');
+        if (!role) return;
 
-            // Switch to new student
-            currentStudentId = id;
-            allProfiles = Storage.getProfiles();
-            initStudentSelector();
-            profile = allProfiles[currentStudentId];
-            skills = [];
-            populateForm(profile);
-            showToast(`Created draft for ${name}`, 'success');
-        });
+        const id = 'u_' + Date.now();
+        const newProfile = {
+            userId: id,
+            name: name,
+            email: email.trim().toLowerCase(),
+            tagline: `${role} at ${company}`,
+            role: type === 'employee' ? 'employee' : 'user',
+            skills: [],
+            internship: {
+                company: company,
+                role: role,
+                startDate: new Date().toISOString().split('T')[0]
+            },
+            socialLinks: {},
+            _isNew: true 
+        };
+        allProfiles[id] = newProfile;
+        Storage.saveProfile(id, newProfile);
+
+        // Switch to new profile
+        currentStudentId = id;
+        allProfiles = Storage.getProfiles();
+        initStudentSelector();
+        profile = allProfiles[currentStudentId];
+        skills = [];
+        populateForm(profile);
+        showToast(`Created draft for ${name} (${label})`, 'success');
+    }
 
     // ── Add Admin ──
     if (addAdminBtn) {
@@ -256,11 +266,15 @@
             currentStudentId = result.userId;
             allProfiles = Storage.getProfiles();
             profile = allProfiles[currentStudentId];
-            showToast(`Account created for ${p.name}! Redirecting to Interns List...`, 'success');
+            
+            const destLabel = profile.role === 'employee' ? 'Employees' : 'Interns';
+            const destUrl   = profile.role === 'employee' ? 'employees.html' : 'students.html';
+            
+            showToast(`Account created for ${p.name}! Redirecting to ${destLabel} List...`, 'success');
 
-            // Redirect to the interns list page after a short delay
+            // Redirect to the appropriate list page after a short delay
             setTimeout(() => {
-                window.location.href = 'students.html';
+                window.location.href = destUrl;
             }, 1500);
 
             saveStatus.classList.add('saved');
@@ -395,6 +409,8 @@
     setTimeout(() => {
         if (urlAction === 'new-intern') {
             if (addStudentBtn) addStudentBtn.click();
+        } else if (urlAction === 'new-employee') {
+            if (addEmployeeBtn) addEmployeeBtn.click();
         } else if (urlAction === 'new-admin') {
             if (openAdminModal) openAdminModal();
         }

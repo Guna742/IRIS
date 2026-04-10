@@ -747,10 +747,7 @@ textarea.field-input {
     font-size: var(--fs-md);
     font-weight: var(--fw-bold);
     color: var(--clr-text-primary);
-    background: rgba(255, 255, 255, 0.03);
-    padding: 6px 16px;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 6px 4px;
     letter-spacing: 0.1px;
 }
 
@@ -764,7 +761,6 @@ textarea.field-input {
     font-size: 18px;
     color: var(--clr-accent);
     opacity: 0.9;
-    background: rgba(139, 92, 246, 0.1);
     width: 28px;
     height: 28px;
     display: flex;

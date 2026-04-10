@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function render() {
         const profiles = Storage.getProfiles();
         const projects = Storage.getProjects();
-        const interns = Object.values(profiles).filter(p => p.role !== 'admin');
+        const interns = Object.values(profiles).filter(p => !p.role || p.role === 'user');
         
         const enriched = interns.map(p => {
             const myProjs = projects.filter(pr => String(pr.userId || pr.ownerId) === String(p.userId));

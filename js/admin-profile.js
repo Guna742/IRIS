@@ -191,23 +191,26 @@
     const allProfiles = Object.values(profiles);
     const projects = Storage.getProjects();
 
-    const totalStudents = allProfiles.length;
+    const totalStudents = allProfiles.filter(p => p.role !== 'admin' && p.role !== 'employee').length;
     const totalSkills = allProfiles.reduce((acc, p) => acc + (p.skills?.length || 0), 0);
     const teams = new Set(allProfiles.map(p => p.internship?.company).filter(Boolean));
     const totalTeams = teams.size;
+    const totalEmployees = allProfiles.filter(p => p.role === 'employee').length;
 
     // Animate counters
     animateCounter('stat-students', totalStudents, 0);
     animateCounter('stat-skills', totalSkills, 100);
     animateCounter('stat-companies', totalTeams, 200);
+    animateCounter('stat-employees', totalEmployees, 300);
 
     // ── Intern Directory ──
     const rosterEl = document.getElementById('student-roster');
+    const internProfiles = allProfiles.filter(p => p.role !== 'admin' && p.role !== 'employee');
     if (rosterEl) {
-        if (allProfiles.length === 0) {
+        if (internProfiles.length === 0) {
             rosterEl.innerHTML = '<p class="text-muted text-sm">No intern profiles yet.</p>';
         } else {
-            rosterEl.innerHTML = allProfiles.map(p => {
+            rosterEl.innerHTML = internProfiles.map(p => {
                 const initials = (p.name || '?')[0].toUpperCase();
                 const role = p.internship?.role || 'Intern';
                 const company = p.internship?.company || 'Not assigned';
@@ -224,6 +227,36 @@
                     <div style="display:flex;gap:6px;flex-shrink:0">
                         <a href="student-analytics.html?student=${p.userId}" class="btn btn-secondary btn-sm" title="View analytics" aria-label="View analytics for ${p.name}" style="padding:4px 10px"><span class="material-symbols-outlined" style="font-size: 16px;">analytics</span></a>
                         <a href="profile-builder.html?student=${p.userId}" class="btn btn-primary btn-sm" title="Edit profile" aria-label="Edit profile for ${p.name}" style="padding:4px 10px"><span class="material-symbols-outlined" style="font-size: 16px;">edit</span></a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // ── Employee Directory ──
+    const employeeRosterEl = document.getElementById('employee-roster');
+    const employeeProfiles = allProfiles.filter(p => p.role === 'employee');
+    if (employeeRosterEl) {
+        if (employeeProfiles.length === 0) {
+            employeeRosterEl.innerHTML = '<p class="text-muted text-sm" style="padding:12px 0;">No employee profiles yet.</p>';
+        } else {
+            employeeRosterEl.innerHTML = employeeProfiles.map(p => {
+                const initials = (p.name || '?')[0].toUpperCase();
+                const dept = p.internship?.role || p.department || 'Employee';
+                const company = p.internship?.company || p.company || 'Not assigned';
+                const avatarHtml = p.avatar
+                    ? `<div class="student-list-avatar"><img src="${p.avatar}" alt="${p.name} avatar"></div>`
+                    : `<div class="student-list-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">${initials}</div>`;
+                return `
+                <div class="student-list-item" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--glass-border, rgba(255,255,255,0.07))">
+                    ${avatarHtml}
+                    <div class="student-list-info" style="flex:1;min-width:0">
+                        <div class="student-list-name">${p.name || 'Unnamed'}</div>
+                        <div class="student-list-role">${dept} · ${company}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0">
+                        <a href="student-analytics.html?student=${p.userId}" class="btn btn-secondary btn-sm" title="View analytics" aria-label="View analytics for ${p.name}" style="padding:4px 10px"><span class="material-symbols-outlined" style="font-size: 16px;">analytics</span></a>
+                        <a href="profile-builder.html?student=${p.userId}" class="btn btn-primary btn-sm" title="Edit profile" aria-label="Edit profile for ${p.name}" style="padding:4px 10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)"><span class="material-symbols-outlined" style="font-size: 16px;">edit</span></a>
                     </div>
                 </div>`;
             }).join('');

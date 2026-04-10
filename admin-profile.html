@@ -116,7 +116,11 @@
                                 </a>
                                 <a href="students.html" class="btn btn-primary btn-sm">
                                     <span class="material-symbols-outlined" style="font-size: 16px;">group</span>
-                                    Manage Students
+                                    Manage Interns
+                                </a>
+                                <a href="employees.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">badge</span>
+                                    Manage Employees
                                 </a>
                             </div>
                         </div>
@@ -126,7 +130,7 @@
                     <div class="stats-row" id="stats-row" role="region" aria-label="Platform statistics">
                         <div class="stat-card">
                             <div class="stat-icon material-symbols-outlined"
-                                style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
+                                style="display: flex; align-items: center; justify-content: center;"
                                 aria-hidden="true">school</div>
                             <div class="stat-value" id="stat-students">0</div>
                             <div class="stat-label">Total Interns</div>
@@ -137,7 +141,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon material-symbols-outlined"
-                                style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                style="display: flex; align-items: center; justify-content: center;"
                                 aria-hidden="true">bolt</div>
                             <div class="stat-value" id="stat-skills">0</div>
                             <div class="stat-label">Skills Recorded</div>
@@ -147,12 +151,22 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon material-symbols-outlined"
-                                style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                style="display: flex; align-items: center; justify-content: center;"
                                 aria-hidden="true">group_work</div>
                             <div class="stat-value" id="stat-companies">0</div>
                             <div class="stat-label">Active Teams</div>
                             <div class="stat-trend" style="color:#f59e0b">
                                 Collaboration units
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon material-symbols-outlined"
+                                style="display: flex; align-items: center; justify-content: center;"
+                                aria-hidden="true">badge</div>
+                            <div class="stat-value" id="stat-employees">0</div>
+                            <div class="stat-label">Total Employees</div>
+                            <div class="stat-trend" style="color:#3b82f6">
+                                Active staff
                             </div>
                         </div>
                     </div>
@@ -170,7 +184,7 @@
                                 <div class="admin-section-head">
                                     <div class="admin-section-title-group">
                                         <div class="admin-section-icon material-symbols-outlined"
-                                            style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                            style="display: flex; align-items: center; justify-content: center;"
                                             aria-hidden="true">person</div>
                                         <span class="admin-section-title">Account Info</span>
                                     </div>
@@ -217,7 +231,7 @@
                                 <div class="admin-section-head">
                                     <div class="admin-section-title-group">
                                         <div class="admin-section-icon material-symbols-outlined"
-                                            style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                            style="display: flex; align-items: center; justify-content: center;"
                                             aria-hidden="true">bolt</div>
                                         <span class="admin-section-title">Quick Actions</span>
                                     </div>
@@ -226,7 +240,7 @@
                                     <div class="quick-actions">
                                         <a href="profile-builder.html?action=new-intern" class="quick-action-btn">
                                             <div class="quick-action-icon material-symbols-outlined"
-                                                style="background:rgba(124,92,252,.12); display: flex; align-items: center; justify-content: center;"
+                                                style="display: flex; align-items: center; justify-content: center;"
                                                 aria-hidden="true">person_add</div>
                                             <div>
                                                 <div class="quick-action-label">Create Intern</div>
@@ -237,7 +251,7 @@
                                         </a>
                                         <a href="profile-builder.html?action=new-admin" class="quick-action-btn">
                                             <div class="quick-action-icon material-symbols-outlined"
-                                                style="background:rgba(245,158,11,.1); display: flex; align-items: center; justify-content: center;"
+                                                style="display: flex; align-items: center; justify-content: center;"
                                                 aria-hidden="true">admin_panel_settings</div>
                                             <div>
                                                 <div class="quick-action-label">Create Admin</div>
@@ -248,7 +262,7 @@
                                         </a>
                                         <a href="dashboard.html" class="quick-action-btn">
                                             <div class="quick-action-icon material-symbols-outlined"
-                                                style="background:rgba(16,185,129,.1); display: flex; align-items: center; justify-content: center;"
+                                                style="display: flex; align-items: center; justify-content: center;"
                                                 aria-hidden="true">grid_view</div>
                                             <div>
                                                 <div class="quick-action-label">Dashboard</div>
@@ -271,7 +285,7 @@
                                 <div class="admin-section-head">
                                     <div class="admin-section-title-group">
                                         <div class="admin-section-icon material-symbols-outlined"
-                                            style="background:rgba(79,124,255,.12); display: flex; align-items: center; justify-content: center;"
+                                            style="display: flex; align-items: center; justify-content: center;"
                                             aria-hidden="true">school</div>
                                         <span class="admin-section-title">Intern Directory</span>
                                     </div>
@@ -285,13 +299,32 @@
                                 </div>
                             </div>
 
+                            <!-- Employee Directory -->
+                            <div class="admin-section reveal anim-d2" aria-label="Employee directory">
+                                <div class="admin-section-head">
+                                    <div class="admin-section-title-group">
+                                        <div class="admin-section-icon material-symbols-outlined"
+                                            style="display: flex; align-items: center; justify-content: center;"
+                                            aria-hidden="true">badge</div>
+                                        <span class="admin-section-title">Employee Directory</span>
+                                    </div>
+                                    <a href="employees.html" class="btn btn-secondary btn-sm"
+                                        style="font-size:var(--fs-xs)">View All</a>
+                                </div>
+                                <div class="admin-section-body">
+                                    <div class="student-list" id="employee-roster">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Pending Requests (Approval Workflow) -->
                             <div class="admin-section reveal anim-d2" aria-label="Pending approvals">
                                 <div class="admin-section-head">
                                     <div class="admin-section-title-group">
                                         <div class="admin-section-icon material-symbols-outlined"
-                                            style="background:rgba(239, 68, 68, .1); color:#ef4444; display: flex; align-items: center; justify-content: center;"
-                                            aria-hidden="true">notification_important</div>
+                                            style="display: flex; align-items: center; justify-content: center;"
+                                            aria-hidden="true">pending_actions</div>
                                         <span class="admin-section-title">Pending Edit Requests</span>
                                     </div>
                                 </div>
@@ -319,6 +352,7 @@
     <script src="js/sidebar-engine.js"></script>
     <script src="js/admin-popup.js"></script>
     <script src="js/admin-profile.js"></script>
+    <script src="js/employees-admin.js"></script>
     <script src="js/theme-switcher.js"></script>
     <script src="js/animation-engine.js"></script>
     <script src="js/iris-modal.js"></script>

@@ -130,6 +130,7 @@ const SidebarEngine = (() => {
             { label: 'Dashboard', href: 'dashboard.html', icon: 'grid_view', tooltip: 'Main control center' },
             { label: 'My Profile', href: 'admin-profile.html', icon: 'person', tooltip: 'Admin sanctuary' },
             { label: 'Interns', href: 'students.html', icon: 'group', tooltip: 'Intern registry' },
+            { label: 'Employees', href: 'employees.html', icon: 'badge', tooltip: 'Employee registry' },
             { label: 'Projects', href: 'projects.html', icon: 'folder', tooltip: 'The vault', alertCount: projectAlertCount },
             { label: 'The Wall', href: 'doubts.html', icon: 'chat', tooltip: 'Community hub', alertCount: wallAlertCount }, 
         ];
