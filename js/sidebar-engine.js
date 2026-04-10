@@ -152,11 +152,12 @@ const SidebarEngine = (() => {
         ];
 
         const NAV_EMPLOYEE = [
-            { label: 'Dashboard',    href: 'employee-profile.html',                              icon: 'home',         tooltip: 'Your workspace' },
+            { label: 'Dashboard',   href: 'employee-dashboard.html',                            icon: 'grid_view',    tooltip: 'Your workspace' },
+            { label: 'My Profile',  href: 'employee-profile.html',                              icon: 'person',       tooltip: 'Your identity' },
             { label: 'Leaderboard', href: 'employee-leaderboard.html',                          icon: 'leaderboard',  tooltip: 'Employee rankings' },
             { label: 'Analytics',   href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics',    tooltip: 'Performance tracking' },
             { label: 'Log Progress',href: 'employee-report.html',                               icon: 'description',  tooltip: 'Document your work' },
-            { label: 'Projects',    href: 'projects.html',                                      icon: 'folder',       tooltip: 'The vault', alertCount: projectAlertCount },
+            { label: 'Projects',    href: 'employee-projects.html',                             icon: 'folder',       tooltip: 'The vault', alertCount: projectAlertCount },
             { label: 'The Wall',    href: 'doubts.html',                                        icon: 'chat',         tooltip: 'Community hub', alertCount: wallAlertCount },
         ];
 

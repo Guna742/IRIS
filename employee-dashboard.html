@@ -79,42 +79,56 @@
                     <p id="welcome-sub">Accessing your corporate workspace and performance metrics.</p>
                 </div>
 
-                <div class="stats-grid" id="stats-grid">
+                <div class="auto-grid-stats" id="stats-grid">
                     <!-- Injected by JS -->
                 </div>
 
-                <div class="dash-layout">
-                    <div class="dash-main">
+                <div class="dash-grid">
+                    <div class="dash-grid-left">
                         <section class="dash-card anim-fadeInUp anim-d3" id="reports-card">
-                            <h2 class="dash-card-title">Recent Activity Logs</h2>
-                            <div class="proj-list" id="recent-reports-list"></div>
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Recent Activity Logs <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">history</span></h2>
+                            </div>
+                            <div class="dash-card-body" id="recent-reports-list"></div>
                         </section>
                         
                         <section class="dash-card anim-fadeInUp anim-d4">
-                            <h2 class="dash-card-title">Managed Ventures</h2>
-                            <div class="proj-list" id="recent-projects-list"></div>
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Managed Ventures <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">folder_managed</span></h2>
+                            </div>
+                            <div class="dash-card-body" id="recent-projects-list"></div>
                             <div style="margin-top:20px; text-align:center;">
                                 <a href="employee-projects.html" class="btn btn-secondary btn-sm">View All Projects</a>
                             </div>
                         </section>
                     </div>
 
-                    <aside class="dash-side">
+                    <div class="dash-grid-right" style="display:flex; flex-direction:column; gap:var(--sp-6);">
                         <section class="dash-card anim-fadeInUp anim-d5">
-                            <h2 class="dash-card-title">Quick Operations</h2>
-                            <div class="quick-actions" id="quick-actions"></div>
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Quick Operations <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">bolt</span></h2>
+                            </div>
+                            <div class="dash-card-body">
+                                <div class="quick-actions" id="quick-actions"></div>
+                            </div>
                         </section>
 
                         <section class="dash-card anim-fadeInUp anim-d6">
-                            <h2 class="dash-card-title">Corporate Insights</h2>
-                            <div id="insights-content"></div>
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Corporate Insights <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">corporate_fare</span></h2>
+                            </div>
+                            <div class="dash-card-body" id="insights-content"></div>
                         </section>
                         
                         <section class="dash-card anim-fadeInUp anim-d7" id="checklist-card">
-                            <h2 class="dash-card-title">Daily Mission</h2>
-                            <div class="checklist" id="checklist-content"></div>
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Daily Mission <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">target</span></h2>
+                            </div>
+                            <div class="dash-card-body">
+                                <div class="checklist" id="checklist-content"></div>
+                            </div>
                         </section>
-                    </aside>
+                    </div>
                 </div>
             </div>
         </main>
