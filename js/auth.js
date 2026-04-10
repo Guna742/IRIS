@@ -213,8 +213,7 @@ const Auth = (() => {
       if (session.role === 'admin') {
         window.location.replace('dashboard.html');
       } else if (session.role === 'employee') {
-        // Use the new employee dashboard if available
-        window.location.replace('employee-dashboard.html');
+        window.location.replace('dashboard.html');
       } else {
         window.location.replace('dashboard.html');
       }

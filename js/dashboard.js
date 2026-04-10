@@ -162,6 +162,7 @@
         { label: 'Completion', value: completionRate, suffix: '%', icon: 'task_alt', color: '#10B981', trend: '+5%', comic: 'Shipping fast!' },
       ];
     } else {
+      const isEmployee = session.role === 'employee';
       const myProjects = projects.filter(p => (p.userId || p.ownerId) === session.userId).length;
       const teamSize = allProfiles.filter(p => p.internship?.company && p.internship.company === profile?.internship?.company).length;
       
@@ -171,20 +172,26 @@
         dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
       }
 
-      // ── Get Reward Points for Intern ──
+      // ── Get Reward Points ──
       const points = profile.points || 0;
       const rank = (Storage.getInternRank && profile.userId) ? Storage.getInternRank(profile.userId) : 1;
-      
-      // Level Title calculation (Rename only, no logic change as requested)
-      let levelTitle = points < 500 ? 'Level 1: Beginner' : points < 1500 ? 'Level 5: Consistent' : points < 3000 ? 'Level 10: Pro' : 'Elite';
       const streakDays = Storage.getInternStreak ? Storage.getInternStreak(session.userId) : (profile.streak || 0);
 
-      statsData = [
-        { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', class: 'c-rank', comic: rank === 1 ? 'King of the hill! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">workspace_premium</span>' : 'Climbing fast! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">trending_up</span>', clickable: true, href: 'leaderboard.html' },
-        { label: 'Current Phase', value: points % 500, suffix: '/500', icon: 'stars', class: 'c-xp', comic: `Consistent progress builds a legacy! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">rocket_launch</span>`, isXP: true },
-        { label: 'Daily Streak', value: streakDays, suffix: ' Days', icon: 'local_fire_department', class: 'c-streak', comic: streakDays > 0 ? `<span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle; color: #ff5722;">local_fire_department</span> Keep the momentum alive!` : 'Start your streak today!' },
-        { label: 'Internship Path', value: dayNumber, icon: 'calendar_month', class: 'c-growth', comic: 'The journey continues! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">navigation</span>', prefix: 'Day ' },
-      ];
+      if (isEmployee) {
+        statsData = [
+          { label: 'Corporate Rank', value: rank, prefix: '#', icon: 'military_tech', class: 'c-rank', comic: 'Performing at peak efficiency!', clickable: true, href: 'employee-leaderboard.html' },
+          { label: 'Activity Index', value: points % 500, suffix: '/500', icon: 'timeline', class: 'c-xp', comic: `Project milestones achieved.`, isXP: true },
+          { label: 'Work Streak', value: streakDays, suffix: ' Days', icon: 'work_history', class: 'c-streak', comic: streakDays > 0 ? `Consistent contribution.` : 'Start your streak today!' },
+          { label: 'Employment Tenure', value: dayNumber, icon: 'badge', class: 'c-growth', comic: 'Advancing in core metrics.', prefix: 'Day ' },
+        ];
+      } else {
+        statsData = [
+          { label: 'Leaderboard Rank', value: rank, prefix: '#', icon: 'emoji_events', class: 'c-rank', comic: rank === 1 ? 'King of the hill! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">workspace_premium</span>' : 'Climbing fast! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">trending_up</span>', clickable: true, href: 'leaderboard.html' },
+          { label: 'Current Phase', value: points % 500, suffix: '/500', icon: 'stars', class: 'c-xp', comic: `Consistent progress builds a legacy! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">rocket_launch</span>`, isXP: true },
+          { label: 'Daily Streak', value: streakDays, suffix: ' Days', icon: 'local_fire_department', class: 'c-streak', comic: streakDays > 0 ? `<span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle; color: #ff5722;">local_fire_department</span> Keep the momentum alive!` : 'Start your streak today!' },
+          { label: 'Internship Path', value: dayNumber, icon: 'calendar_month', class: 'c-growth', comic: 'The journey continues! <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">navigation</span>', prefix: 'Day ' },
+        ];
+      }
     }
 
     statsGrid.innerHTML = statsData.map((s, i) => `
@@ -220,15 +227,26 @@
 
   function renderActions() {
     if (!quickActions) return;
-    const actions = isAdmin ? [
-      { label: 'My Sanctuary', desc: 'Manage your admin identity', href: 'admin-profile.html', icon: 'person', color: 'rgba(99,102,241,.1)' },
-      { label: 'Onboard Intern', desc: 'Add a new talent to the squad', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(6,182,212,.12)' },
-      { label: 'The Registry', desc: 'The master intern inventory', href: 'students.html', icon: 'school', color: 'rgba(124,92,252,.1)' },
-    ] : [
-      { label: 'Drop Progress', desc: 'Log your hourly achievements', href: 'report-submission.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
-      { label: 'Performance', desc: 'The numbers don\'t lie', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(99,102,241,.12)' },
-      { label: 'Glory Board', desc: 'See where you stand globally', href: 'leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
-    ];
+    let actions = [];
+    if (isAdmin) {
+      actions = [
+        { label: 'My Sanctuary', desc: 'Manage your admin identity', href: 'admin-profile.html', icon: 'person', color: 'rgba(99,102,241,.1)' },
+        { label: 'Onboard Intern', desc: 'Add a new talent to the squad', href: 'profile-builder.html?action=new-intern', icon: 'person_add', color: 'rgba(6,182,212,.12)' },
+        { label: 'The Registry', desc: 'The master intern inventory', href: 'students.html', icon: 'school', color: 'rgba(124,92,252,.1)' },
+      ];
+    } else if (isEmployee) {
+      actions = [
+        { label: 'Drop Progress', desc: 'Document your technical work', href: 'employee-report.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
+        { label: 'Performance', desc: 'Internal work analytics', href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(99,102,241,.12)' },
+        { label: 'Glory Board', desc: 'Employee rankings & stand', href: 'employee-leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
+      ];
+    } else {
+      actions = [
+        { label: 'Drop Progress', desc: 'Log your hourly achievements', href: 'report-submission.html', icon: 'description', color: 'rgba(16,185,129,.12)' },
+        { label: 'Performance', desc: 'The numbers don\'t lie', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', color: 'rgba(99,102,241,.12)' },
+        { label: 'Glory Board', desc: 'See where you stand globally', href: 'leaderboard.html', icon: 'leaderboard', color: 'rgba(245,158,11,.1)' },
+      ];
+    }
     quickActions.innerHTML = actions.map((a, i) => `
       <a class="action-tile btn-magnetic anim-stagger visible" style="transition-delay: ${i * 0.1}s" href="${a.href}">
         <div class="action-icon" style="background:${a.color}"><span class="material-symbols-outlined">${a.icon}</span></div>

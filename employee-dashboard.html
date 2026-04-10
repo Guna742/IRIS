@@ -5,10 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I.R.I.S — Employee Dashboard</title>
-    <meta name="description" content="I.R.I.S Corporate: Employee performance and project overview.">
+    <meta name="description" content="I.R.I.S Corporate: Personalized employee dashboard with technical venture tracking and activity intelligence.">
     <link rel="stylesheet" href="css/page-transition.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/glowing-effect.css">
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -19,6 +18,7 @@
     <link rel="stylesheet" href="css/iris-modal.css">
     <link rel="icon" type="image/png" href="img/site-logo.png">
     <link rel="apple-touch-icon" href="img/site-logo.png">
+    <!-- Page Transition: must be in <head> to run before first paint -->
     <script src="js/page-transition.js"></script>
     <style>
         :root {
@@ -34,18 +34,26 @@
 </head>
 
 <body>
+
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="app-shell">
-        <!-- Sidebar and Topbar remain the same (populated by SidebarEngine) -->
+
+        <!-- ── Sidebar ── -->
         <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main navigation">
             <div class="sidebar-brand">
-                <div class="sidebar-logo"><img src="img/site-logo.png" alt="I.R.I.S"></div>
+                <div class="sidebar-logo" aria-hidden="true">
+                    <img src="img/site-logo.png" alt="I.R.I.S"
+                        style="width:100%;height:100%;object-fit:contain;padding:4px;">
+                </div>
                 <div class="sidebar-brand-text">
                     <span class="sidebar-title">I.R.I.S</span>
-                    <span class="sidebar-slogan">Internal Review & Intelligence System</span>
+                    <span class="sidebar-slogan">Review & Intelligence System</span>
                 </div>
             </div>
-            <nav class="sidebar-nav" id="sidebar-nav"></nav>
+
+            <nav class="sidebar-nav" id="sidebar-nav" aria-label="Page navigation"></nav>
+
             <div class="sidebar-footer">
                 <div class="user-info" id="user-info-sidebar">
                     <div class="user-avatar" id="user-avatar-sidebar">E</div>
@@ -57,68 +65,142 @@
             </div>
         </aside>
 
-        <header class="app-topbar">
+        <!-- ── Topbar ── -->
+        <header class="app-topbar" role="banner">
             <div class="container flex-between" style="height:100%">
                 <div class="topbar-left">
-                    <button id="hamburger-btn"><span class="material-symbols-outlined">menu</span></button>
+                    <button id="hamburger-btn" aria-label="Toggle sidebar" aria-expanded="false">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
                     <span class="topbar-title">Employee Portal</span>
                 </div>
                 <div class="topbar-right">
                     <span class="badge badge-employee" id="topbar-role-badge">Employee</span>
-                    <button class="btn btn-secondary btn-sm" id="logout-btn">
-                        <span class="material-symbols-outlined" style="font-size:16px;">logout</span> Sign Out
+                    <button class="btn btn-secondary btn-sm" id="logout-btn" aria-label="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+                        Sign Out
                     </button>
                 </div>
             </div>
         </header>
 
-        <main class="app-content">
-            <div class="container">
-                <div class="dash-hero anim-fadeInUp">
-                    <h1 id="welcome-title">Authenticating Portal...</h1>
-                    <p id="welcome-sub">Accessing your corporate workspace and performance metrics.</p>
+        <!-- ── Main Content ── -->
+        <main class="app-content" id="app-content" aria-label="Dashboard content">
+            <div class="container" data-reveal data-stagger>
+                
+                <!-- Dashboard Hero (Matches Intern Look) -->
+                <div class="dash-hero reveal anim-fadeIn">
+                    <div id="welcome-title" class="dash-hero-content">
+                        <!-- Injected by JS -->
+                    </div>
+                    <div class="dash-hero-visual anim-floating">
+                        <div class="hero-orb" style="background: radial-gradient(circle, var(--clr-accent) 0%, transparent 70%);"></div>
+                        <div class="hero-mascot">👔</div>
+                    </div>
                 </div>
 
-                <div class="stats-grid" id="stats-grid">
+                <!-- Global Activity Bar (Matches Intern Look) -->
+                <div class="global-xp-container-wrap anim-fadeInUp anim-d1" id="global-xp-bar" style="margin-bottom: var(--sp-6);">
+                    <div class="global-xp-header">
+                        <span id="rank-lvl-current" class="xp-lvl">Current Status</span>
+                        <div class="xp-info">
+                            <span id="rank-percent-badge" class="badge badge-glow">Corporate Active ⚡</span>
+                            <span id="next-lvl-xp" class="xp-needed">Efficiency 100%</span>
+                        </div>
+                        <span id="rank-lvl-next" class="xp-lvl">Peak Level</span>
+                    </div>
+                    <div class="global-xp-track">
+                        <div class="global-xp-fill" id="global-xp-fill" style="width: 100%; background: var(--clr-accent);"></div>
+                    </div>
+                </div>
+
+                <!-- Stat cards -->
+                <div class="auto-grid-stats" id="stats-grid" aria-label="Statistics">
                     <!-- Injected by JS -->
                 </div>
 
-                <div class="dash-layout">
-                    <div class="dash-main">
-                        <section class="dash-card anim-fadeInUp anim-d3" id="reports-card">
-                            <h2 class="dash-card-title">Recent Activity Logs</h2>
-                            <div class="proj-list" id="recent-reports-list"></div>
-                        </section>
-                        
-                        <section class="dash-card anim-fadeInUp anim-d4">
-                            <h2 class="dash-card-title">Managed Ventures</h2>
-                            <div class="proj-list" id="recent-projects-list"></div>
-                            <div style="margin-top:20px; text-align:center;">
-                                <a href="employee-projects.html" class="btn btn-secondary btn-sm">View All Projects</a>
+                <!-- Smart Insights -->
+                <div class="dash-card anim-fadeInUp anim-d1" id="insights-card" style="margin-bottom: var(--sp-6); border: 1px dashed var(--clr-accent-glow); background: rgba(59, 130, 246, 0.03);">
+                    <div class="dash-card-body" id="insights-content">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Daily Mission -->
+                <div class="dash-card anim-fadeInUp anim-d2" id="checklist-card" style="margin-bottom: var(--sp-6);">
+                    <div class="dash-card-header">
+                        <h2 class="dash-card-title">Daily Operations <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">target</span></h2>
+                    </div>
+                    <div class="dash-card-body" id="checklist-content">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Main grid -->
+                <div class="dash-grid">
+                    <div class="dash-grid-left">
+                        <!-- Corporate Journey -->
+                        <div class="dash-card anim-fadeInUp anim-d3">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Corporate Journey & Efficiency <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">trending_up</span></h2>
                             </div>
-                        </section>
+                            <div class="dash-card-body" id="journey-content">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Managed Ventures (Projects) -->
+                        <div class="dash-card anim-fadeInUp anim-d4">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Managed Ventures <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">folder_copy</span></h2>
+                                <a href="employee-projects.html" class="btn btn-secondary btn-sm">View All</a>
+                            </div>
+                            <div class="dash-card-body" id="recent-projects-list">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
                     </div>
 
-                    <aside class="dash-side">
-                        <section class="dash-card anim-fadeInUp anim-d5">
-                            <h2 class="dash-card-title">Quick Operations</h2>
-                            <div class="quick-actions" id="quick-actions"></div>
-                        </section>
+                    <div class="dash-grid-right" style="display:flex; flex-direction:column; gap:var(--sp-6);">
+                        <!-- Professional Identity -->
+                        <div class="dash-card anim-fadeInUp anim-d5">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Professional Identity <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">fingerprint</span></h2>
+                            </div>
+                            <div class="dash-card-body" id="skills-content">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
 
-                        <section class="dash-card anim-fadeInUp anim-d6">
-                            <h2 class="dash-card-title">Corporate Insights</h2>
-                            <div id="insights-content"></div>
-                        </section>
+                        <!-- Quick actions -->
+                        <div class="dash-card anim-fadeInUp anim-d6" id="quick-actions-card">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Quick Actions <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">bolt</span></h2>
+                            </div>
+                            <div class="dash-card-body">
+                                <div class="quick-actions" id="quick-actions">
+                                    <!-- Injected by JS -->
+                                </div>
+                            </div>
+                        </div>
                         
-                        <section class="dash-card anim-fadeInUp anim-d7" id="checklist-card">
-                            <h2 class="dash-card-title">Daily Mission</h2>
-                            <div class="checklist" id="checklist-content"></div>
-                        </section>
-                    </aside>
+                        <!-- Recent Activity Logs -->
+                        <div class="dash-card anim-fadeInUp anim-d7" id="reports-card">
+                            <div class="dash-card-header">
+                                <h2 class="dash-card-title">Recent Activity Logs <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">description</span></h2>
+                            </div>
+                            <div class="dash-card-body" id="recent-reports-list">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <script src="js/storage.js"></script>
     <script src="js/sidebar-engine.js"></script>
@@ -128,4 +210,5 @@
     <script src="js/glowing-effect.js"></script>
     <script src="js/iris-modal.js"></script>
 </body>
+
 </html>
