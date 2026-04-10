@@ -87,6 +87,14 @@
             roleFilters.style.display = 'flex';
             roleFilters.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    // CRITICAL FIX: If we are deep-linked into a specific user's portfolio, 
+                    // clicking a global role filter must break us out of that view.
+                    const currentUrl = new URL(window.location.href);
+                    if (currentUrl.searchParams.has('intern')) {
+                        currentUrl.searchParams.delete('intern');
+                        window.history.pushState({}, document.title, currentUrl.pathname + currentUrl.search);
+                    }
+
                     roleFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     activeRoleFilter = btn.dataset.role;
@@ -267,12 +275,24 @@
               })
             : '';
 
-        // Resolve owner name: stored on project, or look up from profiles
+        // Resolve owner name & role dynamically from profiles
         let userName = p.userName || p.ownerName || '';
+        let displayRole = 'Technical Intern';
         const userId = p.userId || p.ownerId;
-        if (!userName && userId) {
+        if (userId) {
             const ownerProfile = Storage.getProfile(userId);
-            userName = ownerProfile ? ownerProfile.name : '';
+            if (!userName && ownerProfile) {
+                userName = ownerProfile.name || '';
+            }
+            if (ownerProfile) {
+                if (ownerProfile.role === 'employee') {
+                    displayRole = ownerProfile.internship?.role || ownerProfile.jobRole || ownerProfile.roleCategory || 'Employee';
+                } else if (ownerProfile.role === 'admin') {
+                    displayRole = 'Administrator';
+                } else {
+                    displayRole = 'Technical Intern';
+                }
+            }
         }
 
         // Notification Logic for the Card
@@ -387,7 +407,7 @@
             })()}
           <div style="display:flex; flex-direction:column; line-height:1.2;">
             <span class="card-owner-name" style="font-size: 0.8rem; font-weight:700; color:var(--clr-text-primary); letter-spacing:0.2px;">${userName || 'Unassigned Member'}</span>
-            <span style="font-size: 0.65rem; color:var(--clr-accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.8;">Software Developer</span>
+            <span style="font-size: 0.65rem; color:var(--clr-accent); font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.8;">${displayRole}</span>
           </div>
         </div>
       </article>`;
