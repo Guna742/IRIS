@@ -156,6 +156,7 @@ const SidebarEngine = (() => {
             { label: 'Leaderboard', href: 'employee-leaderboard.html',                          icon: 'leaderboard',  tooltip: 'Employee rankings' },
             { label: 'Analytics',   href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics',    tooltip: 'Performance tracking' },
             { label: 'Log Progress',href: 'employee-report.html',                               icon: 'description',  tooltip: 'Document your work' },
+            { label: 'Projects',    href: 'projects.html',                                      icon: 'folder',       tooltip: 'The vault', alertCount: projectAlertCount },
             { label: 'The Wall',    href: 'doubts.html',                                        icon: 'chat',         tooltip: 'Community hub', alertCount: wallAlertCount },
         ];
 
