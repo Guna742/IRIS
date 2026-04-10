@@ -211,12 +211,12 @@ const IMAGE_UPLOAD_ENABLED = false;
                             <span class="material-symbols-outlined">schedule</span>
                             ${time}
                         </span>
-                        ${isOwnQ ? `<span class="status-badge" style="background:rgba(34,211,238,.1);color:var(--clr-cyan);border-color:rgba(34,211,238,.2)">
-                            <span class="material-symbols-outlined" style="font-size:12px">person</span>You
-                        </span>` : ''}
-                        ${isAdmin ? `<span class="doubt-meta-item" style="color:var(--clr-text-muted);font-style:italic">
-                            by ${escHtml(q.authorName || 'User')}
-                        </span>` : ''}
+                        <span class="doubt-meta-item" style="color:var(--clr-text-muted); display:flex; align-items:center; gap:6px;">
+                            ${isOwnQ ? `<span class="status-badge" style="background:rgba(34,211,238,.1);color:var(--clr-cyan);border-color:rgba(34,211,238,.2); margin-right:4px;">
+                                <span class="material-symbols-outlined" style="font-size:12px">person</span>You
+                            </span>` : `by <strong style="color:var(--clr-text-main)">${escHtml(q.authorName || 'User')}</strong>`}
+                            ${typeof BadgeEngine !== 'undefined' && typeof Storage !== 'undefined' ? BadgeEngine.renderBadges(Storage.getProfile(q.userId)?.badges || []) : ''}
+                        </span>
                     </div>
                 </div>
             </div>

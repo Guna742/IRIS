@@ -114,7 +114,10 @@
                             <div class="question-author">
                                 <div class="author-avatar-sm">${(q.authorName || 'I')[0].toUpperCase()}</div>
                                 <div class="author-info">
-                                    <div class="author-name">${escHtml(q.authorName || 'Intern')}</div>
+                                    <div class="author-name" style="display:flex; align-items:center; gap:6px;">
+                                        ${escHtml(q.authorName || 'Intern')}
+                                        ${typeof BadgeEngine !== 'undefined' && typeof Storage !== 'undefined' ? BadgeEngine.renderBadges(Storage.getProfile(q.userId)?.badges || []) : ''}
+                                    </div>
                                     <div class="author-time">Asked ${formatTime(q.createdAt)}</div>
                                 </div>
                             </div>
@@ -185,7 +188,10 @@
                                 ${(ans.authorName || 'A')[0].toUpperCase()}
                             </div>
                             <div class="author-info">
-                                <div class="author-name">${escHtml(ans.authorName || 'Intern')}</div>
+                                <div class="author-name" style="display:flex; align-items:center; gap:6px;">
+                                    ${escHtml(ans.authorName || 'Intern')}
+                                    ${typeof BadgeEngine !== 'undefined' && typeof Storage !== 'undefined' ? BadgeEngine.renderBadges(Storage.getProfile(ans.userId)?.badges || []) : ''}
+                                </div>
                                 <div class="author-time">${formatTime(ans.createdAt)}</div>
                             </div>
                         </div>
