@@ -1269,24 +1269,27 @@ textarea.field-input {
     }
 }
 
-@media (max-width: 480px) {
-    #logout-btn {
-        padding: .5rem;
+@media (max-width: 768px) {
+    #logout-btn, #new-project-btn, #ask-doubt-btn {
+        font-size: 0 !important;
+        padding: 0.5rem;
         min-width: 36px;
     }
 
-    #logout-btn svg {
+    #logout-btn .material-symbols-outlined, 
+    #new-project-btn .material-symbols-outlined,
+    #ask-doubt-btn .material-symbols-outlined {
+        font-size: 18px !important;
         margin: 0;
     }
 
-    /* Hide text inside logout button on very small screens */
-    #logout-btn {
-        font-size: 0;
+    .topbar-right {
+        gap: 6px;
     }
-
-    #logout-btn svg {
-        font-size: 14px;
-        /* Reset for icon */
+    
+    #topbar-role-badge {
+        padding: 4px 8px;
+        font-size: 10px;
     }
 
     .topbar-title {
