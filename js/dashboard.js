@@ -20,9 +20,9 @@
   const isAdmin = session.role === 'admin';
   const isEmployee = session.role === 'employee';
 
-  // Employees have their own dedicated profile page
+  // Employees have their own dedicated dashboard
   if (isEmployee) {
-    window.location.replace('employee-profile.html');
+    window.location.replace('employee-dashboard.html');
     return;
   }
 
@@ -127,7 +127,9 @@
       renderJourney(isAdmin, profile, projects);
       renderSkills(isAdmin, profile);
       renderActions();
-      renderRecentProjects(projects);
+
+      const myProjects = isAdmin ? projects : projects.filter(p => (p.userId || p.ownerId) === session.userId);
+      renderRecentProjects(myProjects);
       renderRecentReports(allProfiles);
 
       // 4. Polish

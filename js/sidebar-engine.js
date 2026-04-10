@@ -152,7 +152,7 @@ const SidebarEngine = (() => {
         ];
 
         const NAV_EMPLOYEE = [
-            { label: 'Dashboard',    href: 'employee-profile.html',                              icon: 'home',         tooltip: 'Your workspace' },
+            { label: 'Dashboard',    href: 'employee-dashboard.html',                             icon: 'home',         tooltip: 'Your workspace' },
             { label: 'Leaderboard', href: 'employee-leaderboard.html',                          icon: 'leaderboard',  tooltip: 'Employee rankings' },
             { label: 'Analytics',   href: `employee-analytics.html?student=${session.userId}`, icon: 'analytics',    tooltip: 'Performance tracking' },
             { label: 'Log Progress',href: 'employee-report.html',                               icon: 'description',  tooltip: 'Document your work' },
