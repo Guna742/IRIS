@@ -89,6 +89,10 @@
                 // Critical: Always reveal content and setup handlers after a refresh
                 try { initReveal(); } catch (e) {}
                 try { setupDetailHandlers(); } catch (e) {}
+
+                // Tracker + Report log (dynamic)
+                try { renderTrackerGrid(); } catch (e) { console.warn('Tracker grid failed', e); }
+                try { renderReportLog(); } catch (e) { console.warn('Report log failed', e); }
             };
 
 
@@ -454,133 +458,52 @@
             </table>`}
         </div>
 
-        <!-- ═══ REPORTING HISTORY TABLE (REPORTS) ═══ -->
-        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)">
-            <div class="history-head">
-                <div class="history-title">Technical Reporting Log</div>
-                <div class="history-actions">
-                    <span style="font-size: 0.8rem; color: var(--clr-text-muted);">Historical tracking of daily updates</span>
-                </div>
-            </div>
-            ${(() => {
-            const reports = Storage.getHourlyReports(p.userId).sort((a, b) => (b.createdAt || b.timestamp) - (a.createdAt || a.timestamp));
-            if (reports.length === 0) {
-                return `
-                    <div class="empty-state">
-                        <div class="empty-state-icon material-symbols-outlined">description</div>
-                        <div class="empty-state-title">No reports found</div>
-                        <div class="empty-state-desc">This intern has not submitted any technical reports yet.</div>
-                    </div>`;
-            }
-            return `
-                <table class="history-table" style="margin-top: 10px;">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Window</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${reports.map(r => {
-                const date = new Date(r.createdAt || r.timestamp);
-                const endHour = r.window === 1 ? 13 : 18;
-                const isLate = date.getHours() >= endHour;
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-                return `
-                            <tr>
-                                <td data-label="Date">${dateStr}</td>
-                                <td data-label="Window">${r.window === 1 ? 'Morning (W1)' : 'Afternoon (W2)'}</td>
-                                <td data-label="Time">${timeStr}</td>
-                                <td data-label="Status">
-                                    <span class="badge ${isLate ? 'badge-warning' : 'badge-success'}" style="font-size: 10px; padding: 2px 8px;">
-                                        ${isLate ? 'LATE SUBMISSION' : 'ON TIME'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="more-btn" onclick="viewDetailedReport('${r.id}')">View Details</button>
-                                </td>
-                            </tr>`;
-            }).join('')}
-                    </tbody>
-                </table>`;
-        })()}
-        </div>
-
-        <!-- ═══ WEEKLY CONSISTENCY TRACKER (7 DAYS) ═══ -->
-        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)">
+        <!-- ═══ WEEKLY CONSISTENCY TRACKER — placed ABOVE the log ═══ -->
+        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)" id="weekly-tracker-section">
             <div class="history-head">
                 <div class="history-title">Weekly Consistency Tracker</div>
-                <div style="display:flex; gap:12px; font-size:10px;">
+                <div style="display:flex; gap:12px; font-size:10px; align-items:center;">
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#10b981; border-radius:2px;"></div> On Time</div>
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div> Late</div>
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:#ef4444; border-radius:2px;"></div> Missed</div>
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:8px; height:8px; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.1); border-radius:2px;"></div> Holiday</div>
                 </div>
             </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--glass-border);">
-                ${(() => {
-                    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                    return days.map(d => `<div style="text-align:center; font-size:10px; font-weight:700; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">${d}</div>`).join('');
-                })()}
-                
-                ${(() => {
-                    const reports = Storage.getHourlyReports(p.userId);
-                    const now = new Date();
-                    
-                    // Logic to find this week's Monday
-                    const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday
-                    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-                    const monday = new Date(now);
-                    monday.setDate(now.getDate() + diffToMonday);
-                    monday.setHours(0,0,0,0);
 
-                    let gridHTML = "";
-                    for (let i = 0; i < 7; i++) {
-                        const d = new Date(monday);
-                        d.setDate(monday.getDate() + i);
-                        const isSunday = d.getDay() === 0;
-                        const ds = d.toDateString();
-                        const isFuture = d > now;
-
-                        const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === ds);
-                        const w1 = dayReports.find(r => r.window === 1);
-                        const w2 = dayReports.find(r => r.window === 2);
-                        
-                        const getDot = (rep, winId) => {
-                            if (isSunday) return 'transparent'; // Sunday is blank/holiday
-                            if (isFuture) return 'rgba(255,255,255,0.03)';
-                            
-                            const deadline = winId === 1 ? 13 : 18;
-                            if (!rep) {
-                                // If day is in past and window closed
-                                const dClose = new Date(d); dClose.setHours(deadline, 0, 0);
-                                return (now > dClose) ? '#ef4444' : 'rgba(255,255,255,0.05)';
-                            }
-                            const subT = new Date(rep.createdAt || rep.timestamp);
-                            return subT.getHours() >= deadline ? '#f59e0b' : '#10b981';
-                        };
-
-                        const dateTitle = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        const sundayStyle = isSunday ? 'border: 1px dashed rgba(255,255,255,0.1); background: rgba(255,255,255,0.02) !important;' : '';
-
-                        gridHTML += `
-                            <div class="day-slot-group" style="display:flex; flex-direction:column; gap:4px; padding:8px; background:rgba(255,255,255,0.03); border-radius:8px; ${sundayStyle}">
-                                <div class="slot-dot" title="${dateTitle} Morning" style="height:10px; background:${getDot(w1, 1)}; border-radius:2px; transition: all 0.3s ease;"></div>
-                                <div class="slot-dot" title="${dateTitle} Afternoon" style="height:10px; background:${getDot(w2, 2)}; border-radius:2px; transition: all 0.3s ease;"></div>
-                                <div style="font-size:8px; color:var(--clr-text-muted); text-align:center; margin-top:2px; font-weight:600;">${d.getDate()}</div>
-                            </div>
-                        `;
-                    }
-                    return gridHTML;
-                })()}
+            <!-- Month / Week navigator -->
+            <div id="tracker-nav" style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding:10px 14px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid var(--glass-border);">
+                <button id="tracker-prev-week" onclick="trackerNavWeek(-1)" style="background:rgba(139,92,246,0.15); border:none; color:var(--clr-primary); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:18px; display:flex; align-items:center; transition:background 0.2s;" title="Previous week">&#8592;</button>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div id="tracker-week-label" style="font-weight:700; font-size:0.95rem; color:var(--clr-text-main);"></div>
+                    <div id="tracker-month-label" style="font-size:0.75rem; color:var(--clr-text-muted);"></div>
+                </div>
+                <button id="tracker-next-week" onclick="trackerNavWeek(1)" style="background:rgba(139,92,246,0.15); border:none; color:var(--clr-primary); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:18px; display:flex; align-items:center; transition:background 0.2s;" title="Next week">&#8594;</button>
             </div>
-            <div style="font-size: 0.7rem; color: var(--clr-text-muted); text-align: right; margin-top: 8px; font-style: italic;">Weekly cycle tracking: Morning & Afternoon reporting windows</div>
+
+            <!-- Day headers -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 12px; padding: 0 2px;">
+                ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div style="text-align:center; font-size:10px; font-weight:700; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:1px;">${d}</div>`).join('')}
+            </div>
+
+            <!-- Day grid (rendered by JS) -->
+            <div id="tracker-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 6px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--glass-border);">
+                <!-- injected by renderTrackerGrid() -->
+            </div>
+            <div style="font-size: 0.7rem; color: var(--clr-text-muted); text-align: right; margin-top: 8px; font-style: italic;">Click any day to filter the report log below &bull; Weekly cycle: Morning &amp; Afternoon windows</div>
+        </div>
+
+        <!-- ═══ REPORTING HISTORY TABLE (REPORTS) ═══ -->
+        <div class="history-section reveal anim-d3" style="margin-top: var(--sp-6)" id="report-log-section">
+            <div class="history-head">
+                <div class="history-title">Technical Reporting Log</div>
+                <div class="history-actions" style="display:flex; align-items:center; gap:10px;">
+                    <span id="report-log-date-label" style="font-size: 0.8rem; color: var(--clr-primary); font-weight:600;">Today</span>
+                    <button onclick="clearReportLogFilter()" id="report-log-clear-btn" style="display:none; font-size:0.72rem; padding:3px 10px; border-radius:6px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3); color:var(--clr-primary); cursor:pointer;">Show All</button>
+                </div>
+            </div>
+            <div id="report-log-table-wrap" style="margin-top:10px;">
+                <!-- injected by renderReportLog() -->
+            </div>
         </div>`;
     }
 
@@ -1467,13 +1390,18 @@
     // ────────────────────────────────────────────────────────
     // SIDEBAR
     // ────────────────────────────────────────────────────────
-    SidebarEngine.init = function(session) {
+    SidebarEngine.init = function(sessionArg) {
+        // Firestore live-listeners re-invoke SidebarEngine.init with non-session data.
+        // Fall back to the session captured at page load if the argument is unusable.
+        const s = (sessionArg && sessionArg.userId) ? sessionArg : session;
+        if (!s || !s.userId) return; // nothing we can do without a valid session
+
         const avatar = document.getElementById('user-avatar-sidebar');
         const nameEl = document.getElementById('user-name-sidebar');
         const roleEl = document.getElementById('user-role-sidebar');
 
-        const p = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(session.userId) : null) : Storage.getProfile(session.userId);
-        const currentName = p?.name || session.displayName;
+        const p = isAdmin ? (Storage.getAdminProfile ? Storage.getAdminProfile(s.userId) : null) : Storage.getProfile(s.userId);
+        const currentName = p?.name || s.displayName || 'User';
 
         if (avatar) {
             if (p?.avatar) {
@@ -1494,7 +1422,7 @@
                 : [
                     { label: 'Leaderboard', href: 'leaderboard.html', icon: 'leaderboard' },
                     { label: 'Report Submission', href: 'report-submission.html', icon: 'description' },
-                    { label: 'My Analytics', href: `student-analytics.html?student=${session.userId}`, icon: 'analytics', active: true }
+                    { label: 'My Analytics', href: `student-analytics.html?student=${s.userId}`, icon: 'analytics', active: true }
                 ]
             ),
             { label: 'Projects', href: 'projects.html', icon: 'folder' },
@@ -1526,6 +1454,207 @@
             });
         }
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // TRACKER STATE — week offset (0 = current week, -1 = last, etc.)
+    // ─────────────────────────────────────────────────────────────
+    let trackerWeekOffset = 0;       // how many weeks back/forward from now
+    let selectedDateStr = null;      // null = "show all", else a toDateString() value
+
+    function getMondayOfWeek(offsetWeeks) {
+        const now = new Date();
+        const day = now.getDay();
+        const diffToMon = day === 0 ? -6 : 1 - day;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diffToMon + offsetWeeks * 7);
+        monday.setHours(0, 0, 0, 0);
+        return monday;
+    }
+
+    // Render the tracker grid for the current week offset
+    function renderTrackerGrid() {
+        const grid = document.getElementById('tracker-grid');
+        const weekLabel = document.getElementById('tracker-week-label');
+        const monthLabel = document.getElementById('tracker-month-label');
+        if (!grid) return;
+
+        const monday = getMondayOfWeek(trackerWeekOffset);
+        const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+        const now = new Date();
+
+        // Update nav labels
+        const fmtShort = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (weekLabel) weekLabel.textContent = `${fmtShort(monday)} — ${fmtShort(sunday)}`;
+        if (monthLabel) {
+            const months = [...new Set([monday, sunday].map(d => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })))];
+            monthLabel.textContent = months.join(' / ');
+        }
+
+        // Disable "next" if already at current week
+        const nextBtn = document.getElementById('tracker-next-week');
+        if (nextBtn) nextBtn.disabled = trackerWeekOffset >= 0;
+
+        const reports = Storage.getHourlyReports(targetUid);
+        let html = '';
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            const ds = d.toDateString();
+            const isSunday = d.getDay() === 0;
+            const isFuture = d > now;
+            const isSelected = selectedDateStr === ds;
+
+            const dayReports = reports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === ds);
+            const w1 = dayReports.find(r => r.window === 1);
+            const w2 = dayReports.find(r => r.window === 2);
+
+            const getDot = (rep, winId) => {
+                if (isSunday) return 'transparent';
+                if (isFuture) return 'rgba(255,255,255,0.03)';
+                const deadline = winId === 1 ? 13 : 18;
+                if (!rep) {
+                    const dClose = new Date(d); dClose.setHours(deadline, 0, 0);
+                    return now > dClose ? '#ef4444' : 'rgba(255,255,255,0.05)';
+                }
+                const subT = new Date(rep.createdAt || rep.timestamp);
+                return subT.getHours() >= deadline ? '#f59e0b' : '#10b981';
+            };
+
+            const dateTitle = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const sundayBorder = isSunday ? 'border:1px dashed rgba(255,255,255,0.1);' : '';
+            const selectedRing = isSelected
+                ? 'border:2px solid var(--clr-primary); box-shadow: 0 0 12px rgba(139,92,246,0.4);'
+                : '';
+            const clickable = isSunday || isFuture ? '' : `onclick="selectTrackerDay('${ds}', '${dateTitle}')" style="cursor:pointer;"`;
+
+            html += `
+                <div class="day-slot-group tracker-day${isSelected ? ' selected' : ''}"
+                     data-date="${ds}"
+                     title="${dateTitle}${isSunday ? ' (Holiday)' : isFuture ? ' (Future)' : ' — Click to filter'}"
+                     ${!isSunday && !isFuture ? `onclick="selectTrackerDay('${ds}')" ` : ''}
+                     style="display:flex; flex-direction:column; gap:4px; padding:8px;
+                            background:rgba(255,255,255,${isSelected ? '0.07' : '0.03'});
+                            border-radius:8px; transition: all 0.25s ease;
+                            ${sundayBorder}${selectedRing}
+                            ${!isSunday && !isFuture ? 'cursor:pointer;' : ''}">
+                    <div class="slot-dot" title="${dateTitle} Morning (W1)"
+                         style="height:10px; background:${getDot(w1, 1)}; border-radius:2px; transition: background 0.3s;"></div>
+                    <div class="slot-dot" title="${dateTitle} Afternoon (W2)"
+                         style="height:10px; background:${getDot(w2, 2)}; border-radius:2px; transition: background 0.3s;"></div>
+                    <div style="font-size:8px; color:${isSelected ? 'var(--clr-primary)' : 'var(--clr-text-muted)'}; text-align:center; margin-top:2px; font-weight:${isSelected ? '800' : '600'};">
+                        ${d.getDate()}
+                    </div>
+                </div>
+            `;
+        }
+        grid.innerHTML = html;
+    }
+
+    // Render the report log filtered by selectedDateStr (null = all)
+    function renderReportLog() {
+        const wrap = document.getElementById('report-log-table-wrap');
+        const dateLabel = document.getElementById('report-log-date-label');
+        const clearBtn = document.getElementById('report-log-clear-btn');
+        if (!wrap) return;
+
+        const allReports = Storage.getHourlyReports(targetUid)
+            .sort((a, b) => (b.createdAt || b.timestamp) - (a.createdAt || a.timestamp));
+
+        const filtered = selectedDateStr
+            ? allReports.filter(r => new Date(r.createdAt || r.timestamp).toDateString() === selectedDateStr)
+            : allReports;
+
+        // Update UI labels
+        if (dateLabel) {
+            dateLabel.textContent = selectedDateStr
+                ? new Date(selectedDateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+                : 'All Reports';
+        }
+        if (clearBtn) clearBtn.style.display = selectedDateStr ? 'inline-block' : 'none';
+
+        if (filtered.length === 0) {
+            wrap.innerHTML = `
+                <div class="empty-state" style="padding: 30px 0;">
+                    <div class="empty-state-icon material-symbols-outlined">description</div>
+                    <div class="empty-state-title">${selectedDateStr ? 'No reports for this day' : 'No reports found'}</div>
+                    <div class="empty-state-desc">${selectedDateStr
+                        ? `${new Date(selectedDateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} — no reports were submitted.`
+                        : 'This intern has not submitted any technical reports yet.'}</div>
+                </div>`;
+            return;
+        }
+
+        const rows = filtered.map(r => {
+            const date = new Date(r.createdAt || r.timestamp);
+            const endHour = r.window === 1 ? 13 : 18;
+            const isLate = date.getHours() >= endHour;
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `
+                <tr style="animation: fadeInRow 0.3s ease forwards;">
+                    <td data-label="Date">${dateStr}</td>
+                    <td data-label="Window">${r.window === 1 ? 'Morning (W1)' : 'Afternoon (W2)'}</td>
+                    <td data-label="Time">${timeStr}</td>
+                    <td data-label="Status">
+                        <span class="badge ${isLate ? 'badge-warning' : 'badge-success'}" style="font-size: 10px; padding: 2px 8px;">
+                            ${isLate ? 'LATE SUBMISSION' : 'ON TIME'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="more-btn" onclick="viewDetailedReport('${r.id}')">View Details</button>
+                    </td>
+                </tr>`;
+        }).join('');
+
+        wrap.innerHTML = `
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Window</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    }
+
+    // Called when user clicks a day in the tracker
+    window.selectTrackerDay = function(ds) {
+        if (selectedDateStr === ds) {
+            // Toggle off — deselect
+            selectedDateStr = null;
+        } else {
+            selectedDateStr = ds;
+        }
+        renderTrackerGrid();
+        renderReportLog();
+
+        // Smooth scroll to report log
+        const logSection = document.getElementById('report-log-section');
+        if (logSection) logSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // Navigate weeks back/forward
+    window.trackerNavWeek = function(direction) {
+        trackerWeekOffset += direction;
+        // Don't allow going into the future beyond current week
+        if (trackerWeekOffset > 0) trackerWeekOffset = 0;
+        // Clear day filter when navigating weeks
+        selectedDateStr = null;
+        renderTrackerGrid();
+        renderReportLog();
+    };
+
+    // Clear day filter — show all reports
+    window.clearReportLogFilter = function() {
+        selectedDateStr = null;
+        renderTrackerGrid();
+        renderReportLog();
+    };
 
     function setupDetailHandlers() {
         const triggers = document.querySelectorAll('.detail-trigger');

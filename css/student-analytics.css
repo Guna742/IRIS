@@ -1048,3 +1048,41 @@ body::after {
 .anim-d3 { transition-delay: 0.3s; }
 .anim-d4 { transition-delay: 0.4s; }
 .anim-d5 { transition-delay: 0.5s; }
+
+/* ══════════════════════════════════════
+   TRACKER DAY — interactive day slots
+   ══════════════════════════════════════ */
+.tracker-day {
+    user-select: none;
+}
+
+
+/* Hover: non-future, non-sunday days */
+.tracker-day[onclick]:hover {
+    background: rgba(139, 92, 246, 0.08) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+/* Selected state ring pulse */
+.tracker-day.selected {
+    animation: trackerPulse 1.6s ease infinite;
+}
+
+@keyframes trackerPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); }
+    50%       { box-shadow: 0 0 18px rgba(139, 92, 246, 0.7); }
+}
+
+/* Nav button disabled */
+#tracker-next-week:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Row fade-in for filtered report log */
+@keyframes fadeInRow {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
